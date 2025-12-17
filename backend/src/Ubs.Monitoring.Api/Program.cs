@@ -1,5 +1,6 @@
 using Serilog;
 using Ubs.Monitoring.Infrastructure;
+using Ubs.Monitoring.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,5 +42,13 @@ app.UseCors("frontend");
 
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/health/db", async (AppDbContext db) =>
+{
+    var canConnect = await db.Database.CanConnectAsync();
+    return canConnect
+        ? Results.Ok(new { db = "up" })
+        : Results.Problem("Cannot connect to database");
+});
+
 
 app.Run();
