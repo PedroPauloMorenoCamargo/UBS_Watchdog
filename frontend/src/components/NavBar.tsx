@@ -18,13 +18,28 @@ const NavBar = () => {
       <NavLink to="/" className={styles.brand}>
          UBS <span>Watchdog</span>
        </NavLink>
-       <NavLink to="/dashboard">
-        Dashboard
-       </NavLink>
-       <NavLink to="/login">
-        Login
-       </NavLink>
-      <h2>TODO: Implementar Navbar</h2>
+       <ul className={styles.links_list}>  
+        <li>
+          <NavLink to="/dashboard" className={({isActive}) => (isActive ? styles.active : '')}>
+            Dashboard
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/login"  className={({isActive}) => (isActive ? styles.active : '')}>
+            Login
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/register"  className={({isActive}) => (isActive ? styles.active : '')}>
+            Register
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/" className={styles.logout}>
+            Logout
+          </NavLink>
+        </li>
+       </ul>
     </nav>
   )
 }

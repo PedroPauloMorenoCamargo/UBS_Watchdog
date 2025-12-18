@@ -1,4 +1,4 @@
-export function DashboardPage() {
+const DashboardPage = () => {
   return (
     <div>
       <h1>Dashboard</h1>
@@ -6,3 +6,4 @@ export function DashboardPage() {
     </div>
   );
 }
+export default DashboardPage;
