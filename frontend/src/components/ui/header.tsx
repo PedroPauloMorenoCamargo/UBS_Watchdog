@@ -2,21 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/auth";
 
-import { Bell, User } from "lucide-react";
+import { Loader2, Bell, User } from "lucide-react";
 
 export function Header() {
   const [openProfile, setOpenProfile] = useState(false);
   const [openNotifications, setOpenNotifications] = useState(false);
 
   
-  const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const {logout, status}  = useAuthStore();
 
-  function handleLogout() {
-    logout(); // limpa Zustand + persist
-    setOpenProfile(false);
-    setOpenNotifications(false);
-    navigate("/", { replace: true });
+  const isLoggingOut = status === "loading";
+
+  async function handleLogout() {
+   await logout(); // limpa Zustand + persist
+   navigate("/", { replace: true });
+   setOpenProfile(false);
+   setOpenNotifications(false);
   }
 
   const profileRef = useRef<HTMLDivElement>(null);
@@ -84,10 +86,19 @@ export function Header() {
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left text-red-600 cursor-pointer hover:text-red-700"
+                  disabled={isLoggingOut}
+                  className="w-full text-left text-red-600 flex items-center cursor-pointer gap-2 disabled:opacity-70"
                 >
-                  Sair
+                  {isLoggingOut ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Efetuando logout...
+                    </>
+                  ) : (
+                    "Sair"
+                  )}
                 </button>
+
               </div>
             </div>
           )}
