@@ -1,14 +1,29 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/auth";
+
 import { Bell, User } from "lucide-react";
 
 export function Header() {
   const [openProfile, setOpenProfile] = useState(false);
   const [openNotifications, setOpenNotifications] = useState(false);
 
+  
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout(); // limpa Zustand + persist
+    setOpenProfile(false);
+    setOpenNotifications(false);
+    navigate("/", { replace: true });
+  }
+
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
-  const adminName = "Admin UBS";
+  const user = useAuthStore((s) => s.user);
+  const adminName = user?.displayName ?? user?.username ?? "Usuário";
 
   // 🔥 Fecha dropdown ao clicar fora
   useEffect(() => {
@@ -58,16 +73,19 @@ export function Header() {
           {openProfile && (
             <div className="absolute right-0 top-12 w-56 bg-white border rounded-lg shadow-lg p-3">
               <p className="font-semibold">{adminName}</p>
-              <p className="text-sm text-slate-500 mb-3">admin@ubs.com</p>
+              <p className="text-sm text-slate-500 mb-3"> {user?.username}@ubs.com</p>
 
               <div className="border-t pt-2 space-y-2 text-sm">
-                <button className="w-full text-left hover:text-blue-600">
+                <button className="w-full text-left cursor-pointer hover:text-blue-600">
                   Meu perfil
                 </button>
-                <button className="w-full text-left hover:text-blue-600">
+                <button className="w-full text-left cursor-pointer hover:text-blue-600">
                   Configurações
                 </button>
-                <button className="w-full text-left text-red-600">
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left text-red-600 cursor-pointer hover:text-red-700"
+                >
                   Sair
                 </button>
               </div>

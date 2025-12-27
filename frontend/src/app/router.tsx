@@ -2,6 +2,8 @@ import { createBrowserRouter } from "react-router-dom";
 import { LoginPage } from "@/pages/LoginPage";
 import { Dashboard } from "@/pages/Dashboard";
 import { AppLayout } from "@/layout/AppLayout";
+import { requireAuth } from "@/middlewares/authMiddleware";
+import { requireRole } from "@/middlewares/roleMiddleware";
 
 export const router = createBrowserRouter([
   { 
@@ -10,6 +12,7 @@ export const router = createBrowserRouter([
   },
   {
     element: <AppLayout />, //Layout para encapsular as paginas que terão Navbar depois de feito login
+    loader: requireAuth,
     children: [
       {
         path: "/dashboard",
@@ -33,6 +36,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/admin",
+        loader: requireRole(["admin"]),
         element: <div>Admin Page</div>,
       },
       {
