@@ -4,10 +4,10 @@ import { Header } from "@/components/ui/header";
 
 export function AppLayout() {
   return (
-    <div className="flex">
+    <div className="flex min-h-screen">
       <Navbar />
 
-      <div className="flex flex-col flex-1 min-h-screen">
+      <div className="flex flex-col flex-1">
         <Header />
 
         <main className="flex-1 bg-slate-100 p-6">

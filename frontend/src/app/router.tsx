@@ -31,6 +31,14 @@ export const router = createBrowserRouter([
         path: "/alerts",
         element: <div>Alerts Page</div>,
       },
+      {
+        path: "/admin",
+        element: <div>Admin Page</div>,
+      },
+      {
+        path: "/configurations",
+        element: <div>Configurations Page</div>,
+      },
     ],
   },
 ]);

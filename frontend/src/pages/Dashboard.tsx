@@ -32,81 +32,71 @@ import {
   Search
 } from "lucide-react";
 
+import { AlertsBySeverityChart } from "@/components/ui/charts/barchart";
+import { TransactionsByTypeChart } from "@/components/ui/charts/donutchart";
+import { WeeklyActivityChart } from "@/components/ui/charts/linechart";
+import { ChartCard } from "@/components/ui/charts/chartcard";
+import { AlertsTable } from "@/components/ui/tables/alertstable";
+
 export function Dashboard() {
   return (
     <div
-      className="relative min-h-screen bg-cover bg-center"
-      style={{ backgroundImage: `url(${loginBg})` }}
+      className="relative bg-cover bg-center"
     >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60" />
-
       {/* Conteúdo */}
-      <div className="relative z-10 p-6">
-        {/* Título */}
-        <h2 className="mb-6 text-2xl font-bold text-white 
-                       drop-shadow-[0_2px_6px_rgba(255,255,255,0.8)]">
-          ISSO AQUI TA FICANDO MANEIRO
-        </h2>
+     <div className="relative z-10 p-6">
 
         {/* Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           
-          {/* Card 1 */}
+          {/* Transactions 1 */}
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">
-            <h3 className="mb-2 text-lg font-semibold">Total Clients</h3>
-            <p className="text-3xl font-bold text-blue-600">1,245</p> {/*mock*/}
+            <h3 className="mb-2 text-lg font-semibold">Total Transactions</h3>
+            <p className="text-3xl font-bold text-black-600">1,245</p> {/*mock*/}
           </div>
 
-          {/* Card 2 */}
+          {/* Alerts */}
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">
-            <h3 className="mb-2 text-lg font-semibold">Active Reports</h3>
-            <p className="text-3xl font-bold text-green-600">87</p> {/*mock*/}
+            <h3 className="mb-2 text-lg font-semibold">Alerts Today</h3>
+            <p className="text-3xl font-bold text-red-600">87</p> {/*mock*/}
           </div>
 
-          {/* Card 3 — Filtros */}
-<div className="rounded-xl bg-white/90 p-6 shadow-lg">
-  <h3 className="mb-4 text-lg font-semibold">Filters</h3>
-
-  {/* Search */}
-  <div className="relative mb-3 w-full">
-    <Search
-      size={18}
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-    />
-    <input
-      type="text"
-      placeholder="Search..."
-      className="w-full rounded-md border bg-slate-50
-                 pl-3 pr-10 py-2
-                 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-  </div>
-
-            {/* Dropdowns */}
-            <select className="mb-3 w-full rounded-md border px-3 py-2">
-              <option>Status</option>
-              <option>Active</option>
-              <option>Inactive</option>
-            </select>
-
-            <select className="w-full rounded-md border px-3 py-2">
-              <option>Period</option>
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
-            </select>
-          </div>
-
-          {/* Card 4 — Gráfico */}
+          {/* High Risk Alerts */}
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">
-            <h3 className="mb-4 text-lg font-semibold">Reports Overview</h3>
+            <h3 className="mb-4 text-lg font-semibold">High Risk Alerts</h3>
+            <p className="text-3xl font-bold text-red-600">8</p> {/*mock*/}
 
-            {/* Placeholder do gráfico */}
-            <div className="flex h-40 items-center justify-center rounded-md bg-slate-100 text-slate-500">
-              Chart goes here
-            </div>
+          </div>
+          {/* Monitored Clients */}
+          <div className="rounded-xl bg-white/90 p-6 shadow-lg">
+            <h3 className="mb-4 text-lg font-semibold">Monitored Clients</h3>
+            <p className="text-3xl font-bold text-black-600">870</p> {/*mock*/}
           </div>
 
+        </div>
+        <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <ChartCard title="Alerts by Severity">
+            <AlertsBySeverityChart />
+          </ChartCard>
+
+          <ChartCard title="Transactions by Type">
+            <TransactionsByTypeChart />
+          </ChartCard>
+        </div>
+
+        <div className="mt-6">
+          <ChartCard
+            title="Weekly Activity Trend"
+            height="h-80"
+          >
+            <WeeklyActivityChart />
+          </ChartCard>
+        </div>
+
+        <div className="mt-5 rounded-xl bg-white p-6 shadow">
+          <ChartCard title="Recent High-Priority Alerts">
+            <AlertsTable />
+          </ChartCard>
         </div>
       </div>
     </div>

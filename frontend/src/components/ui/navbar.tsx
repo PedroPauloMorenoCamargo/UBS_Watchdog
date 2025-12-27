@@ -8,7 +8,7 @@ import {
 
 export function Navbar() {
   return (
-    <aside className="h-screen w-64 bg-slate-900 text-white flex flex-col p-4">
+    <aside className="w-64 bg-slate-900 text-white flex flex-col p-4">
       
       {/* Logo / Título */}
       <div className="text-xl font-bold mb-8">
@@ -73,16 +73,16 @@ export function Navbar() {
         </NavLink>
 
         {/* Configurations no final */}
-        <div className="mt-auto pt-4 border-t border-slate-700">
+        <div className="pt-2 border-t border-slate-700">
           <NavLink
-            to="/configurations"
+            to="/admin"
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-md px-3 py-2 transition
                ${isActive ? "bg-slate-700" : "hover:bg-slate-800"}`
             }
           >
             <Settings size={20} />
-            Configurations
+            Admin
           </NavLink>
           </div>
       </nav>
