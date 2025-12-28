@@ -1,6 +1,7 @@
 using Serilog;
 using Ubs.Monitoring.Infrastructure;
 using Ubs.Monitoring.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,11 +33,38 @@ app.UseSerilogRequestLogging();
 app.UseExceptionHandler();   
 app.UseStatusCodePages();   
 
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    await ApplyMigrationsWithRetryAsync(app);
 }
+
+static async Task ApplyMigrationsWithRetryAsync(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    const int maxRetries = 10;
+    const int delayMs = 1500;
+
+    for (var attempt = 1; attempt <= maxRetries; attempt++)
+    {
+        try
+        {
+            db.Database.Migrate();
+            return;
+        }
+        catch when (attempt < maxRetries)
+        {
+            await Task.Delay(delayMs);
+        }
+    }
+
+    throw new Exception("Database migrations failed after multiple retries.");
+}
+
 
 app.UseCors("frontend");
 
