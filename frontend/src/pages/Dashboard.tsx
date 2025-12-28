@@ -32,9 +32,9 @@ import {
   Search
 } from "lucide-react";
 
-import { AlertsBySeverityChart } from "@/components/ui/charts/barchart";
-import { TransactionsByTypeChart } from "@/components/ui/charts/donutchart";
-import { WeeklyActivityChart } from "@/components/ui/charts/linechart";
+import { AlertsBySeverityChart } from "@/components/ui/charts/alertsbyseveritychart";
+import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
+import { WeeklyActivityChart } from "@/components/ui/charts/weeklyactivitychart";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AlertsTable } from "@/components/ui/tables/alertstable";
 
@@ -43,6 +43,7 @@ export function Dashboard() {
     <div
       className="relative bg-cover bg-center"
     >
+      {/* <h3>Dashboard</h3> TODO: AJUSTAR TITULO DA PAGINA */}
       {/* Conteúdo */}
      <div className="relative z-10 p-6">
 
@@ -87,7 +88,6 @@ export function Dashboard() {
         <div className="mt-6">
           <ChartCard
             title="Weekly Activity Trend"
-            height="h-80"
           >
             <WeeklyActivityChart />
           </ChartCard>

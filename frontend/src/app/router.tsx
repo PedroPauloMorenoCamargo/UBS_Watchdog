@@ -4,6 +4,7 @@ import { Dashboard } from "@/pages/Dashboard";
 import { AppLayout } from "@/layout/AppLayout";
 import { requireAuth } from "@/middlewares/authMiddleware";
 import { requireRole } from "@/middlewares/roleMiddleware";
+import { AlertsPage } from "@/pages/AlertsPage";
 
 export const router = createBrowserRouter([
   { 
@@ -32,7 +33,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/alerts",
-        element: <div>Alerts Page</div>,
+        element: <AlertsPage />,
       },
       {
         path: "/admin",
