@@ -5,15 +5,15 @@ namespace Ubs.Monitoring.Domain.Entities;
 
 public class ComplianceRule
 {
-    public Guid Id { get; set; }
-    public RuleType RuleType { get; set; }
+    public Guid Id { get; private set; }
+    public RuleType RuleType { get; private set; } 
     public string Name { get; set; } = null!;
-    public bool IsActive { get; set; }
-    public Severity Severity { get; set; }
+    public bool IsActive { get; private set; } 
+    public Severity Severity { get; private set; } 
     public string? Scope { get; set; }
     public JsonDocument ParametersJson { get; set; } = null!;
-    public DateTimeOffset CreatedAtUtc { get; set; }
-    public DateTimeOffset UpdatedAtUtc { get; set; }
+    public DateTimeOffset CreatedAtUtc { get; private set; }
+    public DateTimeOffset UpdatedAtUtc { get; private set; }
 
     public ICollection<CaseFinding> CaseFindings { get; set; } = new List<CaseFinding>();
 }
