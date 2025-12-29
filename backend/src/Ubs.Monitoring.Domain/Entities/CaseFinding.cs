@@ -5,6 +5,27 @@ namespace Ubs.Monitoring.Domain.Entities;
 
 public class CaseFinding
 {
+    private CaseFinding() { }
+
+    public CaseFinding(
+        Guid caseId,
+        Guid ruleId,
+        RuleType ruleType,
+        Severity severity,
+        JsonDocument evidenceJson)
+    {
+        if (evidenceJson == null)
+            throw new ArgumentNullException(nameof(evidenceJson));
+
+        Id = Guid.NewGuid();
+        CaseId = caseId;
+        RuleId = ruleId;
+        RuleType = ruleType;
+        Severity = severity;
+        EvidenceJson = evidenceJson;
+        CreatedAtUtc = DateTimeOffset.UtcNow;
+    }
+
     public Guid Id { get; private set; }
 
     public Guid CaseId { get; private set; }
