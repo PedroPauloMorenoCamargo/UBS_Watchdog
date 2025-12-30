@@ -8,8 +8,7 @@ public class Analyst
         string corporateEmail,
         string passwordHash,
         string fullName,
-        string? phoneNumber = null,
-        string? profilePictureBase64 = null)
+        string? phoneNumber = null)
     {
         if (string.IsNullOrWhiteSpace(corporateEmail))
             throw new ArgumentException("Corporate email is required", nameof(corporateEmail));
@@ -23,7 +22,7 @@ public class Analyst
         PasswordHash = passwordHash;
         FullName = fullName;
         PhoneNumber = phoneNumber;
-        ProfilePictureBase64 = profilePictureBase64;
+        ProfilePictureBase64 = null;
         CreatedAtUtc = DateTimeOffset.UtcNow;
     }
 
@@ -37,24 +36,6 @@ public class Analyst
 
     public ICollection<Case> Cases { get; set; } = new List<Case>();
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
-
-    public void ChangePassword(string newPasswordHash)
-    {
-        if (string.IsNullOrWhiteSpace(newPasswordHash))
-            throw new ArgumentException("Password hash is required", nameof(newPasswordHash));
-
-        PasswordHash = newPasswordHash;
-    }
-
-    public void UpdateProfile(string fullName, string? phoneNumber = null, string? profilePictureBase64 = null)
-    {
-        if (string.IsNullOrWhiteSpace(fullName))
-            throw new ArgumentException("Full name is required", nameof(fullName));
-
-        FullName = fullName;
-        PhoneNumber = phoneNumber;
-        ProfilePictureBase64 = profilePictureBase64;
-    }
 
     public void UpdateProfilePicture(string? profilePictureBase64)
     {
