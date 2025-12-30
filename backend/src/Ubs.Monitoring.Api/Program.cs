@@ -39,6 +39,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     await ApplyMigrationsWithRetryAsync(app);
+    await SeedDatabaseAsync(app);
 }
 
 static async Task ApplyMigrationsWithRetryAsync(WebApplication app)
@@ -63,6 +64,14 @@ static async Task ApplyMigrationsWithRetryAsync(WebApplication app)
     }
 
     throw new Exception("Database migrations failed after multiple retries.");
+}
+
+static async Task SeedDatabaseAsync(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var seeder = new DatabaseSeeder(db);
+    await seeder.SeedAsync();
 }
 
 

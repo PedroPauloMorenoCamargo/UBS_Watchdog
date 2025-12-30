@@ -66,6 +66,11 @@ public class AppDbContext : DbContext
             b.Property(x => x.CountryCode).HasColumnType("char(2)").IsRequired();
             b.Property(x => x.CreatedAtUtc).HasDefaultValueSql("now()").IsRequired();
             b.Property(x => x.UpdatedAtUtc).HasDefaultValueSql("now()").IsRequired();
+
+            // Índices de otimização
+            b.HasIndex(x => x.CountryCode).HasDatabaseName("ix_clients_country");
+            b.HasIndex(x => x.KycStatus).HasDatabaseName("ix_clients_kyc_status");
+            b.HasIndex(x => x.RiskLevel).HasDatabaseName("ix_clients_risk_level");
         });
 
         // accounts
@@ -202,6 +207,9 @@ public class AppDbContext : DbContext
             b.Property(x => x.ParametersJson).HasColumnType("jsonb").IsRequired();
             b.Property(x => x.CreatedAtUtc).HasDefaultValueSql("now()").IsRequired();
             b.Property(x => x.UpdatedAtUtc).HasDefaultValueSql("now()").IsRequired();
+
+            // Índice de otimização
+            b.HasIndex(x => x.IsActive).HasDatabaseName("ix_compliance_rules_active");
         });
 
         // cases (1:1 with transactions)
