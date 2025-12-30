@@ -68,10 +68,19 @@ static async Task ApplyMigrationsWithRetryAsync(WebApplication app)
 
 static async Task SeedDatabaseAsync(WebApplication app)
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var seeder = new DatabaseSeeder(db);
-    await seeder.SeedAsync();
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var seeder = new DatabaseSeeder(db);
+        await seeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        // Seed failure is non-critical: log and continue
+        // Developers can recover with: docker compose down -v && docker compose up
+        Log.Warning(ex, "Failed to seed database. Application will continue without seed data.");
+    }
 }
 
 

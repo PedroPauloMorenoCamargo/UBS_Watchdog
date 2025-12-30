@@ -6,7 +6,6 @@ public class Account
 {
     private Account()
     {
-        _identifiers = new List<AccountIdentifier>();
     }
 
     public Account(
@@ -32,7 +31,6 @@ public class Account
         Status = AccountStatus.Active;
         CreatedAtUtc = DateTimeOffset.UtcNow;
         UpdatedAtUtc = DateTimeOffset.UtcNow;
-        _identifiers = new List<AccountIdentifier>();
     }
 
     public Guid Id { get; private set; }

@@ -6,7 +6,6 @@ public class Case
 {
     private Case()
     {
-        _findings = new List<CaseFinding>();
     }
 
     public Case(
@@ -25,7 +24,6 @@ public class Case
         Status = analystId.HasValue ? CaseStatus.UnderReview : CaseStatus.New;
         OpenedAtUtc = DateTimeOffset.UtcNow;
         UpdatedAtUtc = DateTimeOffset.UtcNow;
-        _findings = new List<CaseFinding>();
     }
 
     public Guid Id { get; private set; }

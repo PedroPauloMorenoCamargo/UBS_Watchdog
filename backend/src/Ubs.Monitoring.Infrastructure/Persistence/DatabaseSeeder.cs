@@ -16,20 +16,22 @@ public class DatabaseSeeder
 
     public async Task SeedAsync()
     {
+        // NOTE: Simple idempotency check adequate for development.
+        // All data is saved in a single SaveChangesAsync() to ensure atomicity.
+        // If seeding fails, EF Core's implicit transaction will rollback everything.
         if (await _db.Analysts.AnyAsync())
             return;
- 
+
+        // 1. ANALYST
         var admin = new Analyst(
             corporateEmail: "admin@ubs.com",
-            passwordHash: "admin123", 
+            passwordHash: "admin123",
             fullName: "Admin Sistema UBS",
             phoneNumber: "+5511999999999"
         );
         _db.Analysts.Add(admin);
-        await _db.SaveChangesAsync();
-        Console.WriteLine("✅ Admin created: admin@ubs.com");
 
-        
+        // 2. CLIENTS
         var clientBR = new Client(
             legalType: LegalType.Individual,
             name: "Maria Santos Silva",
@@ -73,9 +75,8 @@ public class DatabaseSeeder
         );
 
         _db.Clients.AddRange(clientBR, clientUS, clientAR);
-        await _db.SaveChangesAsync();
-        
 
+        // 3. ACCOUNTS
 
         var accountBR = new Account(
             clientBR.Id,
@@ -94,7 +95,7 @@ public class DatabaseSeeder
             AccountType.Investment,
             "USD"
         );
-        accountUS.AddIdentifier(IdentifierType.LEI, "ABCUS33XXX12345678", "US");
+        accountUS.AddIdentifier(IdentifierType.LEI, "5493001KJTIIGC8Y1R12", "US");
 
         var accountAR = new Account(
             clientAR.Id,
@@ -105,10 +106,8 @@ public class DatabaseSeeder
         );
 
         _db.Accounts.AddRange(accountBR, accountUS, accountAR);
-        await _db.SaveChangesAsync();
-        
 
-        
+        // 4. FX_RATES
         var fxUsdBrl = new FxRate(
             baseCurrencyCode: "USD",
             quoteCurrencyCode: "BRL",
@@ -124,10 +123,8 @@ public class DatabaseSeeder
         );
 
         _db.FxRates.AddRange(fxUsdBrl, fxEurBrl);
-        await _db.SaveChangesAsync();
-        
 
-        
+        // 5. COMPLIANCE_RULES
         var ruleDailyLimit = new ComplianceRule(
             ruleType: RuleType.DailyLimit,
             name: "Limite Diário - R$ 10.000",
@@ -152,7 +149,9 @@ public class DatabaseSeeder
         );
 
         _db.ComplianceRules.AddRange(ruleDailyLimit, ruleBannedCountries);
+
+        // 6. ATOMIC SAVE - All entities saved in a single transaction
         await _db.SaveChangesAsync();
-      
+        Console.WriteLine("✅ Database seeded successfully: 1 Analyst, 3 Clients, 3 Accounts, 2 FxRates, 2 ComplianceRules");
     }
 }
