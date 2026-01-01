@@ -11,7 +11,7 @@ export const router = createBrowserRouter([
     element: <LoginPage /> 
   },
   {
-    element: <AppLayout />, //Layout para encapsular as paginas que terão Navbar depois de feito login
+    element: <AppLayout />, 
     loader: requireAuth,
     children: [
       {
