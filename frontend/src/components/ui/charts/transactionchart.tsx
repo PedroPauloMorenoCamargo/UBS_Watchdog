@@ -10,6 +10,8 @@ import { COLORS, transactionsByType } from "@/mocks/mocks";
 
 export function TransactionsByTypeChart() {
   return (
+    <div className="h-64">
+
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
         <Pie
@@ -29,5 +31,6 @@ export function TransactionsByTypeChart() {
         <Legend verticalAlign="bottom" />
       </PieChart>
     </ResponsiveContainer>
+    </div>
   );
 }

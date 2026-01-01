@@ -11,6 +11,8 @@ import { weeklyActivity } from "@/mocks/mocks";
 
 export function WeeklyActivityChart() {
   return (
+    <div className="h-64">
+
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={weeklyActivity}>
         <XAxis dataKey="day" />
@@ -35,5 +37,6 @@ export function WeeklyActivityChart() {
         />
       </LineChart>
     </ResponsiveContainer>
+    </div>
   );
 }

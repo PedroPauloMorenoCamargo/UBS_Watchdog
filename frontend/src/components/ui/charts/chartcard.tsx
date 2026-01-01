@@ -10,14 +10,12 @@ import {
 interface ChartCardProps {
   title: string;
   description?: string;
-  height?: string; // ex: "h-64", "h-80"
   children: ReactNode;
 }
 
 export function ChartCard({
   title,
   description,
-  height = "h-64",
   children,
 }: ChartCardProps) {
   return (
@@ -30,9 +28,7 @@ export function ChartCard({
       </CardHeader>
 
       <CardContent>
-        <div className={height}>
-          {children}
-        </div>
+        {children}
       </CardContent>
     </Card>
   );
