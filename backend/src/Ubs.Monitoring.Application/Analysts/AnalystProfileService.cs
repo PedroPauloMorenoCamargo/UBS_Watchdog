@@ -39,7 +39,7 @@ public sealed class AnalystProfileService : IAnalystProfileService
         // allow clearing
         if (string.IsNullOrWhiteSpace(base64))
         {
-            analyst.ProfilePictureBase64 = null;
+            analyst.UpdateProfilePicture(null);
             await _repo.SaveChangesAsync(ct);
             return true;
         }
@@ -64,7 +64,7 @@ public sealed class AnalystProfileService : IAnalystProfileService
             throw new ArgumentException("profilePictureBase64 exceeds 2MB limit.");
 
         // store normalized base64 (no data-uri)
-        analyst.ProfilePictureBase64 = Convert.ToBase64String(bytes);
+        analyst.UpdateProfilePicture(Convert.ToBase64String(bytes));
         await _repo.SaveChangesAsync(ct);
         return true;
     }
