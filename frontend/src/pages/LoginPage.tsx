@@ -161,7 +161,7 @@ export function LoginPage() {
       password,
     });
 
-    if (ok) navigate("/clients");
+    if (ok) navigate("/dashboard");
   }
 
   return (

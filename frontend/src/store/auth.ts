@@ -150,14 +150,19 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      logout: () =>
-        set({
-          status: "idle",
-          isAuthenticated: false,
-          token: null,
-          user: null,
-          errorMessage: null,
-        }),
+      logout: async () => {
+         set({ status: "loading" });
+         
+         await new Promise((resolve) => setTimeout(resolve, 800)); // apenas didático enquanto ainda nao
+         //se comunica com backend
+          set({
+            status: "idle",
+            isAuthenticated: false,
+            token: null,
+            user: null,
+            errorMessage: null,
+          });
+      }
     }),
     {
       name: "ubs-monitoring-auth",
