@@ -35,7 +35,6 @@ if (app.Environment.IsDevelopment())
 
 await app.InitializeDatabaseAsync();
 
-
 app.UseFrontendCors();
 app.UseAuthentication();
 app.UseAuthorization();
