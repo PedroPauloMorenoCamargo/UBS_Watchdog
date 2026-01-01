@@ -95,7 +95,7 @@ export function Dashboard() {
 
         <div className="mt-5 rounded-xl bg-white p-6 shadow">
           <ChartCard title="Recent High-Priority Alerts">
-            <AlertsTable />
+            <AlertsTable severityFilter="all"/>
           </ChartCard>
         </div>
       </div>
