@@ -2,49 +2,59 @@ import { api } from "@/lib/api";
 
 /**
  * @typedef {Object} LoginRequest
- * @description DTO enviado ao endpoint de login.
- * @property {string} username - Identificador do usuário (login).
- * @property {string} password - Senha em texto puro.
+ * @description 
+ * @property {string} email 
+ * @property {string} password 
  */
 export type LoginRequest = {
-  username: string;
+  email: string;
   password: string;
 };
 
 /**
+ * @typedef {Object} AnalystProfile
+ * @description 
+ */
+export type AnalystProfile = {
+  id: string;
+  corporateEmail: string;
+  fullName: string;
+  phoneNumber?: string | null;
+  profilePictureBase64?: string | null;
+  createdAtUtc: string;
+};
+
+/**
  * @typedef {Object} LoginResponse
- * @description DTO de resposta do endpoint de login (mock).
- * @property {string} [token] - Token de autenticação retornado pelo backend/mock.
- * @property {Object} [user] - Dados básicos do usuário autenticado.
- * @property {string} user.username - Identificador do usuário.
- * @property {string} [user.displayName] - Nome amigável para exibição na UI.
+ * @description 
+ * @property {string} token 
+ * @property {string} expiresAtUtc 
+ * @property {AnalystProfile} analyst 
  */
 export type LoginResponse = {
-  token?: string;
-  user?: {
-    username: string;
-    displayName?: string;
-  };
+  token: string;
+  expiresAtUtc: string;
+  analyst: AnalystProfile;
 };
 
 /**
  * @async
  * @function login
- * @description Executa autenticação via endpoint de login.
+ * @description - Authentication is performed via the backend login endpoint.
  *
- * Endpoint esperado:
- * - POST /login
+ * Endpoint:
+ * - POST /api/auth/login
  *
- * Comportamento:
- * - Envia as credenciais para o backend/mock.
- * - Retorna apenas o payload (`data`) da resposta.
+ * Behavior :
+ * - Sends the credentials to the backend.
+ * - Returns the payload containing the JWT token and analyst profile.
  *
- * Tratamento de erros:
- * - Erros de rede, timeout ou HTTP (4xx/5xx) **não são tratados aqui**.
- * @param {LoginRequest} request - DTO contendo credenciais de login.
- * @returns {Promise<LoginResponse>} DTO de resposta do login.
+ * Errors handling:
+ * - Network, timeout, or HTTP (4xx/5xx) errors are propagated to the caller.
+ * @param {LoginRequest} request 
+ * @returns {Promise<LoginResponse>} 
  */
 export async function login(request: LoginRequest): Promise<LoginResponse> {
-  const { data } = await api.post<LoginResponse>("/login", request);
+  const { data } = await api.post<LoginResponse>("/api/auth/login", request);
   return data;
 }

@@ -1,7 +1,7 @@
-// Imports Padrões do React
+// React standard imports
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// Imagens da UBS
+// UBS images
 import UbsLogo from "@/assets/svg/ubs_logo.svg";
 import loginBg from "@/assets/png/ubs.jpg";
 
@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-// Icones
+// Icons
 import {
   Eye,
   EyeOff,
@@ -33,32 +33,33 @@ import {
 
 /**
  * @typedef {Object} FieldErrors
- * @description Estrutura de erros do formulário. Cada propriedade, quando presente,
- * contém a mensagem pronta para exibição na UI.
+ * @description Form error structure. Each property, when present,
+ * contains the message ready for UI display.
  *
- * @property {string} [username] - Mensagem de erro do campo usuário (quando inválido).
- * @property {string} [password] - Mensagem de erro do campo senha (quando inválido).
+ * @property {string} [email] - Error message for email field (when invalid).
+ * @property {string} [password] - Error message for password field (when invalid).
  */
 type FieldErrors = {
-  username?: string;
+  email?: string;
   password?: string;
 };
 
 /**
  * @function validate
- * @description Valida os campos do formulário de login.
- * Regras:
- * - `username`: obrigatório (após trim).
- * - `password`: obrigatório e com mínimo de 4 caracteres.
- * @param {string} username - Valor do campo de usuário (possivelmente com espaços).
- * @param {string} password - Valor do campo de senha.
- * @returns {FieldErrors} Mapa de erros por campo; vazio quando válido.
+ * @description Validates the login form fields.
+ * Rules:
+ * - `email`: required (after trim) and must be a valid email.
+ * - `password`: required with a minimum of 4 characters.
+ * @param {string} email - Email field value (possibly with spaces).
+ * @param {string} password - Password field value.
+ * @returns {FieldErrors} Error map by field; empty when valid.
  */
-function validate(username: string, password: string): FieldErrors {
+function validate(email: string, password: string): FieldErrors {
   const errors: FieldErrors = {};
-  const u = username.trim();
+  const e = email.trim();
   const p = password;
-  if (!u) errors.username = "Usuário é obrigatório.";
+  if (!e) errors.email = "Email é obrigatório.";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) errors.email = "Email inválido.";
   if (!p) errors.password = "Senha é obrigatória.";
   else if (p.length < 4) errors.password = "Senha deve ter pelo menos 4 caracteres.";
   return errors;
@@ -67,12 +68,12 @@ function validate(username: string, password: string): FieldErrors {
 
 /**
  * @function FeatureCard
- * @description  Cartão informativo reutilizável para listar funcionalidades no painel institucional.
+ * @description Reusable informational card to list features in the institutional panel.
  * @param {{ title: string; description: string; icon: React.ReactNode }} props
- * @param {string} props.title - Título curto da funcionalidade.
- * @param {string} props.description - Descrição breve.
- * @param {React.ReactNode} props.icon - Ícone da funcionalidade.
- * @returns {JSX.Element} Card de feature.
+ * @param {string} props.title - Short feature title.
+ * @param {string} props.description - Brief description.
+ * @param {React.ReactNode} props.icon - Feature icon.
+ * @returns {JSX.Element} Feature card.
  */
 function FeatureCard(props: {
   title: string;
@@ -101,63 +102,63 @@ function FeatureCard(props: {
 
 /**
  * @function LoginPage
- * @description Página de login do sistema.
- * @returns {JSX.Element} Layout completo da página de login.
+ * @description System login page.
+ * @returns {JSX.Element} Complete login page layout.
  */
 export function LoginPage() {
   const navigate = useNavigate();
 
   const { login, status, errorMessage, clearError } = useAuthStore();
 
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const [touched, setTouched] = useState<{ username: boolean; password: boolean }>({
-    username: false,
+  const [touched, setTouched] = useState<{ email: boolean; password: boolean }>({
+    email: false,
     password: false,
   });
 
-  const usernameRef = useRef<HTMLInputElement | null>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
 
-  const errors = useMemo(() => validate(username, password), [username, password]);
+  const errors = useMemo(() => validate(email, password), [email, password]);
 
   const isSubmitting = status === "loading";
-  const canSubmit = !isSubmitting && !errors.username && !errors.password;
+  const canSubmit = !isSubmitting && !errors.email && !errors.password;
 
   /**
    * @function handleSubmit
-   * @description Handler de submit do formulário de login.
+   * @description Login form submit handler.
    *
-   * Fluxo:
-   * 1) Impede submit padrão do browser.
-   * 2) Limpa erro anterior no store.
-   * 3) Revalida campos no momento do submit.
-   * 4) Se houver erros: marca campos como touched e foca o primeiro inválido.
-   * 5) Se válido: dispara `login` e navega para a rota de clientes ao sucesso.
+   * Flow:
+   * 1) Prevents default browser submit.
+   * 2) Clears previous error in store.
+   * 3) Revalidates fields at submit time.
+   * 4) If there are errors: marks fields as touched and focuses the first invalid one.
+   * 5) If valid: triggers `login` and navigates to dashboard on success.
    *
-   * @param {React.FormEvent} e - Evento de submit do formulário.
-   * @returns {Promise<void>} Promise resolvida ao final do fluxo.
+   * @param {React.FormEvent} e - Form submit event.
+   * @returns {Promise<void>} Promise resolved at the end of the flow.
    */
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     clearError();
 
-    const currentErrors = validate(username, password);
-    const hasErrors = Boolean(currentErrors.username || currentErrors.password);
+    const currentErrors = validate(email, password);
+    const hasErrors = Boolean(currentErrors.email || currentErrors.password);
 
     if (hasErrors) {
-      setTouched({ username: true, password: true });
+      setTouched({ email: true, password: true });
 
-      if (currentErrors.username) usernameRef.current?.focus();
+      if (currentErrors.email) emailRef.current?.focus();
       else if (currentErrors.password) passwordRef.current?.focus();
 
       return;
     }
 
     const ok = await login({
-      username: username.trim(),
+      email: email.trim(),
       password,
     });
 
@@ -173,10 +174,10 @@ export function LoginPage() {
     >
       <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center p-4">
         <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Painel esquerda (branding / contexto) */}
+          {/* Left panel (branding / context) */}
           <div className="hidden lg:flex">
             <div className="flex w-full flex-col justify-center rounded-2xl border bg-white/70 p-10 shadow-sm backdrop-blur">
-              {/* Topo */}
+              {/* Top */}
               <div className="flex items-center gap-3">
                 <div className="flex h-15 w-15 items-center justify-center">
                   <img
@@ -196,7 +197,7 @@ export function LoginPage() {
                 </div>
               </div>
 
-              {/* Texto institucional */}
+              {/* Institutional text */}
               <div className="mt-8 space-y-2">
                 <div className="text-sm leading-relaxed text-neutral-600">
                   Sistema que centraliza a gestão de clientes, o registro de transações e a geração de alertas
@@ -204,7 +205,7 @@ export function LoginPage() {
                 </div>
               </div>
 
-              {/* Funcionalidades */}
+              {/* Features */}
               <div className="mt-8">
                 <div className="text-sm font-semibold text-neutral-900">
                   Funcionalidades
@@ -247,11 +248,11 @@ export function LoginPage() {
               </CardHeader>
 
               <CardContent>
-                {/* Banner de erro de autenticação (exibido apenas quando o store reporta erro). */}
+                {/* Authentication error banner (displayed only when store reports error). */}
                 {errorMessage && (
                   <div className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-100/60 p-4 shadow-sm backdrop-blur-sm">
                     <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20 text-red-700">
-                      {/* Ícone do alerta para reforçar visualmente a falha. */}
+                      {/* Alert icon to visually reinforce the failure. */}
                       <ShieldAlert className="h- w-6" />
                     </div>
                     <div className="text-sm">
@@ -264,35 +265,35 @@ export function LoginPage() {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Usuário */}
+                  {/* Email */}
                   <div className="space-y-2">
-                    <Label htmlFor="username">Usuário</Label>
+                    <Label htmlFor="email">Usuário</Label>
                     <Input
-                      id="username"
-                      ref={usernameRef}
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      onBlur={() => setTouched((t) => ({ ...t, username: true }))}
-                      placeholder="ex: analyst"
-                      autoComplete="username"
-                      inputMode="text"
-                      aria-invalid={Boolean(touched.username && errors.username)}
+                      id="email"
+                      ref={emailRef}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+                      placeholder="ex: analyst1"
+                      autoComplete="email"
+                      inputMode="email"
+                      aria-invalid={Boolean(touched.email && errors.email)}
                       className={[
                         "rounded-xl",
-                        // Ajusta classes para destacar o campo quando inválido e já "tocado".
-                        touched.username && errors.username
+                        // Adjust classes to highlight the field when invalid and already "touched".
+                        touched.email && errors.email
                           ? "border-red-400 focus-visible:ring-red-400"
                           : "",
                       ].join(" ")}
                       disabled={isSubmitting}
                     />
-                    {/* Exibe mensagem de erro apenas após interação com o campo (touched). */}
-                    {touched.username && errors.username && (
-                      <p className="text-sm text-red-600">{errors.username}</p>
+                    {/* Display error message only after field interaction (touched). */}
+                    {touched.email && errors.email && (
+                      <p className="text-sm text-red-600">{errors.email}</p>
                     )}
                   </div>
 
-                  {/* Senha + toggle */}
+                  {/* Password + toggle */}
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha</Label>
                     <div className="relative">
@@ -308,7 +309,7 @@ export function LoginPage() {
                         aria-invalid={Boolean(touched.password && errors.password)}
                         className={[
                           "rounded-xl pr-11",
-                          // Ajusta classes para destacar o campo quando inválido e já "tocado".
+                          // Adjust classes to highlight the field when invalid and already "touched".
                           touched.password && errors.password
                             ? "border-red-400 focus-visible:ring-red-400"
                             : "",
@@ -316,7 +317,7 @@ export function LoginPage() {
                         disabled={isSubmitting}
                       />
 
-                      {/* Botão de alternância de visibilidade da senha. */}
+                      {/* Password visibility toggle button. */}
                       <button
                         type="button"
                         onClick={() => setShowPassword((v) => !v)}
@@ -332,13 +333,13 @@ export function LoginPage() {
                       </button>
                     </div>
 
-                    {/* Exibe mensagem de erro apenas após interação com o campo (touched). */}
+                    {/* Display error message only after field interaction (touched). */}
                     {touched.password && errors.password && (
                       <p className="text-sm text-red-600">{errors.password}</p>
                     )}
                   </div>
 
-                  {/* Botão */}
+                  {/* Button */}
                   <Button
                     type="submit"
                     className="w-full rounded-xl bg-red-600 hover:bg-red-700"
@@ -346,7 +347,7 @@ export function LoginPage() {
                   >
                     {isSubmitting ? (
                       <>
-                        {/* Indicador visual de carregamento. */}
+                        {/* Loading visual indicator. */}
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Entrando...
                       </>
