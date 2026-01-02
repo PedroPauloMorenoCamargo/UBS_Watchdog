@@ -1,100 +1,43 @@
 using Serilog;
+using Ubs.Monitoring.Api.Extensions;
+using Ubs.Monitoring.Api.Startup;
 using Ubs.Monitoring.Infrastructure;
-using Ubs.Monitoring.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog
-builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
+// Logging
+builder.Host.AddSerilogLogging(builder.Configuration);
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// RFC7807 / problem+json
-builder.Services.AddProblemDetails();
-
+// Application + Infrastructure registrations
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// CORS (dev)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("frontend", policy =>
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod());
-});
+// API cross-cutting concerns
+builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddAuthorization();
+
+builder.Services.AddApiServices();
+builder.Services.AddSwaggerServices();
+builder.Services.AddFrontendCors(builder.Configuration);
 
 var app = builder.Build();
 
+
+app.UseRouting();
+
+// Request logging and error handling
 app.UseSerilogRequestLogging();
-
-app.UseExceptionHandler();   
-app.UseStatusCodePages();   
-
+app.UseApiErrorHandling();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    await ApplyMigrationsWithRetryAsync(app);
-    await SeedDatabaseAsync(app);
+    app.UseSwaggerPipeline();
 }
 
-static async Task ApplyMigrationsWithRetryAsync(WebApplication app)
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+await app.InitializeDatabaseAsync();
 
-    const int maxRetries = 10;
-    const int delayMs = 1500;
-
-    for (var attempt = 1; attempt <= maxRetries; attempt++)
-    {
-        try
-        {
-            db.Database.Migrate();
-            return;
-        }
-        catch when (attempt < maxRetries)
-        {
-            await Task.Delay(delayMs);
-        }
-    }
-
-    throw new Exception("Database migrations failed after multiple retries.");
-}
-
-static async Task SeedDatabaseAsync(WebApplication app)
-{
-    try
-    {
-        using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var seeder = new DatabaseSeeder(db);
-        await seeder.SeedAsync();
-    }
-    catch (Exception ex)
-    {
-        // Seed failure is non-critical: log and continue
-        // Developers can recover with: docker compose down -v && docker compose up
-        Log.Warning(ex, "Failed to seed database. Application will continue without seed data.");
-    }
-}
-
-
-app.UseCors("frontend");
+app.UseFrontendCors();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
-app.MapGet("/health/db", async (AppDbContext db) =>
-{
-    var canConnect = await db.Database.CanConnectAsync();
-    return canConnect
-        ? Results.Ok(new { db = "up" })
-        : Results.Problem("Cannot connect to database");
-});
-
-
 app.Run();

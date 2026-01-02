@@ -2,7 +2,7 @@ namespace Ubs.Monitoring.Domain.Entities;
 
 public class Analyst
 {
-    private Analyst() { }
+    protected Analyst() { }
 
     public Analyst(
         string corporateEmail,
@@ -18,10 +18,10 @@ public class Analyst
             throw new ArgumentException("Full name is required", nameof(fullName));
 
         Id = Guid.NewGuid();
-        CorporateEmail = corporateEmail.ToLowerInvariant();
+        CorporateEmail = corporateEmail.Trim().ToLowerInvariant();
         PasswordHash = passwordHash;
-        FullName = fullName;
-        PhoneNumber = phoneNumber;
+        FullName = fullName.Trim();
+        PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim();
         ProfilePictureBase64 = null;
         CreatedAtUtc = DateTimeOffset.UtcNow;
     }
@@ -34,11 +34,25 @@ public class Analyst
     public string? ProfilePictureBase64 { get; private set; }
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
-    public ICollection<Case> Cases { get; set; } = new List<Case>();
-    public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+    public ICollection<Case> Cases { get; private set; } = new List<Case>();
+    public ICollection<AuditLog> AuditLogs { get; private set; } = new List<AuditLog>();
 
-    public void UpdateProfilePicture(string? profilePictureBase64)
+    public void UpdateProfilePicture(string? profilePictureBase64) => ProfilePictureBase64 = profilePictureBase64;
+
+    public void UpdateContact(string fullName, string? phoneNumber)
     {
-        ProfilePictureBase64 = profilePictureBase64;
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new ArgumentException("Full name is required", nameof(fullName));
+
+        FullName = fullName.Trim();
+        PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim();
+    }
+
+    public void SetPasswordHash(string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash))
+            throw new ArgumentException("Password hash is required", nameof(passwordHash));
+
+        PasswordHash = passwordHash;
     }
 }

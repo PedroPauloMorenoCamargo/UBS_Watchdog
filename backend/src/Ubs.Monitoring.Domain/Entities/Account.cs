@@ -33,12 +33,12 @@ public class Account
         UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 
-    public Guid Id { get; private set; }
+    public Guid Id { get;  set; }
 
     public Guid ClientId { get; private set; }
     public Client Client { get; set; } = null!;
 
-    public string AccountIdentifier { get; private set; } = null!;
+    public string AccountIdentifier { get; set; } = null!;
     public string CountryCode { get; private set; } = null!;
     public AccountType AccountType { get; private set; }
     public string CurrencyCode { get; private set; } = null!;
