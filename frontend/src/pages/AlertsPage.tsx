@@ -33,9 +33,7 @@ import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AlertsTable } from "@/components/ui/tables/alertstable";
 import { StatCard    } from "@/components/ui/statcard";
 import { alertsMock } from "@/mocks/mocks";
-
-
-type SeverityFilter = "all" | "high" | "medium" | "low";
+import type { SeverityFilter } from "@/types/alert";
 
 export function AlertsPage() {
 
@@ -65,7 +63,7 @@ export function AlertsPage() {
       className="relative bg-cover bg-center"
     >
       {/* Conteúdo */}
-     <div className="relative z-10 p-6">
+     <div className="relative z-10 p-3">
 
         {/* Grid */}
         <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
@@ -88,50 +86,48 @@ export function AlertsPage() {
                 value={55}
                 variant="low"
             />
-</div>
-
+          </div>
         </div>
-
         {/* Filtro por Severidade */}
         <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl bg-white p-4 shadow">
-            <span className="mr-2 text-sm font-semibold text-slate-600">
-                Filter by severity:
-            </span>
+          <span className="mr-2 text-sm font-semibold text-slate-600">
+              Filter by severity:
+          </span>
 
-            <Button
-                variant={severity === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSeverity("all")}
-            >
-                All ({severityCounts.all})
-            </Button>
+          <Button
+              variant={severity === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSeverity("all")}
+          >
+              All ({severityCounts.all})
+          </Button>
 
-            <Button
-                variant={severity === "high" ? "destructive" : "outline"}
-                size="sm"
-                onClick={() => setSeverity("high")}
-            >
-                High ({severityCounts.high})
-            </Button>
+          <Button
+              variant={severity === "high" ? "destructive" : "outline"}
+              size="sm"
+              onClick={() => setSeverity("high")}
+          >
+              High ({severityCounts.high})
+          </Button>
 
-            <Button
-                variant={severity === "medium" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSeverity("medium")}
-            >
-                Medium ({severityCounts.medium})
-            </Button>
+          <Button
+              variant={severity === "medium" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSeverity("medium")}
+          >
+              Medium ({severityCounts.medium})
+          </Button>
 
-            <Button
-                variant={severity === "low" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSeverity("low")}
-            >
-                Low ({severityCounts.low})
-            </Button>
+          <Button
+              variant={severity === "low" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSeverity("low")}
+          >
+              Low ({severityCounts.low})
+          </Button>
         </div>
 
-        <div className="mt-5 rounded-xl bg-white p-6 shadow">
+        <div className="mt-5">
           <ChartCard title="Recent High-Priority Alerts">
             <AlertsTable severityFilter={severity}/>
           </ChartCard>

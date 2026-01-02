@@ -5,6 +5,7 @@ import { AppLayout } from "@/layout/AppLayout";
 import { requireAuth } from "@/middlewares/authMiddleware";
 import { requireRole } from "@/middlewares/roleMiddleware";
 import { AlertsPage } from "@/pages/AlertsPage";
+import { TransactionsPage } from "@/pages/TransactionsPage";
 
 export const router = createBrowserRouter([
   { 
@@ -18,31 +19,52 @@ export const router = createBrowserRouter([
       {
         path: "/dashboard",
         element: <Dashboard />,
-      },
-      {
-        path: "/clients",
-        element: <div>Clients Page</div>,
-      },
-      {
-        path: "/transactions",
-        element: <div>Transactions Page</div>,
-      },
-      {
-        path: "/reports",
-        element: <div>Reports Page</div>,
+        handle: {
+          title: "Dashboard",
+        },
       },
       {
         path: "/alerts",
         element: <AlertsPage />,
+        handle: {
+          title: "Alerts",
+        },
+      },
+      {
+        path: "/transactions",
+        element: <TransactionsPage />,
+        handle: {
+          title: "Transactions",
+        },
+      },
+      {
+        path: "/clients",
+        element: <div>Clients Page</div>,
+        handle: {
+          title: "Clients",
+        },
+      },
+      {
+        path: "/reports",
+        element: <div>Reports Page</div>,
+        handle: {
+          title: "Reports",
+        },
       },
       {
         path: "/admin",
         loader: requireRole(["admin"]),
         element: <div>Admin Page</div>,
+        handle: {
+          title: "Admin",
+        },
       },
       {
         path: "/configurations",
         element: <div>Configurations Page</div>,
+        handle: {
+          title: "Configurations",
+        },
       },
     ],
   },

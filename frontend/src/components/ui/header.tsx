@@ -27,7 +27,7 @@ export function Header() {
   const user = useAuthStore((s) => s.user);
   const adminName = user?.displayName ?? user?.username ?? "Usuário";
 
-  // 🔥 Fecha dropdown ao clicar fora
+  
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
