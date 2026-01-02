@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ubs.Monitoring.Application.Analysts;
 using Ubs.Monitoring.Application.Auth;
+using Ubs.Monitoring.Application.Clients;
 using Ubs.Monitoring.Infrastructure.Auth;
 using Ubs.Monitoring.Infrastructure.Persistence;
 using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
-using Microsoft.Extensions.Options; 
 using Ubs.Monitoring.Infrastructure.Persistence.Seeding;
-using Ubs.Monitoring.Application.Analysts;
 
 
 namespace Ubs.Monitoring.Infrastructure;
@@ -55,8 +55,8 @@ public static class DependencyInjection
         // Analysts Profile
         services.AddScoped<IAnalystProfileRepository, AnalystProfileRepository>();
         services.AddScoped<IAnalystProfileService, AnalystProfileService>();
-
-
+        // Clients
+        services.AddScoped<IClientRepository, ClientRepository>();
 
         return services;
     }
