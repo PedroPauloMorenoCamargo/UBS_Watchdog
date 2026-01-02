@@ -82,3 +82,22 @@ public sealed record PagedClientsResponseDto(
     int PageSize,
     int TotalPages
 );
+
+/// <summary>
+/// Response DTO for client import operations.
+/// </summary>
+public sealed record ImportResultDto(
+    int TotalProcessed,
+    int SuccessCount,
+    int ErrorCount,
+    IReadOnlyList<ImportErrorDto> Errors
+);
+
+/// <summary>
+/// Details of an import error.
+/// </summary>
+public sealed record ImportErrorDto(
+    int LineNumber,
+    string ClientName,
+    string ErrorMessage
+);

@@ -57,6 +57,8 @@ public static class DependencyInjection
         services.AddScoped<IAnalystProfileService, AnalystProfileService>();
         // Clients
         services.AddScoped<IClientRepository, ClientRepository>();
+        services.AddScoped<IClientFileImportService, ClientFileImportService>();
+        services.AddScoped<IClientService, ClientService>();
 
         return services;
     }
