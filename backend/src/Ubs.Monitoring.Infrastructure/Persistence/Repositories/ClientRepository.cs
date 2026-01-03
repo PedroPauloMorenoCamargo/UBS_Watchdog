@@ -116,8 +116,12 @@ public sealed class ClientRepository : IClientRepository
     /// <param name="ct">
     /// Cancellation token used to cancel the operation.
     /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="client"/> is null.
+    /// </exception>
     public async Task AddAsync(Client client, CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(client);
         await _db.Clients.AddAsync(client, ct);
     }
 
