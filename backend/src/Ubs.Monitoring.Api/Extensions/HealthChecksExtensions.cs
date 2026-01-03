@@ -19,44 +19,56 @@ public static class HealthChecksExtensions
         return services;
     }
 
-    public static WebApplication MapApiHealthChecks(this WebApplication app)
+   public static WebApplication MapApiHealthChecks(this WebApplication app)
     {
-        app.MapHealthChecks("/api/health", new HealthCheckOptions
+        app.MapGet("/api/health", async (HealthCheckService hc, CancellationToken ct) =>
         {
-            Predicate = r => r.Tags.Contains("live"),
-            ResponseWriter = WriteJson
-        }).AllowAnonymous();
+            var report = await hc.CheckHealthAsync(r => r.Tags.Contains("live"), ct);
 
-        app.MapHealthChecks("/api/health/db", new HealthCheckOptions
-        {
-            Predicate = r => r.Tags.Contains("ready"),
-            ResultStatusCodes =
+            var payload = new
             {
-                [HealthStatus.Healthy] = StatusCodes.Status200OK,
-                [HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable,
-                [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
-            },
-            ResponseWriter = WriteJson
-        }).AllowAnonymous();
+                status = report.Status.ToString(),
+                checks = report.Entries.Select(e => new
+                {
+                    name = e.Key,
+                    status = e.Value.Status.ToString(),
+                    description = e.Value.Description
+                })
+            };
+
+            // Liveness: usually always 200
+            return Results.Json(payload, statusCode: StatusCodes.Status200OK);
+        })
+        .WithTags("Health")
+        .AllowAnonymous()
+        .WithOpenApi();
+
+        app.MapGet("/api/health/db", async (HealthCheckService hc, CancellationToken ct) =>
+        {
+            var report = await hc.CheckHealthAsync(r => r.Tags.Contains("ready"), ct);
+
+            var payload = new
+            {
+                status = report.Status.ToString(),
+                checks = report.Entries.Select(e => new
+                {
+                    name = e.Key,
+                    status = e.Value.Status.ToString(),
+                    description = e.Value.Description
+                })
+            };
+
+            // Readiness: 200 if healthy, 503 otherwise
+            var code = report.Status == HealthStatus.Healthy
+                ? StatusCodes.Status200OK
+                : StatusCodes.Status503ServiceUnavailable;
+
+            return Results.Json(payload, statusCode: code);
+        })
+        .WithTags("Health")
+        .AllowAnonymous()
+        .WithOpenApi();
 
         return app;
-    }
-
-    private static Task WriteJson(HttpContext context, HealthReport report)
-    {
-        context.Response.ContentType = "application/json; charset=utf-8";
-
-        var payload = new
-        {
-            status = report.Status.ToString(),
-            checks = report.Entries.Select(e => new
-            {
-                name = e.Key,
-                status = e.Value.Status.ToString(),
-                description = e.Value.Description
-            })
-        };
-
-        return context.Response.WriteAsync(JsonSerializer.Serialize(payload));
     }
 }
