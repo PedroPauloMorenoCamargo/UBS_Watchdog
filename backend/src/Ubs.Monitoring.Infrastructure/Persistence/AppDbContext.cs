@@ -202,15 +202,22 @@ public class AppDbContext : DbContext
             b.ToTable("compliance_rules");
             b.HasKey(x => x.Id);
             b.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
+
+            b.Property(x => x.Code).HasMaxLength(100).IsRequired();
+            b.HasIndex(x => x.Code).IsUnique();
+
             b.Property(x => x.Name).HasMaxLength(150).IsRequired();
             b.Property(x => x.Scope).HasMaxLength(20);
+
             b.Property(x => x.ParametersJson).HasColumnType("jsonb").IsRequired();
+
             b.Property(x => x.CreatedAtUtc).HasDefaultValueSql("now()").IsRequired();
             b.Property(x => x.UpdatedAtUtc).HasDefaultValueSql("now()").IsRequired();
 
-            
-            b.HasIndex(x => x.IsActive).HasDatabaseName("ix_compliance_rules_active");
+            b.HasIndex(x => new { x.RuleType, x.IsActive }).HasDatabaseName("ix_rules_type_active");
+            b.HasIndex(x => x.UpdatedAtUtc).HasDatabaseName("ix_rules_updated");
         });
+
 
         // cases (1:1 with transactions)
         modelBuilder.Entity<Case>(b =>

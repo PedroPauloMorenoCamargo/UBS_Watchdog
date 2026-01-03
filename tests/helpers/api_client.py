@@ -78,7 +78,7 @@ class ApiClient:
         Execute a HTTP POST request.
 
         Args:
-            path: API path relative to the base URL. (e.g. "/api/health").
+            path: API path relative to the base URL. (e.g. "/api/auth/login").
             **kwargs: Additional arguments forwarded to requests.Session.post() (e.g. json, data).
 
         Returns:
@@ -96,7 +96,7 @@ class ApiClient:
         Execute an HTTP PUT request.
 
         Args:
-            path: API path relative to the base URL (e.g. "/api/health")..
+            path: API path relative to the base URL (e.g. "/api/analysts/me/profile-picture").
             **kwargs: Additional arguments forwarded to requests.Session.put() (e.g. json, data).
 
         Returns:
@@ -109,15 +109,34 @@ class ApiClient:
             **kwargs,
         )
 
+    def patch(self, path: str, **kwargs):
+        """
+        Execute an HTTP PATCH request.
+
+        Args:
+            path: API path relative to the base URL (e.g. "/api/rules/{id}").
+            **kwargs: Additional arguments forwarded to requests.Session.patch() (e.g. json, data).
+
+        Returns:
+            requests.Response object.
+        """
+        return self.session.patch(
+            f"{self.base_url}{path}",
+            headers=self._headers(kwargs.pop("headers", None)),
+            timeout=kwargs.pop("timeout", self.timeout),
+            **kwargs,
+        )
+
+    # -----------------------------
+    # Convenience API calls
+    # -----------------------------
+
     def health(self):
         """
         Call the health endpoint to verify that API is not down.
 
         Endpoint:
             GET /api/health
-
-        Returns:
-            requests.Response object.
         """
         return self.get("/api/health")
 
@@ -127,18 +146,8 @@ class ApiClient:
 
         Endpoint:
             POST /api/auth/login
-
-        Args:
-            email: Analyst corporate email.
-            password: Analyst plaintext password.
-
-        Returns:
-            requests.Response object containing token and analyst profile.
         """
-        return self.post(
-            "/api/auth/login",
-            json={"email": email, "password": password},
-        )
+        return self.post("/api/auth/login", json={"email": email, "password": password})
 
     def auth_me(self):
         """
@@ -146,9 +155,6 @@ class ApiClient:
 
         Endpoint:
             GET /api/auth/me
-
-        Returns:
-            requests.Response object containing analyst profile data.
         """
         return self.get("/api/auth/me")
 
@@ -158,12 +164,6 @@ class ApiClient:
 
         Endpoint:
             GET /api/analysts/{id}
-
-        Args:
-            analyst_id: UUID of the analyst.
-
-        Returns:
-            requests.Response object.
         """
         return self.get(f"/api/analysts/{analyst_id}")
 
@@ -172,15 +172,52 @@ class ApiClient:
         Update or clear the authenticated analyst's profile picture.
 
         Endpoint:
-            PUT /api/analysts/me/profile-picture
+            PATCH /api/analysts/me/profile-picture
+        """
+        return self.patch("/api/analysts/me/profile-picture", json={"profilePictureBase64": base64_payload})
+
+    # -----------------------------
+    # Rules endpoints
+    # -----------------------------
+
+    def rules_search(self, params: dict | None = None):
+        """
+        Search/list compliance rules.
+
+        Endpoint:
+            GET /api/rules
 
         Args:
-            base64_payload: Base64-encoded image string. If None or empty, the profile picture is cleared.
+            params: Optional query-string parameters (page, pageSize, ruleType, isActive, severity, scope, sortBy, sortDir).
 
         Returns:
             requests.Response object.
         """
-        return self.put(
-            "/api/analysts/me/profile-picture",
-            json={"profilePictureBase64": base64_payload},
-        )
+        return self.get("/api/rules", params=params or {})
+
+    def rules_get(self, rule_id: str):
+        """
+        Retrieve a compliance rule by ID.
+
+        Endpoint:
+            GET /api/rules/{id}
+        """
+        return self.get(f"/api/rules/{rule_id}")
+
+    def rules_patch(self, rule_id: str, payload: dict | None = None):
+        """
+        Patch/update a compliance rule.
+
+        Endpoint:
+            PATCH /api/rules/{id}
+
+        Args:
+            payload: Patch payload (camelCase keys): name, isActive, severity, scope, parameters
+
+        Returns:
+            requests.Response object.
+        """
+        if payload is None:
+            # Send no JSON body at all (useful to test invalid payload behavior)
+            return self.patch(f"/api/rules/{rule_id}")
+        return self.patch(f"/api/rules/{rule_id}", json=payload)

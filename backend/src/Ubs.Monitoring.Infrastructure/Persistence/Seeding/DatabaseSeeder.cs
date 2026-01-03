@@ -53,6 +53,8 @@ public sealed class DatabaseSeeder
 
         // Ensure default analyst account exists
         var analyst = await EnsureDefaultAnalystAsync(ct);
+        await EnsureBaselineComplianceRulesAsync(ct);
+
 
         // Optionally seed demo data
         if (_options.SeedDemoData)
@@ -126,6 +128,93 @@ public sealed class DatabaseSeeder
         _logger.LogInformation("Created default analyst: {Email}", email);
         return created;
     }
+
+    private async Task EnsureBaselineComplianceRulesAsync(CancellationToken ct)
+    {
+        // Create-if-missing by stable Code (never overwrite user-changed config).
+        await EnsureRuleByCodeAsync(
+            code: "daily_limit_default",
+            create: () => new ComplianceRule(
+                code: "daily_limit_default",
+                ruleType: RuleType.DailyLimit,
+                name: "Daily Limit (Default) - 10,000 USD",
+                severity: Severity.Medium,
+                parametersJson: JsonSerializer.Serialize(new
+                {
+                    limitBaseAmount = 10000.00m
+                }),
+                scope: "PerClient",
+                isActive: true
+            ),
+            ct
+        );
+
+        await EnsureRuleByCodeAsync(
+            code: "banned_countries_default",
+            create: () => new ComplianceRule(
+                code: "banned_countries_default",
+                ruleType: RuleType.BannedCountries,
+                name: "Banned Countries (Default)",
+                severity: Severity.High,
+                parametersJson: JsonSerializer.Serialize(new
+                {
+                    countries = new[] { "IR", "KP", "SY" }
+                }),
+                scope: null,
+                isActive: true
+            ),
+            ct
+        );
+
+        await EnsureRuleByCodeAsync(
+            code: "structuring_default",
+            create: () => new ComplianceRule(
+                code: "structuring_default",
+                ruleType: RuleType.Structuring,
+                name: "Structuring (Default) - 5 tx under 2,000 USD/day",
+                severity: Severity.High,
+                parametersJson: JsonSerializer.Serialize(new
+                {
+                    n = 5,
+                    xBaseAmount = 2000.00m
+                }),
+                scope: "PerClient",
+                isActive: true
+            ),
+            ct
+        );
+
+        await EnsureRuleByCodeAsync(
+            code: "banned_accounts_default",
+            create: () => new ComplianceRule(
+                code: "banned_accounts_default",
+                ruleType: RuleType.BannedAccounts,
+                name: "Banned Accounts/Identifiers (Default)",
+                severity: Severity.Critical,
+                parametersJson: JsonSerializer.Serialize(new
+                {
+                    entries = Array.Empty<object>()
+                }),
+                scope: null,
+                isActive: false
+            ),
+            ct
+        );
+
+        _logger.LogInformation("Baseline compliance rules ensured.");
+    }
+
+    private async Task EnsureRuleByCodeAsync(string code, Func<ComplianceRule> create, CancellationToken ct)
+    {
+        var exists = await _db.ComplianceRules.AsNoTracking()
+            .AnyAsync(r => r.Code == code, ct);
+
+        if (exists) return;
+
+        _db.ComplianceRules.Add(create());
+        _logger.LogInformation("Seeded compliance rule: {Code}", code);
+    }
+
 
     /// <summary>
     /// Seeds optional demo data for development and testing environments.
@@ -237,38 +326,6 @@ public sealed class DatabaseSeeder
         // ---- FX RATES ----
         await EnsureFxRateAsync("USD", "BRL", 5.25m, ct);
         await EnsureFxRateAsync("EUR", "BRL", 5.65m, ct);
-
-        // ---- COMPLIANCE RULES ----
-        await EnsureComplianceRuleAsync(
-            "Limite Diário - R$ 10.000",
-            () => new ComplianceRule(
-                RuleType.DailyLimit,
-                "Limite Diário - R$ 10.000",
-                Severity.Medium,
-                JsonDocument.Parse(@"{
-                    ""limitBaseAmount"": 10000,
-                    ""currencyCode"": ""BRL""
-                }"),
-                "BR",
-                true
-            ),
-            ct
-        );
-
-        await EnsureComplianceRuleAsync(
-            "Países de Alto Risco",
-            () => new ComplianceRule(
-                RuleType.BannedCountries,
-                "Países de Alto Risco",
-                Severity.High,
-                JsonDocument.Parse(@"{
-                    ""bannedCountryCodes"": [""IR"", ""KP"", ""SY""]
-                }"),
-                null,
-                true
-            ),
-            ct
-        );
     }
 
     /// <summary>

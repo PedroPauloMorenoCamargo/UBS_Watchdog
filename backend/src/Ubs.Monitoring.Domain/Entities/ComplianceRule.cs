@@ -3,82 +3,118 @@ using Ubs.Monitoring.Domain.Enums;
 
 namespace Ubs.Monitoring.Domain.Entities;
 
-public class ComplianceRule
+public sealed class ComplianceRule
 {
-    private ComplianceRule() { }
+    private ComplianceRule() { } // EF Core
 
     public ComplianceRule(
+        string code,
         RuleType ruleType,
         string name,
         Severity severity,
-        JsonDocument parametersJson,
+        string parametersJson,
         string? scope = null,
         bool isActive = true)
     {
+        if (string.IsNullOrWhiteSpace(code))
+            throw new ArgumentException("Rule code is required.", nameof(code));
+
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Rule name is required", nameof(name));
-        if (parametersJson == null)
-            throw new ArgumentNullException(nameof(parametersJson));
+            throw new ArgumentException("Rule name is required.", nameof(name));
+        if (name.Length > 150)
+            throw new ArgumentException("Rule name max length is 150.", nameof(name));
+
+        if (scope is not null && scope is not ("PerClient" or "PerAccount"))
+            throw new ArgumentException("Scope must be null, 'PerClient' or 'PerAccount'.", nameof(scope));
+
+        EnsureValidJson(parametersJson);
 
         Id = Guid.NewGuid();
+        Code = code.Trim();
         RuleType = ruleType;
-        Name = name;
+        Name = name.Trim();
         Severity = severity;
         ParametersJson = parametersJson;
         Scope = scope;
         IsActive = isActive;
+
         CreatedAtUtc = DateTimeOffset.UtcNow;
         UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 
     public Guid Id { get; private set; }
+
+    public string Code { get; private set; } = null!;
+
     public RuleType RuleType { get; private set; }
     public string Name { get; private set; } = null!;
     public bool IsActive { get; private set; }
     public Severity Severity { get; private set; }
+
     public string? Scope { get; private set; }
-    public JsonDocument ParametersJson { get; private set; } = null!;
+
+    public string ParametersJson { get; private set; } = null!;
+
     public DateTimeOffset CreatedAtUtc { get; private set; }
     public DateTimeOffset UpdatedAtUtc { get; private set; }
 
-    public ICollection<CaseFinding> CaseFindings { get; set; } = new List<CaseFinding>();
+    public ICollection<CaseFinding> CaseFindings { get; private set; } = new List<CaseFinding>();
 
-    public void Activate()
+    public void Rename(string newName)
     {
-        if (IsActive)
-            throw new InvalidOperationException("Rule is already active");
+        if (string.IsNullOrWhiteSpace(newName))
+            throw new ArgumentException("Rule name is required.", nameof(newName));
 
-        IsActive = true;
-        UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Name = newName.Trim();
+        Touch();
     }
 
-    public void Deactivate()
+    public void SetActive(bool active)
     {
-        if (!IsActive)
-            throw new InvalidOperationException("Rule is already inactive");
-
-        IsActive = false;
-        UpdatedAtUtc = DateTimeOffset.UtcNow;
-    }
-
-    public void UpdateParameters(JsonDocument newParameters)
-    {
-        if (newParameters == null)
-            throw new ArgumentNullException(nameof(newParameters));
-
-        ParametersJson = newParameters;
-        UpdatedAtUtc = DateTimeOffset.UtcNow;
+        // Best practice: idempotent
+        if (IsActive == active) return;
+        IsActive = active;
+        Touch();
     }
 
     public void UpdateSeverity(Severity newSeverity)
     {
+        if (Severity == newSeverity) return;
         Severity = newSeverity;
-        UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Touch();
     }
 
     public void UpdateScope(string? newScope)
     {
+        if (newScope is not null && newScope is not ("PerClient" or "PerAccount"))
+            throw new ArgumentException("Scope must be null, 'PerClient' or 'PerAccount'.", nameof(newScope));
+
+        if (Scope == newScope) return;
         Scope = newScope;
-        UpdatedAtUtc = DateTimeOffset.UtcNow;
+        Touch();
+    }
+
+    public void UpdateParametersJson(string newParametersJson)
+    {
+        EnsureValidJson(newParametersJson);
+        ParametersJson = newParametersJson;
+        Touch();
+    }
+
+    private void Touch() => UpdatedAtUtc = DateTimeOffset.UtcNow;
+
+    private static void EnsureValidJson(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            throw new ArgumentException("ParametersJson is required.", nameof(json));
+
+        try
+        {
+            using var _ = JsonDocument.Parse(json);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("ParametersJson must be valid JSON.", nameof(json), ex);
+        }
     }
 }
