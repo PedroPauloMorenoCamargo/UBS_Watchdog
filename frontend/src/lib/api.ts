@@ -1,8 +1,6 @@
 import axios from "axios";
 import { AUTH_STORAGE_KEY } from "@/constants/storage";
 
-const AUTH_STORAGE_KEY = "ubs-monitoring-auth";
-
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
 });
