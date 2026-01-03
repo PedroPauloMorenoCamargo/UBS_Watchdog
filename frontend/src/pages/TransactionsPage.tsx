@@ -21,6 +21,8 @@ export function TransactionsPage() {
   const [severity, setSeverity] = useState<SeverityFilter>("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+
 
   const filteredTransactions = useMemo(() => {
   return transactionsMock.filter((t) => {
@@ -125,11 +127,44 @@ export function TransactionsPage() {
           </div>
         </div>
       </div>
-        <div className="mt-5">
-          <ChartCard title="Recent High-Priority Alerts">
-            <TransactionsTable transactions={filteredTransactions}/>
-          </ChartCard>
-        </div>
+      
+      <div className="mt-4 rounded-xl bg-white p-4 shadow">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button className="cursor-pointer hover:bg-slate-600"
+              onClick={() => console.log("Criar")}>
+              Criar Transação
+            </Button>
+
+            <Button className="cursor-pointer hover:bg-slate-200"
+              variant="outline" 
+              onClick={() => console.log("Importar CSV")}>
+              Importar CSV
+            </Button>
+
+            <Button className="cursor-pointer hover:bg-slate-200"
+              variant="outline"
+              disabled={!selectedTransactionId}
+              onClick={() => console.log("Editar", selectedTransactionId)}>
+              Editar Transação
+            </Button>
+            
+            <Button className="cursor-pointer hover:bg-slate-600"
+              variant="destructive"
+              disabled={!selectedTransactionId}
+              onClick={() => console.log("Excluir", selectedTransactionId)}
+            >
+              Excluir Transação
+            </Button>
+          </div>
+      </div>
+
+      <div className="mt-5">
+        <ChartCard title="Recent High-Priority Alerts">
+          <TransactionsTable transactions={filteredTransactions} 
+            selectedId={selectedTransactionId}
+            onSelect={setSelectedTransactionId}/>
+        </ChartCard>
+      </div>
     </div>
   );
 }

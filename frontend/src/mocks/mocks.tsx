@@ -147,7 +147,7 @@ const transactionsMock: Transaction[] = [
     status: "Approved",
   },
   {
-    id: "TX-2024-002",
+    id: "TX-2024-003",
     date: "2024-09-11",
     amount: "$1,500",
     type: "Cash Deposit",
@@ -160,7 +160,7 @@ const transactionsMock: Transaction[] = [
     status: "Approved",
   },
   {
-    id: "TX-2024-001",
+    id: "TX-2024-004",
     date: "2024-09-10",
     amount: "$125,000",
     type: "Wire Transfer",
@@ -173,7 +173,7 @@ const transactionsMock: Transaction[] = [
     status: "Pending",
   },
   {
-    id: "TX-2024-002",
+    id: "TX-2024-005",
     date: "2024-09-11",
     amount: "$18,500",
     type: "Cash Deposit",
@@ -186,7 +186,7 @@ const transactionsMock: Transaction[] = [
     status: "Approved",
   },
   {
-    id: "TX-2024-002",
+    id: "TX-2024-006",
     date: "2024-09-11",
     amount: "$10,500",
     type: "Cash Deposit",
@@ -199,7 +199,7 @@ const transactionsMock: Transaction[] = [
     status: "Approved",
   },
   {
-    id: "TX-2024-001",
+    id: "TX-2024-007",
     date: "2024-09-10",
     amount: "$125,000",
     type: "Wire Transfer",
@@ -212,7 +212,7 @@ const transactionsMock: Transaction[] = [
     status: "Pending",
   },
   {
-    id: "TX-2024-002",
+    id: "TX-2024-008",
     date: "2024-09-11",
     amount: "$18,500",
     type: "Cash Deposit",
@@ -225,7 +225,7 @@ const transactionsMock: Transaction[] = [
     status: "Approved",
   },
   {
-    id: "TX-2024-002",
+    id: "TX-2024-009",
     date: "2024-09-11",
     amount: "$10,500",
     type: "Cash Deposit",
@@ -240,4 +240,4 @@ const transactionsMock: Transaction[] = [
 ];
 
 
-export { weeklyActivity, transactionsByType, alertsBySeverity, COLORS, alertsMock, transactionsMock} ;
+export { weeklyActivity, transactionsByType, alertsBySeverity, COLORS, alertsMock, transactionsMock};
