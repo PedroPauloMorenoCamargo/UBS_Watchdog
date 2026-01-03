@@ -67,6 +67,9 @@ public sealed class ClientRepository : IClientRepository
     /// <returns>
     /// A tuple containing the paginated list of clients and the total count.
     /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="pageNumber"/> is less than 1 or <paramref name="pageSize"/> is less than 1.
+    /// </exception>
     public async Task<(IReadOnlyList<Client> Items, int TotalCount)> GetPagedAsync(
         int pageNumber,
         int pageSize,
@@ -75,6 +78,9 @@ public sealed class ClientRepository : IClientRepository
         KycStatus? kycStatus = null,
         CancellationToken ct = default)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(pageNumber, 1, nameof(pageNumber));
+        ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1, nameof(pageSize));
+
         var query = _db.Clients.AsNoTracking();
 
         // Apply filters
