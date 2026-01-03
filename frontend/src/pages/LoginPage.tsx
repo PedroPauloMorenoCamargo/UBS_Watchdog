@@ -267,14 +267,14 @@ export function LoginPage() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Email */}
                   <div className="space-y-2">
-                    <Label htmlFor="email">Usuário</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       ref={emailRef}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onBlur={() => setTouched((t) => ({ ...t, email: true }))}
-                      placeholder="ex: analyst1"
+                      placeholder="ex: analyst@ubs.com"
                       autoComplete="email"
                       inputMode="email"
                       aria-invalid={Boolean(touched.email && errors.email)}
