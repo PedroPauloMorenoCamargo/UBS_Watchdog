@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { AxiosError } from "axios";
 import type { LoginRequest } from "@/features/auth/auth.api";
 import { login as loginApi } from "@/features/auth/auth.api";
 import { AUTH_STORAGE_KEY } from "@/constants/storage";
@@ -58,7 +59,7 @@ type AuthState = {
  */
 function toFriendlyAuthError(err: unknown): string {
   if (err && typeof err === 'object' && 'response' in err) {
-    const axiosError = err as any;
+    const axiosError = err as AxiosError;
     if (axiosError.response?.status === 401) {
       return "Email ou senha incorretos.";
     }
