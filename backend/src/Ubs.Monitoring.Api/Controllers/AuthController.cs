@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Ubs.Monitoring.Application.Auth;
 using Ubs.Monitoring.Api.Contracts;
 namespace Ubs.Monitoring.Api.Controllers;
+using Ubs.Monitoring.Application.Analysts;
 
 [ApiController]
 [Route("api/auth")]
+[Produces("application/json")]
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
@@ -32,8 +34,9 @@ public sealed class AuthController : ControllerBase
     /// </returns>
     [AllowAnonymous]
     [HttpPost("login")]
-    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login(
         [FromBody] LoginRequest req,
         CancellationToken ct)
@@ -48,10 +51,10 @@ public sealed class AuthController : ControllerBase
             );
         }
 
-        return Ok(new LoginResponse(
+        return Ok(new LoginResultDto(
             result.Token,
             result.ExpiresAtUtc,
-            new AnalystProfileResponse(
+            new AnalystProfileDto(
                 result.Analyst.Id,
                 result.Analyst.CorporateEmail,
                 result.Analyst.FullName,
@@ -77,14 +80,15 @@ public sealed class AuthController : ControllerBase
     [Authorize]
     [HttpGet("me")]
     [ProducesResponseType(typeof(AnalystProfileResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Me(CancellationToken ct)
     {
         var analystId = GetAnalystIdOrNull();
         if (analystId is null)
         {
-            return Problem(statusCode: StatusCodes.Status401Unauthorized);
+            return Problem(title: "Unauthorized", statusCode: StatusCodes.Status401Unauthorized);
+
         }
 
         var me = await _auth.GetMeAsync(analystId.Value, ct);
@@ -118,6 +122,7 @@ public sealed class AuthController : ControllerBase
     /// </returns>
     [Authorize]
     [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Logout() => NoContent();
 
     /// <summary>

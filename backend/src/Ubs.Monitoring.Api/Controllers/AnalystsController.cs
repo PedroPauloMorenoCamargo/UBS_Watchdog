@@ -3,33 +3,30 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ubs.Monitoring.Api.Contracts;
 using Ubs.Monitoring.Application.Analysts;
-using Ubs.Monitoring.Application.Auth;
 
 namespace Ubs.Monitoring.Api.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/analysts")]
+[Produces("application/json")]
 public sealed class AnalystsController : ControllerBase
 {
     private readonly IAnalystProfileRepository _analystRead;
     private readonly IAnalystProfileService _profile;
 
-    public AnalystsController(
-        IAnalystProfileRepository analystRead,
-        IAnalystProfileService profile)
+    public AnalystsController( IAnalystProfileRepository analystRead, IAnalystProfileService profile)
     {
         _analystRead = analystRead;
         _profile = profile;
     }
-
     /// <summary>
     /// Retrieve an analyst profile by its unique identifier.
     /// </summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AnalystProfileResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AnalystProfileResponse>> GetById(Guid id, CancellationToken ct)
     {
         var a = await _analystRead.GetByIdAsync(id, ct);
         if (a is null)
@@ -40,36 +37,33 @@ public sealed class AnalystsController : ControllerBase
             );
         }
 
-            return Ok(new AnalystProfileResponse(
-                a.Id,
-                a.CorporateEmail,
-                a.FullName,
-                a.PhoneNumber,
-                a.ProfilePictureBase64,
-                a.CreatedAtUtc
+        return Ok(new AnalystProfileResponse(
+            a.Id,
+            a.CorporateEmail,
+            a.FullName,
+            a.PhoneNumber,
+            a.ProfilePictureBase64,
+            a.CreatedAtUtc
         ));
     }
-
     /// <summary>
     /// Update or clear the authenticated analyst's profile picture.
     /// </summary>
     [HttpPatch("me/profile-picture")]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateMyProfilePicture(
         [FromBody] UpdateProfilePictureRequest req,
         CancellationToken ct)
     {
-        if (req is null)
+        
+        if (!TryGetAnalystId(out var analystId))
         {
-            return Problem(
-                title: "Invalid payload",
-                statusCode: StatusCodes.Status400BadRequest
-            );
+            return Problem(title: "Unauthorized", statusCode: StatusCodes.Status401Unauthorized);
         }
-
-        var analystId = GetRequiredAnalystId();
 
         try
         {
@@ -98,7 +92,6 @@ public sealed class AnalystsController : ControllerBase
             );
         }
     }
-
     /// <summary>
     /// Extracts the authenticated analyst's ID from JWT claims.
     /// This method assumes [Authorize] has already validated authentication.
@@ -106,26 +99,12 @@ public sealed class AnalystsController : ControllerBase
     /// <exception cref="InvalidOperationException">
     /// Thrown when the authenticated principal is missing required claims.
     /// </exception>
-    private Guid GetRequiredAnalystId()
+    private bool TryGetAnalystId(out Guid id)
     {
         var raw =
             User.FindFirstValue("sub") ??
             User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            throw new InvalidOperationException(
-                "Authenticated user is missing required identifier claim."
-            );
-        }
-
-        if (!Guid.TryParse(raw, out var id))
-        {
-            throw new InvalidOperationException(
-                "Authenticated user identifier claim is not a valid GUID."
-            );
-        }
-
-        return id;
+        return Guid.TryParse(raw, out id);
     }
 }

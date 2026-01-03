@@ -59,6 +59,8 @@ public static class DependencyInjection
         // Compliance Rules
         services.AddScoped<IComplianceRuleRepository, ComplianceRuleRepository>();
         services.AddSingleton<IComplianceRuleParametersValidator, ComplianceRuleParametersValidator>();
+        services.AddScoped<IComplianceRuleService, ComplianceRuleService>();
+
         return services;
     }
 }

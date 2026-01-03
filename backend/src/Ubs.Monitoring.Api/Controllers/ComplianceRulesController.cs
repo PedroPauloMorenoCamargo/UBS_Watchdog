@@ -1,31 +1,30 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Ubs.Monitoring.Api.Contracts;
 using Ubs.Monitoring.Api.Extensions;
+using Ubs.Monitoring.Api.Validation;
 using Ubs.Monitoring.Application.Common.Pagination;
 using Ubs.Monitoring.Application.ComplianceRules;
 using Ubs.Monitoring.Domain.Enums;
-using Ubs.Monitoring.Api.Validation;
-using Ubs.Monitoring.Api.Contracts;
-
 
 namespace Ubs.Monitoring.Api.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/rules")]
+[Produces("application/json")]
 public sealed class ComplianceRulesController : ControllerBase
 {
-    private readonly IComplianceRuleRepository _repo;
-    private readonly IComplianceRuleParametersValidator _validator;
+    private readonly IComplianceRuleService _service;
 
-    public ComplianceRulesController(IComplianceRuleRepository repo, IComplianceRuleParametersValidator validator)
+    public ComplianceRulesController(IComplianceRuleService service)
     {
-        _repo = repo;
-        _validator = validator;
+        _service = service;
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<ComplianceRuleDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Search(
         [FromQuery] int page = PaginationDefaults.DefaultPage,
         [FromQuery] int pageSize = PaginationDefaults.DefaultPageSize,
@@ -47,110 +46,64 @@ public sealed class ComplianceRulesController : ControllerBase
         if (scope is not null && !ComplianceRuleScopes.IsValid(scope))
             return Problem(title: "Invalid scope", statusCode: StatusCodes.Status400BadRequest);
 
-        var result = await _repo.SearchAsync(
+        var result = await _service.SearchAsync(
             new ComplianceRuleQuery
             {
-                Page = new PageRequest
-                {
-                    Page = page,
-                    PageSize = pageSize,
-                    SortBy = sortBy,
-                    SortDir = sortDir
-                },
+                Page = new PageRequest { Page = page, PageSize = pageSize, SortBy = sortBy, SortDir = sortDir },
                 RuleType = ruleType,
                 IsActive = isActive,
                 Severity = severity,
                 Scope = scope
             },
-            ct
-        );
+            ct);
 
-        return Ok(result.Map(ToDto).ToPagedResponse());
+        return Ok(result);
     }
 
-
     [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(ComplianceRuleDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
-        var rule = await _repo.GetByIdAsync(id, ct);
+        var rule = await _service.GetByIdAsync(id, ct);
         if (rule is null)
             return Problem(title: "Rule not found", statusCode: StatusCodes.Status404NotFound);
 
-        return Ok(ToDto(rule));
+        return Ok(rule);
     }
 
     [HttpPatch("{id:guid}")]
+    [ProducesResponseType(typeof(ComplianceRuleDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Patch(Guid id, [FromBody] PatchRuleRequest req, CancellationToken ct)
     {
         if (req is null)
             return Problem(title: "Invalid payload", statusCode: StatusCodes.Status400BadRequest);
 
-        var hasAny =
-            req.Name is not null ||
-            req.IsActive is not null ||
-            req.Severity is not null ||
-            req.Scope is not null ||
-            req.Parameters is not null;
+        var result = await _service.PatchAsync(id, new PatchComplianceRuleData(req.Name, req.IsActive, req.Severity, req.Scope, req.Parameters), ct);
 
-        if (!hasAny)
-            return Problem(title: "No changes provided", statusCode: StatusCodes.Status400BadRequest);
-
-        var rule = await _repo.GetByIdAsync(id, ct);
-        if (rule is null)
-            return Problem(title: "Rule not found", statusCode: StatusCodes.Status404NotFound);
-        try
+        return result.Status switch
         {
-            if (req.Name is not null) rule.Rename(req.Name);
-            if (req.IsActive is not null) rule.SetActive(req.IsActive.Value);
-            if (req.Severity is not null) rule.UpdateSeverity(req.Severity.Value);
-            if (req.Scope is not null) rule.UpdateScope(req.Scope);
+            PatchComplianceRuleStatus.NoChanges => Problem(title: "No changes provided", statusCode: StatusCodes.Status400BadRequest),
 
-            if (req.Parameters is not null)
-            {
-                var errors = _validator.Validate(rule.RuleType, req.Parameters.Value);
-                if (errors.Count > 0)
-                {
-                    return Problem(
-                        title: "Invalid rule parameters",
-                        detail: string.Join(" ", errors),
-                        statusCode: StatusCodes.Status400BadRequest
-                    );
-                }
+            PatchComplianceRuleStatus.NotFound => Problem(title: "Rule not found", statusCode: StatusCodes.Status404NotFound),
 
-                var json = JsonSerializer.Serialize(req.Parameters.Value);
-                rule.UpdateParametersJson(json);
-            }
-        }
-        catch (ArgumentException ex)
-        {
-            return Problem(
-                title: "Invalid rule update",
-                detail: ex.Message,
-                statusCode: StatusCodes.Status400BadRequest
-            );
-        }
+            PatchComplianceRuleStatus.InvalidParameters =>
+                Problem(
+                    title: "Invalid rule parameters",
+                    detail: string.Join(" ", result.Errors ?? Array.Empty<string>()),
+                    statusCode: StatusCodes.Status400BadRequest),
 
+            PatchComplianceRuleStatus.InvalidUpdate =>
+                Problem(
+                    title: "Invalid rule update",
+                    detail: string.Join(" ", result.Errors ?? Array.Empty<string>()),
+                    statusCode: StatusCodes.Status400BadRequest),
 
-        await _repo.SaveChangesAsync(ct);
-        return Ok(ToDto(rule));
-    }
+            PatchComplianceRuleStatus.Success => Ok(result.Rule),
 
-    private static ComplianceRuleDto ToDto(Domain.Entities.ComplianceRule r)
-    {
-        using var doc = JsonDocument.Parse(r.ParametersJson);
-        var parameters = doc.RootElement.Clone();
-
-        return new ComplianceRuleDto(
-            r.Id,
-            r.Code,
-            r.RuleType,
-            r.Name,
-            r.IsActive,
-            r.Severity,
-            r.Scope,
-            parameters,
-            r.CreatedAtUtc,
-            r.UpdatedAtUtc
-        );
+            _ => Problem(statusCode: StatusCodes.Status500InternalServerError)
+        };
     }
 }
