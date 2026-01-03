@@ -1,4 +1,5 @@
 import axios from "axios";
+import { AUTH_STORAGE_KEY } from "@/constants/storage";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -6,7 +7,7 @@ export const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const authStorage = localStorage.getItem("ubs-monitoring-auth");
+    const authStorage = localStorage.getItem(AUTH_STORAGE_KEY);
     if (authStorage) {
       try {
         const { state } = JSON.parse(authStorage);

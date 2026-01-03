@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { LoginRequest } from "@/features/auth/auth.api";
 import { login as loginApi } from "@/features/auth/auth.api";
+import { AUTH_STORAGE_KEY } from "@/constants/storage";
 
 /**
  * @typedef {("idle"|"loading"|"authenticated"|"error")} AuthStatus
@@ -151,7 +152,7 @@ export const useAuthStore = create<AuthState>()(
       }
     }),
     {
-      name: "ubs-monitoring-auth",
+      name: AUTH_STORAGE_KEY,
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         token: state.token,
