@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { AxiosError } from "axios";
 import type { LoginRequest } from "@/features/auth/auth.api";
 import { login as loginApi } from "@/features/auth/auth.api";
+import { AUTH_STORAGE_KEY } from "@/constants/storage";
 
 /**
  * @typedef {("idle"|"loading"|"authenticated"|"error")} AuthStatus
@@ -11,14 +13,15 @@ type AuthStatus = "idle" | "loading" | "authenticated" | "error";
 
 /**
  * @typedef {Object} AuthUser
- * @description Modelo de usuário no domínio do frontend.
- * @property {string} username - Identificador principal do usuário (nome).
- * @property {string} [displayName] - Nome amigável para exibição na UI.
+ * @description 
+ * @property {string} id 
+ * @property {string} email 
+ * @property {string} fullName 
  */
-
 type AuthUser = {
-  username: string;
-  displayName?: string;
+  id: string;
+  email: string;
+  fullName: string;
 };
 
 
@@ -47,27 +50,21 @@ type AuthState = {
 };
 
 /**
- * @function getMockCredentials
- * @description Recupera credenciais de mock via variáveis de ambiente. Usado como fallback
- * enquanto o backend não está disponível.
- * @returns {{mockUser: string, mockPass: string}} Credenciais do mock (usuário e senha).
- */
-function getMockCredentials() {
-  const mockUser = import.meta.env.VITE_MOCK_USER ?? "analyst";
-  const mockPass = import.meta.env.VITE_MOCK_PASS ?? "ubs123";
-  return { mockUser, mockPass };
-}
-
-/**
  * @function toFriendlyAuthError
  * @description Normaliza erros de autenticação para uma mensagem amigável e segura para UI,
  * evitando vazamento de detalhes técnicos (ex.: stack traces, mensagens de rede).
  *
- * @param {unknown} _err - Erro capturado durante tentativa de login.
+ * @param {unknown} err - Erro capturado durante tentativa de login.
  * @returns {string} Mensagem pronta para exibição ao usuário.
  */
-function toFriendlyAuthError(_: unknown): string {
-  return "Verifique usuário e senha e tente novamente.";
+function toFriendlyAuthError(err: unknown): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const axiosError = err as AxiosError;
+    if (axiosError.response?.status === 401) {
+      return "Email ou senha incorretos.";
+    }
+  }
+  return "Erro ao conectar com o servidor. Verifique sua conexão.";
 }
 
 /**
@@ -100,44 +97,35 @@ export const useAuthStore = create<AuthState>()(
       /**
        * @async
        * @function login
-       * @description Executa o fluxo de login.
+       * @description Executa o fluxo de login contra o backend real.
        * Fluxo:
        * 1) Marca estado como "loading" e limpa erros anteriores.
-       * 2) Tenta autenticar via API (quando backend/mock server existir).
-       * 3) Em caso de erro, tenta fallback local via credenciais de mock (env).
+       * 2) Tenta autenticar via API do backend.
+       * 3) Se sucesso, armazena token e dados do analista.
        * 4) Se falhar, marca estado como "error" e retorna `false`.
-       * @param {LoginRequest} payload - DTO contendo `username` e `password`.
+       * @param {LoginRequest} payload - DTO contendo `email` e `password`.
        * @returns {Promise<boolean>} `true` se autenticou com sucesso; caso contrário `false`.
        */
-      login: async ({ username, password }) => {
+      login: async ({ email, password }) => {
         set({ status: "loading", errorMessage: null });
 
         try {
-          const res = await loginApi({ username, password });
+          const res = await loginApi({ email, password });
 
           set({
             status: "authenticated",
             isAuthenticated: true,
-            token: res.token ?? "mock-token",
-            user: res.user ?? { username },
+            token: res.token,
+            user: {
+              id: res.analyst.id,
+              email: res.analyst.corporateEmail,
+              fullName: res.analyst.fullName,
+            },
             errorMessage: null,
           });
 
           return true;
         } catch (err) {
-          const { mockUser, mockPass } = getMockCredentials();
-
-          if (username === mockUser && password === mockPass) {
-            set({
-              status: "authenticated",
-              isAuthenticated: true,
-              token: "mock-token",
-              user: { username: mockUser, displayName: "Analyst" },
-              errorMessage: null,
-            });
-            return true;
-          }
-
           set({
             status: "error",
             isAuthenticated: false,
@@ -165,7 +153,7 @@ export const useAuthStore = create<AuthState>()(
       }
     }),
     {
-      name: "ubs-monitoring-auth",
+      name: AUTH_STORAGE_KEY,
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         token: state.token,

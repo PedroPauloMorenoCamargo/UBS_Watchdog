@@ -25,7 +25,7 @@ export function Header() {
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   const user = useAuthStore((s) => s.user);
-  const adminName = user?.displayName ?? user?.username ?? "Usuário";
+  const adminName = user?.fullName ?? "Usuário";
 
   // 🔥 Fecha dropdown ao clicar fora
   useEffect(() => {
@@ -75,7 +75,7 @@ export function Header() {
           {openProfile && (
             <div className="absolute right-0 top-12 w-56 bg-white border rounded-lg shadow-lg p-3">
               <p className="font-semibold">{adminName}</p>
-              <p className="text-sm text-slate-500 mb-3"> {user?.username}@ubs.com</p>
+              <p className="text-sm text-slate-500 mb-3">{user?.email}</p>
 
               <div className="border-t pt-2 space-y-2 text-sm">
                 <button className="w-full text-left cursor-pointer hover:text-blue-600">
