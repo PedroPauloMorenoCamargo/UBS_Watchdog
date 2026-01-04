@@ -8,6 +8,8 @@ using Ubs.Monitoring.Infrastructure.Auth;
 using Ubs.Monitoring.Infrastructure.Persistence;
 using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
 using Ubs.Monitoring.Infrastructure.Persistence.Seeding;
+using Ubs.Monitoring.Application.Analysts;
+using Ubs.Monitoring.Application.ComplianceRules;
 
 
 namespace Ubs.Monitoring.Infrastructure;
@@ -55,6 +57,10 @@ public static class DependencyInjection
         // Analysts Profile
         services.AddScoped<IAnalystProfileRepository, AnalystProfileRepository>();
         services.AddScoped<IAnalystProfileService, AnalystProfileService>();
+        // Compliance Rules
+        services.AddScoped<IComplianceRuleRepository, ComplianceRuleRepository>();
+        services.AddSingleton<IComplianceRuleParametersValidator, ComplianceRuleParametersValidator>();
+        services.AddScoped<IComplianceRuleService, ComplianceRuleService>();
         // Clients
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IClientFileImportService, ClientFileImportService>();

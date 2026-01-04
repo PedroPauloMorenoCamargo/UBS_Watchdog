@@ -2,11 +2,13 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ubs.Monitoring.Application.Auth;
-
+using Ubs.Monitoring.Api.Contracts;
 namespace Ubs.Monitoring.Api.Controllers;
+using Ubs.Monitoring.Application.Analysts;
 
 [ApiController]
 [Route("api/auth")]
+[Produces("application/json")]
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
@@ -15,9 +17,6 @@ public sealed class AuthController : ControllerBase
     {
         _auth = auth;
     }
-
-    public sealed record LoginRequest(string Email, string Password);
-
     /// <summary>
     /// Authenticates an analyst using email and password credentials.
     /// </summary>
@@ -35,18 +34,37 @@ public sealed class AuthController : ControllerBase
     /// </returns>
     [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResultDto>> Login([FromBody] LoginRequest req, CancellationToken ct)
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Login(
+        [FromBody] LoginRequest req,
+        CancellationToken ct)
     {
         var result = await _auth.LoginAsync(req.Email, req.Password, ct);
         if (result is null)
+        {
             return Problem(
                 title: "Invalid credentials",
                 detail: "Email or password is incorrect.",
                 statusCode: StatusCodes.Status401Unauthorized
             );
+        }
 
-        return Ok(result);
+        return Ok(new LoginResultDto(
+            result.Token,
+            result.ExpiresAtUtc,
+            new AnalystProfileDto(
+                result.Analyst.Id,
+                result.Analyst.CorporateEmail,
+                result.Analyst.FullName,
+                result.Analyst.PhoneNumber,
+                result.Analyst.ProfilePictureBase64,
+                result.Analyst.CreatedAtUtc
+            )
+        ));
     }
+
 
     /// <summary>
     /// Retrieves the authenticated analyst's profile information.
@@ -61,21 +79,37 @@ public sealed class AuthController : ControllerBase
     /// </returns>
     [Authorize]
     [HttpGet("me")]
-    public async Task<ActionResult<AnalystProfileDto>> Me(CancellationToken ct)
+    [ProducesResponseType(typeof(AnalystProfileResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Me(CancellationToken ct)
     {
         var analystId = GetAnalystIdOrNull();
         if (analystId is null)
-            return Problem(statusCode: StatusCodes.Status401Unauthorized);
+        {
+            return Problem(title: "Unauthorized", statusCode: StatusCodes.Status401Unauthorized);
+
+        }
 
         var me = await _auth.GetMeAsync(analystId.Value, ct);
         if (me is null)
+        {
             return Problem(
-                statusCode: StatusCodes.Status404NotFound,
-                title: "Analyst not found"
+                title: "Analyst not found",
+                statusCode: StatusCodes.Status404NotFound
             );
+        }
 
-        return Ok(me);
+        return Ok(new AnalystProfileResponse(
+            me.Id,
+            me.CorporateEmail,
+            me.FullName,
+            me.PhoneNumber,
+            me.ProfilePictureBase64,
+            me.CreatedAtUtc
+        ));
     }
+
 
     /// <summary>
     /// Logs the analyst out of the system.
@@ -88,6 +122,7 @@ public sealed class AuthController : ControllerBase
     /// </returns>
     [Authorize]
     [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Logout() => NoContent();
 
     /// <summary>

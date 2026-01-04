@@ -39,4 +39,9 @@ public sealed class AnalystProfileRepository : IAnalystProfileRepository
     /// </returns>
     public Task SaveChangesAsync(CancellationToken ct)
         => _db.SaveChangesAsync(ct);
+
+    public Task<Analyst?> GetByIdAsync(Guid id, CancellationToken ct)
+        => _db.Analysts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id, ct);
 }

@@ -10,6 +10,8 @@ builder.Host.AddSerilogLogging(builder.Configuration);
 
 // Application + Infrastructure registrations
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApiHealthChecks();
+
 
 // API cross-cutting concerns
 builder.Services.AddJwtAuthentication(builder.Configuration);
@@ -38,6 +40,6 @@ await app.InitializeDatabaseAsync();
 app.UseFrontendCors();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.MapApiHealthChecks();
 app.MapControllers();
 app.Run();

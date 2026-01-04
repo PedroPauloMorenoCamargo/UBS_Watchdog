@@ -1,40 +1,32 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Ubs.Monitoring.Api.Contracts;
 using Ubs.Monitoring.Application.Analysts;
-using Ubs.Monitoring.Application.Auth;
 
 namespace Ubs.Monitoring.Api.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/analysts")]
+[Produces("application/json")]
 public sealed class AnalystsController : ControllerBase
 {
-    private readonly IAnalystRepository _analystRead;
+    private readonly IAnalystProfileRepository _analystRead;
     private readonly IAnalystProfileService _profile;
 
-    public AnalystsController(IAnalystRepository analystRead, IAnalystProfileService profile)
+    public AnalystsController( IAnalystProfileRepository analystRead, IAnalystProfileService profile)
     {
         _analystRead = analystRead;
         _profile = profile;
     }
-
-    public sealed record UpdateProfilePictureRequest(string? ProfilePictureBase64);
-
     /// <summary>
     /// Retrieve an analyst profile by its unique identifier.
     /// </summary>
-    /// <param name="id">The UUID of the analyst.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>
-    /// The analyst profile if found; otherwise, a 404 ProblemDetails response.
-    /// </returns>
-    /// <response code="200">Analyst profile retrieved successfully.</response>
-    /// <response code="404">Analyst not found.</response>
-    /// <response code="401">Request is unauthorized.</response>
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<AnalystProfileDto>> GetById(Guid id, CancellationToken ct)
+    [ProducesResponseType(typeof(AnalystProfileResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AnalystProfileResponse>> GetById(Guid id, CancellationToken ct)
     {
         var a = await _analystRead.GetByIdAsync(id, ct);
         if (a is null)
@@ -45,7 +37,7 @@ public sealed class AnalystsController : ControllerBase
             );
         }
 
-        return Ok(new AnalystProfileDto(
+        return Ok(new AnalystProfileResponse(
             a.Id,
             a.CorporateEmail,
             a.FullName,
@@ -54,46 +46,34 @@ public sealed class AnalystsController : ControllerBase
             a.CreatedAtUtc
         ));
     }
-
     /// <summary>
     /// Update or clear the authenticated analyst's profile picture.
     /// </summary>
-    /// <remarks>
-    /// Business rules:
-    ///     - Only the authenticated analyst can update their own profile picture
-    ///     - Payload must be valid Base64 and within size limits
-    ///     - Other analyst fields are immutable via this endpoint
-    /// </remarks>
-    /// <param name="req">Profile picture update payload.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>
-    /// 204 No Content on success; appropriate ProblemDetails on failure.
-    /// </returns>
-    /// <response code="204">Profile picture updated successfully.</response>
-    /// <response code="400">Invalid Base64 payload or size violation.</response>
-    /// <response code="401">Request is unauthorized.</response>
-    /// <response code="404">Analyst not found.</response>
-    [HttpPut("me/profile-picture")]
+    [HttpPatch("me/profile-picture")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateMyProfilePicture(
         [FromBody] UpdateProfilePictureRequest req,
-        CancellationToken ct
-    )
+        CancellationToken ct)
     {
-        var analystId = GetAnalystIdOrNull();
-        if (analystId is null)
+        
+        if (!TryGetAnalystId(out var analystId))
         {
-            return Problem(statusCode: StatusCodes.Status401Unauthorized);
+            return Problem(title: "Unauthorized", statusCode: StatusCodes.Status401Unauthorized);
         }
 
         try
         {
-            var ok = await _profile.UpdateProfilePictureAsync(
-                analystId.Value,
+            var updated = await _profile.UpdateProfilePictureAsync(
+                analystId,
                 req.ProfilePictureBase64,
                 ct
             );
 
-            if (!ok)
+            if (!updated)
             {
                 return Problem(
                     title: "Analyst not found",
@@ -106,24 +86,25 @@ public sealed class AnalystsController : ControllerBase
         catch (ArgumentException ex)
         {
             return Problem(
-                title: "Invalid input",
+                title: "Invalid profile picture",
                 detail: ex.Message,
                 statusCode: StatusCodes.Status400BadRequest
             );
         }
     }
-
     /// <summary>
-    /// Extract the authenticated analyst's ID from the JWT claims.
+    /// Extracts the authenticated analyst's ID from JWT claims.
+    /// This method assumes [Authorize] has already validated authentication.
     /// </summary>
-    /// <returns>
-    /// Analyst UUID if present and valid; otherwise, null.
-    /// </returns>
-    private Guid? GetAnalystIdOrNull()
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the authenticated principal is missing required claims.
+    /// </exception>
+    private bool TryGetAnalystId(out Guid id)
     {
-        var sub = User.FindFirstValue("sub")
-                  ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var raw =
+            User.FindFirstValue("sub") ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        return Guid.TryParse(sub, out var id) ? id : null;
+        return Guid.TryParse(raw, out id);
     }
 }
