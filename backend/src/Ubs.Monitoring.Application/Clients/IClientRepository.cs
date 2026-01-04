@@ -43,11 +43,12 @@ public interface IClientRepository
         CancellationToken ct = default);
 
     /// <summary>
-    /// Adds a new client to the database.
+    /// Adds a new client to the database context.
+    /// This is a synchronous operation that only modifies the in-memory change tracker.
+    /// Call SaveChangesAsync to persist changes to the database.
     /// </summary>
     /// <param name="client">The client entity to add.</param>
-    /// <param name="ct">Cancellation token.</param>
-    Task AddAsync(Client client, CancellationToken ct);
+    void Add(Client client);
 
     /// <summary>
     /// Retrieves a client entity for update operations (tracked).

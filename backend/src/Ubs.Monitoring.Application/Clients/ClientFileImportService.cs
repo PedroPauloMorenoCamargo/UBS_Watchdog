@@ -34,7 +34,7 @@ public sealed class ClientFileImportService : IClientFileImportService
     /// </summary>
     private List<ClientImportRow> ParseCsv(Stream stream)
     {
-        using var reader = new StreamReader(stream);
+        using var reader = new StreamReader(stream, leaveOpen: true);
         using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             HasHeaderRecord = true,

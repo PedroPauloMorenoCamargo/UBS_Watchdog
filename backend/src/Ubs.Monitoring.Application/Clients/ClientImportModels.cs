@@ -24,14 +24,19 @@ public sealed class ClientImportRow
     /// </summary>
     public CreateClientRequest ToRequest()
     {
-        // Parse LegalType enum
+        // Parse LegalType enum (required)
         if (!Enum.TryParse<LegalType>(LegalType, ignoreCase: true, out var legalTypeEnum))
             throw new InvalidOperationException($"Invalid LegalType: {LegalType}. Must be 'Individual' or 'Corporate'.");
 
-        // Parse RiskLevel enum (optional)
+        // Parse RiskLevel enum (optional - but if provided, must be valid)
         RiskLevel? riskLevelEnum = null;
-        if (!string.IsNullOrWhiteSpace(RiskLevel) && Enum.TryParse<RiskLevel>(RiskLevel, ignoreCase: true, out var parsedRisk))
+        if (!string.IsNullOrWhiteSpace(RiskLevel))
+        {
+            if (!Enum.TryParse<RiskLevel>(RiskLevel, ignoreCase: true, out var parsedRisk))
+                throw new InvalidOperationException($"Invalid RiskLevel: {RiskLevel}. Must be 'Low', 'Medium', or 'High'.");
+
             riskLevelEnum = parsedRisk;
+        }
 
         // Build address JSON
         var address = new

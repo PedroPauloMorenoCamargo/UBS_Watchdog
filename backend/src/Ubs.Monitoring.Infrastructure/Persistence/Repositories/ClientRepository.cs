@@ -108,17 +108,20 @@ public sealed class ClientRepository : IClientRepository
     }
 
     /// <summary>
-    /// Adds a new client to the database.
+    /// Adds a new client to the database context.
+    /// This is a synchronous operation that only modifies the in-memory change tracker.
+    /// Call SaveChangesAsync to persist changes to the database.
     /// </summary>
     /// <param name="client">
     /// The client entity to add.
     /// </param>
-    /// <param name="ct">
-    /// Cancellation token used to cancel the operation.
-    /// </param>
-    public async Task AddAsync(Client client, CancellationToken ct)
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="client"/> is null.
+    /// </exception>
+    public void Add(Client client)
     {
-        await _db.Clients.AddAsync(client, ct);
+        ArgumentNullException.ThrowIfNull(client);
+        _db.Clients.Add(client);
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Ubs.Monitoring.Domain.Entities;
 using Ubs.Monitoring.Domain.Enums;
 
@@ -10,11 +11,16 @@ public sealed class ClientService : IClientService
 {
     private readonly IClientRepository _clients;
     private readonly IClientFileImportService _fileImport;
+    private readonly ILogger<ClientService> _logger;
 
-    public ClientService(IClientRepository clients, IClientFileImportService fileImport)
+    public ClientService(
+        IClientRepository clients,
+        IClientFileImportService fileImport,
+        ILogger<ClientService> logger)
     {
         _clients = clients;
         _fileImport = fileImport;
+        _logger = logger;
     }
 
     /// <summary>
@@ -27,24 +33,35 @@ public sealed class ClientService : IClientService
     /// Cancellation token used to cancel the operation.
     /// </param>
     /// <returns>
-    /// The created client data if successful; otherwise, <c>null</c>.
+    /// A tuple containing the created client data and error message.
+    /// If successful, Result contains the client data and ErrorMessage is null.
+    /// If failed, Result is null and ErrorMessage contains the validation error from the domain.
     /// </returns>
-    public async Task<ClientResponseDto?> CreateClientAsync(CreateClientRequest request, CancellationToken ct)
+    public async Task<(ClientResponseDto? Result, string? ErrorMessage)> CreateClientAsync(CreateClientRequest request, CancellationToken ct)
     {
-        // Validate input
-        var (isValid, errorMessage) = ValidateClientRequest(request);
-        if (!isValid)
-            return null;
+        _logger.LogInformation("Creating new client: {Name}, LegalType: {LegalType}", request.Name, request.LegalType);
 
-        // Create domain entity
-        var client = CreateClientFromRequest(request);
+        try
+        {
+            // Create domain entity (Domain validates invariants)
+            var client = CreateClientFromRequest(request);
 
-        // Persist
-        await _clients.AddAsync(client, ct);
-        await _clients.SaveChangesAsync(ct);
+            // Persist
+            _clients.Add(client);
+            await _clients.SaveChangesAsync(ct);
 
-        // Return DTO
-        return MapToResponseDto(client);
+            _logger.LogInformation("Client created successfully: {ClientId}, Name: {Name}", client.Id, client.Name);
+
+            // Return DTO
+            return (MapToResponseDto(client), null);
+        }
+        catch (ArgumentException ex)
+        {
+            // Domain validation failed - return specific error message
+            // (includes ArgumentNullException which inherits from ArgumentException)
+            _logger.LogWarning("Client creation failed for {Name}: {ErrorMessage}", request.Name, ex.Message);
+            return (null, ex.Message);
+        }
     }
 
     /// <summary>
@@ -67,13 +84,16 @@ public sealed class ClientService : IClientService
         string? kycStatus = null,
         CancellationToken ct = default)
     {
+        _logger.LogDebug("Fetching clients page {PageNumber} with size {PageSize}, filters: Country={CountryCode}, Risk={RiskLevel}, KYC={KycStatus}",
+            pageNumber, pageSize, countryCode, riskLevel, kycStatus);
+
         // Validate pagination parameters
         if (pageNumber <= 0)
             throw new ArgumentException("Page number must be greater than 0", nameof(pageNumber));
         if (pageSize <= 0)
             throw new ArgumentException("Page size must be greater than 0", nameof(pageSize));
-        if (pageSize > 100)
-            throw new ArgumentException("Page size cannot exceed 100", nameof(pageSize));
+        if (pageSize > ClientServiceConstants.MaxPageSize)
+            throw new ArgumentException($"Page size cannot exceed {ClientServiceConstants.MaxPageSize}", nameof(pageSize));
 
         // Parse enum filters
         RiskLevel? riskLevelEnum = null;
@@ -144,13 +164,19 @@ public sealed class ClientService : IClientService
     /// </returns>
     public async Task<ImportResultDto> ImportClientsFromFileAsync(Stream fileStream, string fileName, CancellationToken ct)
     {
+        _logger.LogInformation("Starting import from file: {FileName}", fileName);
+
         try
         {
             // Parse file (CSV or Excel)
             var rows = _fileImport.ParseFile(fileStream, fileName);
+            _logger.LogInformation("Parsed {RowCount} rows from file: {FileName}", rows.Count, fileName);
 
             // Process all rows
             var (successCount, errors) = await ProcessImportRowsAsync(rows, ct);
+
+            _logger.LogInformation("Import completed for {FileName}: {SuccessCount} succeeded, {ErrorCount} failed, {TotalRows} total",
+                fileName, successCount, errors.Count, rows.Count);
 
             // Build result
             return BuildImportResult(rows.Count, successCount, errors);
@@ -158,12 +184,14 @@ public sealed class ClientService : IClientService
         catch (Exception ex)
         {
             // File parsing error
+            _logger.LogError(ex, "Error parsing import file: {FileName}", fileName);
             return BuildFileParsingErrorResult(ex.Message);
         }
     }
 
     /// <summary>
     /// Processes all import rows and creates clients.
+    /// Uses batch processing to optimize memory usage for large imports.
     /// </summary>
     /// <param name="rows">List of rows to process.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -179,12 +207,20 @@ public sealed class ClientService : IClientService
         {
             try
             {
-                var lineNumber = i + 2; // +2 because: index starts at 0, and row 1 is header
+                var lineNumber = i + ClientServiceConstants.ImportLineNumberOffset;
                 var processResult = await ProcessSingleRowAsync(rows[i], lineNumber, ct);
 
                 if (processResult.IsSuccess)
                 {
                     successCount++;
+
+                    // Save batch periodically to optimize memory usage
+                    if (successCount % ClientServiceConstants.ImportBatchSize == 0)
+                    {
+                        await _clients.SaveChangesAsync(ct);
+                        _logger.LogDebug("Saved batch of {BatchSize} clients. Total processed: {TotalProcessed}",
+                            ClientServiceConstants.ImportBatchSize, successCount);
+                    }
                 }
                 else
                 {
@@ -194,15 +230,15 @@ public sealed class ClientService : IClientService
             catch (Exception ex)
             {
                 errors.Add(new ImportErrorDto(
-                    LineNumber: i + 2,
+                    LineNumber: i + ClientServiceConstants.ImportLineNumberOffset,
                     ClientName: rows[i].Name ?? "Unknown",
                     ErrorMessage: ex.Message
                 ));
             }
         }
 
-        // Save all valid clients in a single transaction
-        if (successCount > 0)
+        // Save remaining records (last partial batch)
+        if (successCount % ClientServiceConstants.ImportBatchSize != 0 && successCount > 0)
         {
             await _clients.SaveChangesAsync(ct);
         }
@@ -222,27 +258,30 @@ public sealed class ClientService : IClientService
         int lineNumber,
         CancellationToken ct)
     {
-        // Convert row to request
-        var request = row.ToRequest();
-
-        // Validate
-        var (isValid, errorMessage) = ValidateClientRequest(request);
-        if (!isValid)
+        try
         {
-            return (false, new ImportErrorDto(lineNumber, request.Name ?? "Unknown", errorMessage!));
+            // Convert row to request
+            var request = row.ToRequest();
+
+            // Create client (Domain validates invariants)
+            var client = CreateClientFromRequest(request);
+
+            // Add to repository (will be saved later in batch)
+            _clients.Add(client);
+
+            return (true, null);
         }
-
-        // Create client
-        var client = CreateClientFromRequest(request);
-
-        // Add to repository (will be saved later in batch)
-        await _clients.AddAsync(client, ct);
-
-        return (true, null);
+        catch (ArgumentException ex)
+        {
+            // Domain validation failed
+            // (includes ArgumentNullException which inherits from ArgumentException)
+            return (false, new ImportErrorDto(lineNumber, row.Name ?? "Unknown", ex.Message));
+        }
     }
 
     /// <summary>
     /// Creates a client domain entity from a request.
+    /// Normalizes countryCode to uppercase for consistency with repository filters.
     /// </summary>
     /// <param name="request">The client creation request.</param>
     /// <returns>A new client domain entity.</returns>
@@ -252,7 +291,7 @@ public sealed class ClientService : IClientService
             name: request.Name.Trim(),
             contactNumber: request.ContactNumber.Trim(),
             addressJson: request.AddressJson,
-            countryCode: request.CountryCode.Trim(),
+            countryCode: request.CountryCode.Trim().ToUpperInvariant(),
             initialRiskLevel: request.InitialRiskLevel
         );
 
@@ -289,31 +328,6 @@ public sealed class ClientService : IClientService
                 new ImportErrorDto(0, "File", $"Error parsing file: {errorMessage}")
             }
         );
-
-    /// <summary>
-    /// Validates a client creation request.
-    /// </summary>
-    /// <param name="request">The client request to validate.</param>
-    /// <returns>
-    /// A tuple containing validation result and error message.
-    /// IsValid is true if all validations pass; otherwise, false with error message.
-    /// </returns>
-    private static (bool IsValid, string? ErrorMessage) ValidateClientRequest(CreateClientRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request.Name))
-            return (false, "Name is required");
-
-        if (string.IsNullOrWhiteSpace(request.ContactNumber))
-            return (false, "Contact number is required");
-
-        if (request.AddressJson is null)
-            return (false, "Address is required");
-
-        if (string.IsNullOrWhiteSpace(request.CountryCode))
-            return (false, "Country code is required");
-
-        return (true, null);
-    }
 
     /// <summary>
     /// Maps a domain <see cref="Client"/> entity to a <see cref="ClientResponseDto"/>.

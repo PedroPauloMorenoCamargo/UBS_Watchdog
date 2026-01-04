@@ -10,8 +10,12 @@ public interface IClientService
     /// </summary>
     /// <param name="request">The client creation request data.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>The created client data if successful; otherwise, null.</returns>
-    Task<ClientResponseDto?> CreateClientAsync(CreateClientRequest request, CancellationToken ct);
+    /// <returns>
+    /// A tuple containing the created client data and error message.
+    /// If successful, Result contains the client data and ErrorMessage is null.
+    /// If failed, Result is null and ErrorMessage contains the validation error from the domain.
+    /// </returns>
+    Task<(ClientResponseDto? Result, string? ErrorMessage)> CreateClientAsync(CreateClientRequest request, CancellationToken ct);
 
     /// <summary>
     /// Retrieves a paginated list of clients with optional filters and sorting.

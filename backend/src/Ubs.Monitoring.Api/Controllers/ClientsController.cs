@@ -43,12 +43,12 @@ public sealed class ClientsController : ControllerBase
         [FromBody] CreateClientRequest request,
         CancellationToken ct)
     {
-        var result = await _clientService.CreateClientAsync(request, ct);
+        var (result, errorMessage) = await _clientService.CreateClientAsync(request, ct);
 
         if (result is null)
             return Problem(
                 title: "Invalid client data",
-                detail: "One or more required fields are missing or invalid.",
+                detail: errorMessage ?? "One or more required fields are missing or invalid.",
                 statusCode: StatusCodes.Status400BadRequest
             );
 
@@ -159,6 +159,7 @@ public sealed class ClientsController : ControllerBase
     /// <response code="200">Import completed (may contain partial errors).</response>
     /// <response code="400">Invalid file format or missing file.</response>
     /// <response code="401">Unauthorized - JWT token missing or invalid.</response>
+    /// <response code="413">File size exceeds the 50 MB limit.</response>
     /// <remarks>
     /// This endpoint accepts CSV or Excel files (.csv, .xlsx, .xls) with the following columns:
     ///
@@ -174,13 +175,19 @@ public sealed class ClientsController : ControllerBase
     /// - RiskLevel (optional): "Low", "Medium", or "High"
     ///
     /// The first row must contain column headers.
-    /// The operation is transactional - all valid clients are saved together.
+    /// Valid clients are saved in batches for optimal performance.
+    /// Partial success is possible - successfully imported clients are persisted even if later rows fail.
     /// Invalid rows are reported in the response with line numbers and error messages.
+    ///
+    /// Maximum file size: 50 MB.
+    /// For larger datasets, consider splitting the file into multiple imports.
     /// </remarks>
     [HttpPost("import")]
+    [RequestSizeLimit(50 * 1024 * 1024)] // 50 MB limit
     [ProducesResponseType(typeof(ImportResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status413PayloadTooLarge)]
     public async Task<ActionResult<ImportResultDto>> ImportClients(
         IFormFile file,
         CancellationToken ct)
