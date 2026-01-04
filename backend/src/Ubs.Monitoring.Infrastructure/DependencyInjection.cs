@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ubs.Monitoring.Application.Analysts;
 using Ubs.Monitoring.Application.Auth;
+using Ubs.Monitoring.Application.Clients;
 using Ubs.Monitoring.Infrastructure.Auth;
 using Ubs.Monitoring.Infrastructure.Persistence;
 using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
-using Microsoft.Extensions.Options; 
 using Ubs.Monitoring.Infrastructure.Persistence.Seeding;
 using Ubs.Monitoring.Application.Analysts;
 using Ubs.Monitoring.Application.ComplianceRules;
@@ -60,6 +61,10 @@ public static class DependencyInjection
         services.AddScoped<IComplianceRuleRepository, ComplianceRuleRepository>();
         services.AddSingleton<IComplianceRuleParametersValidator, ComplianceRuleParametersValidator>();
         services.AddScoped<IComplianceRuleService, ComplianceRuleService>();
+        // Clients
+        services.AddScoped<IClientRepository, ClientRepository>();
+        services.AddScoped<IClientFileImportService, ClientFileImportService>();
+        services.AddScoped<IClientService, ClientService>();
 
         return services;
     }

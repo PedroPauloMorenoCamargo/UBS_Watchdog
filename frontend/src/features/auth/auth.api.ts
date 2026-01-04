@@ -2,49 +2,68 @@ import { api } from "@/lib/api";
 
 /**
  * @typedef {Object} LoginRequest
- * @description DTO enviado ao endpoint de login.
- * @property {string} username - Identificador do usuário (login).
- * @property {string} password - Senha em texto puro.
+ * @description Credentials payload sent to the authentication endpoint.
+ * Used to authenticate an analyst with email and password.
+ * @property {string} email - Analyst's corporate email address (required).
+ * @property {string} password - Analyst's password in plain text (required, min 4 characters).
  */
 export type LoginRequest = {
-  username: string;
+  email: string;
   password: string;
 };
 
 /**
+ * @typedef {Object} AnalystProfile
+ * @description Complete profile information of an authenticated analyst.
+ * Returned by the backend after successful authentication.
+ * @property {string} id - Unique identifier (GUID) of the analyst.
+ * @property {string} corporateEmail - Corporate email address used for authentication.
+ * @property {string} fullName - Analyst's full name for display purposes.
+ * @property {string} [phoneNumber] - Optional contact phone number (nullable).
+ * @property {string} [profilePictureBase64] - Optional base64-encoded profile picture (nullable).
+ * @property {string} createdAtUtc - Account creation timestamp in UTC (ISO 8601 format).
+ */
+export type AnalystProfile = {
+  id: string;
+  corporateEmail: string;
+  fullName: string;
+  phoneNumber?: string | null;
+  profilePictureBase64?: string | null;
+  createdAtUtc: string;
+};
+
+/**
  * @typedef {Object} LoginResponse
- * @description DTO de resposta do endpoint de login (mock).
- * @property {string} [token] - Token de autenticação retornado pelo backend/mock.
- * @property {Object} [user] - Dados básicos do usuário autenticado.
- * @property {string} user.username - Identificador do usuário.
- * @property {string} [user.displayName] - Nome amigável para exibição na UI.
+ * @description Authentication response returned by the backend login endpoint.
+ * Contains JWT token and complete analyst profile information.
+ * @property {string} token - JWT authentication token (Bearer token format).
+ * @property {string} expiresAtUtc - Token expiration timestamp in UTC (ISO 8601 format).
+ * @property {AnalystProfile} analyst - Complete profile information of the authenticated analyst.
  */
 export type LoginResponse = {
-  token?: string;
-  user?: {
-    username: string;
-    displayName?: string;
-  };
+  token: string;
+  expiresAtUtc: string;
+  analyst: AnalystProfile;
 };
 
 /**
  * @async
  * @function login
- * @description Executa autenticação via endpoint de login.
+ * @description - Authentication is performed via the backend login endpoint.
  *
- * Endpoint esperado:
- * - POST /login
+ * Endpoint:
+ * - POST /api/auth/login
  *
- * Comportamento:
- * - Envia as credenciais para o backend/mock.
- * - Retorna apenas o payload (`data`) da resposta.
+ * Behavior :
+ * - Sends the credentials to the backend.
+ * - Returns the payload containing the JWT token and analyst profile.
  *
- * Tratamento de erros:
- * - Erros de rede, timeout ou HTTP (4xx/5xx) **não são tratados aqui**.
- * @param {LoginRequest} request - DTO contendo credenciais de login.
- * @returns {Promise<LoginResponse>} DTO de resposta do login.
+ * Errors handling:
+ * - Network, timeout, or HTTP (4xx/5xx) errors are propagated to the caller.
+ * @param {LoginRequest} request 
+ * @returns {Promise<LoginResponse>} 
  */
 export async function login(request: LoginRequest): Promise<LoginResponse> {
-  const { data } = await api.post<LoginResponse>("/login", request);
+  const { data } = await api.post<LoginResponse>("/api/auth/login", request);
   return data;
 }
