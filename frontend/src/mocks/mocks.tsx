@@ -37,7 +37,7 @@ const alertsMock:Alert[] = [
     client: "Acme Corporation",
     severity: "High",
     rule: "Large Cash Deposit",
-    amount: "$485,000",
+    amount: "$400,0000000085,000",
     time: "10 mins ago",
   },
   {
@@ -104,47 +104,140 @@ const alertsMock:Alert[] = [
     amount: "$310,000",
     time: "2 hours ago",
   },
+];
+interface Parties {
+  sender: string;
+  receiver: string;
+}
+interface Transaction {
+  id: string;
+  date: string;
+  amount: string;
+  type: string;
+  parties: Parties;
+  country: string;
+  severity: Severity;
+  status: string;
+}
+const transactionsMock: Transaction[] = [
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
-    severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    id: "TX-2024-001",
+    date: "2024-09-10",
+    amount: "$125,000",
+    type: "Wire Transfer",
+    parties: {
+      sender: "Acme Corporation",
+      receiver: "Global Supplies Ltd",
+    },
+    country: "USA",
+    severity: "High",
+    status: "Pending",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
-    severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    id: "TX-2024-002",
+    date: "2024-09-11",
+    amount: "$18,500",
+    type: "Cash Deposit",
+    parties: {
+      sender: "John Doe",
+      receiver: "First National Bank",
+    },
+    country: "Brazil",
+    severity: "Medium",
+    status: "Approved",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
+    id: "TX-2024-003",
+    date: "2024-09-11",
+    amount: "$1,500",
+    type: "Cash Deposit",
+    parties: {
+      sender: "John Doe",
+      receiver: "First National Bank",
+    },
+    country: "Brazil",
     severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    status: "Approved",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
-    severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    id: "TX-2024-004",
+    date: "2024-09-10",
+    amount: "$125,000",
+    type: "Wire Transfer",
+    parties: {
+      sender: "Acme Corporation",
+      receiver: "Global Supplies Ltd",
+    },
+    country: "USA",
+    severity: "High",
+    status: "Pending",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
+    id: "TX-2024-005",
+    date: "2024-09-11",
+    amount: "$18,500",
+    type: "Cash Deposit",
+    parties: {
+      sender: "John Doe",
+      receiver: "First National Bank",
+    },
+    country: "Brazil",
+    severity: "Medium",
+    status: "Approved",
+  },
+  {
+    id: "TX-2024-006",
+    date: "2024-09-11",
+    amount: "$10,500",
+    type: "Cash Deposit",
+    parties: {
+      sender: "John Doe",
+      receiver: "First National Bank",
+    },
+    country: "Brazil",
     severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    status: "Approved",
+  },
+  {
+    id: "TX-2024-007",
+    date: "2024-09-10",
+    amount: "$125,000",
+    type: "Wire Transfer",
+    parties: {
+      sender: "Acme Corporation",
+      receiver: "Global Supplies Ltd",
+    },
+    country: "USA",
+    severity: "High",
+    status: "Pending",
+  },
+  {
+    id: "TX-2024-008",
+    date: "2024-09-11",
+    amount: "$18,500",
+    type: "Cash Deposit",
+    parties: {
+      sender: "John Doe",
+      receiver: "First National Bank",
+    },
+    country: "Brazil",
+    severity: "Medium",
+    status: "Approved",
+  },
+  {
+    id: "TX-2024-009",
+    date: "2024-09-11",
+    amount: "$10,500",
+    type: "Cash Deposit",
+    parties: {
+      sender: "John Doe",
+      receiver: "First National Bank",
+    },
+    country: "Brazil",
+    severity: "Low",
+    status: "Approved",
   },
 ];
 
 
-export { weeklyActivity, transactionsByType, alertsBySeverity, COLORS, alertsMock} ;
+export { weeklyActivity, transactionsByType, alertsBySeverity, COLORS, alertsMock, transactionsMock};

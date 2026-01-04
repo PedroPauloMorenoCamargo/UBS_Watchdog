@@ -40,35 +40,24 @@ import { AlertsTable } from "@/components/ui/tables/alertstable";
 
 export function Dashboard() {
   return (
-    <div
-      className="relative bg-cover bg-center"
-    >
-      {/* <h3>Dashboard</h3> TODO: AJUSTAR TITULO DA PAGINA */}
-      {/* Conteúdo */}
-     <div className="relative z-10 p-6">
-
-        {/* Grid */}
+    <div className="relative bg-cover bg-center">
+     <div className="relative z-10 p-3">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          
-          {/* Transactions 1 */}
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">Total Transactions</h3>
             <p className="text-3xl font-bold text-black-600">1,245</p> {/*mock*/}
           </div>
 
-          {/* Alerts */}
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">Alerts Today</h3>
             <p className="text-3xl font-bold text-red-600">87</p> {/*mock*/}
           </div>
 
-          {/* High Risk Alerts */}
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">
             <h3 className="mb-4 text-lg font-semibold">High Risk Alerts</h3>
             <p className="text-3xl font-bold text-red-600">8</p> {/*mock*/}
-
           </div>
-          {/* Monitored Clients */}
+          
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">
             <h3 className="mb-4 text-lg font-semibold">Monitored Clients</h3>
             <p className="text-3xl font-bold text-black-600">870</p> {/*mock*/}

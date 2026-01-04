@@ -4,6 +4,8 @@ import {
   Users,
   FileBarChart,
   Settings,
+  AlertCircle,
+  ArrowLeftRight,
 } from "lucide-react";
 
 export function Navbar() {
@@ -29,6 +31,28 @@ export function Navbar() {
         </NavLink>
 
         <NavLink
+          to="/alerts"
+          className={({ isActive }) =>
+            `flex items-center gap-3 rounded-md px-3 py-2 transition
+             ${isActive ? "bg-slate-700" : "hover:bg-slate-800"}`
+          }
+        >
+          <AlertCircle size={20} />
+          Alerts
+        </NavLink>
+
+        <NavLink
+          to="/transactions"
+          className={({ isActive }) =>
+            `flex items-center gap-3 rounded-md px-3 py-2 transition
+             ${isActive ? "bg-slate-700" : "hover:bg-slate-800"}`
+          }
+        >
+          <ArrowLeftRight size={20} />
+          Transactions
+        </NavLink>
+
+        <NavLink
           to="/clients"
           className={({ isActive }) =>
             `flex items-center gap-3 rounded-md px-3 py-2 transition
@@ -39,18 +63,7 @@ export function Navbar() {
           Clients
         </NavLink>
 
-          <NavLink
-          to="/transactions"
-          className={({ isActive }) =>
-            `flex items-center gap-3 rounded-md px-3 py-2 transition
-             ${isActive ? "bg-slate-700" : "hover:bg-slate-800"}`
-          }
-        >
-          <FileBarChart size={20} />
-          Transactions
-        </NavLink>
-
-          <NavLink
+        <NavLink
           to="/reports"
           className={({ isActive }) =>
             `flex items-center gap-3 rounded-md px-3 py-2 transition
@@ -61,16 +74,7 @@ export function Navbar() {
           Reports
         </NavLink>
 
-        <NavLink
-          to="/alerts"
-          className={({ isActive }) =>
-            `flex items-center gap-3 rounded-md px-3 py-2 transition
-             ${isActive ? "bg-slate-700" : "hover:bg-slate-800"}`
-          }
-        >
-          <FileBarChart size={20} />
-          Alerts
-        </NavLink>
+        
 
         {/* Configurations no final */}
         <div className="pt-2 border-t border-slate-700">
