@@ -8,7 +8,6 @@ using Ubs.Monitoring.Infrastructure.Auth;
 using Ubs.Monitoring.Infrastructure.Persistence;
 using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
 using Ubs.Monitoring.Infrastructure.Persistence.Seeding;
-using Ubs.Monitoring.Application.Analysts;
 using Ubs.Monitoring.Application.ComplianceRules;
 
 
