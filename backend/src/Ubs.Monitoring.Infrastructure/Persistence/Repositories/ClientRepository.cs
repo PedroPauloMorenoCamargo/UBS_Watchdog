@@ -94,6 +94,7 @@ public sealed class ClientRepository : IClientRepository
 
     /// <summary>
     /// Applies dynamic ordering to the query based on sortBy and sortDir parameters.
+    /// Sort field names must match property names exactly (case-insensitive).
     /// </summary>
     private static IQueryable<Client> ApplyOrdering(IQueryable<Client> query, string? sortBy, string? sortDir)
     {
@@ -105,11 +106,11 @@ public sealed class ClientRepository : IClientRepository
         return sortBy.ToLowerInvariant() switch
         {
             "name" => isAsc ? query.OrderBy(c => c.Name) : query.OrderByDescending(c => c.Name),
-            "country" or "countrycode" => isAsc ? query.OrderBy(c => c.CountryCode) : query.OrderByDescending(c => c.CountryCode),
-            "risk" or "risklevel" => isAsc ? query.OrderBy(c => c.RiskLevel) : query.OrderByDescending(c => c.RiskLevel),
-            "kyc" or "kycstatus" => isAsc ? query.OrderBy(c => c.KycStatus) : query.OrderByDescending(c => c.KycStatus),
-            "createdat" or "created" => isAsc ? query.OrderBy(c => c.CreatedAtUtc) : query.OrderByDescending(c => c.CreatedAtUtc),
-            "updatedat" or "updated" => isAsc ? query.OrderBy(c => c.UpdatedAtUtc) : query.OrderByDescending(c => c.UpdatedAtUtc),
+            "countrycode" => isAsc ? query.OrderBy(c => c.CountryCode) : query.OrderByDescending(c => c.CountryCode),
+            "risklevel" => isAsc ? query.OrderBy(c => c.RiskLevel) : query.OrderByDescending(c => c.RiskLevel),
+            "kycstatus" => isAsc ? query.OrderBy(c => c.KycStatus) : query.OrderByDescending(c => c.KycStatus),
+            "createdatutc" => isAsc ? query.OrderBy(c => c.CreatedAtUtc) : query.OrderByDescending(c => c.CreatedAtUtc),
+            "updatedatutc" => isAsc ? query.OrderBy(c => c.UpdatedAtUtc) : query.OrderByDescending(c => c.UpdatedAtUtc),
             _ => query.OrderByDescending(c => c.CreatedAtUtc) // Fallback to default
         };
     }

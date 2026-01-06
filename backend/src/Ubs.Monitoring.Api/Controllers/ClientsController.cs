@@ -75,13 +75,13 @@ public sealed class ClientsController : ControllerBase
     /// Query parameters:
     /// - Page.Page: Page number (1-based). Default is 1.
     /// - Page.PageSize: Number of items per page (max 100). Default is 20.
-    /// - Page.SortBy: Field to sort by (name, country, risk, kyc, createdat). Optional.
+    /// - Page.SortBy: Field to sort by (Name, CountryCode, RiskLevel, KycStatus, CreatedAtUtc, UpdatedAtUtc). Optional. Case-insensitive.
     /// - Page.SortDir: Sort direction (asc or desc). Default is desc.
     /// - CountryCode: ISO country code filter (e.g., "BR", "US"). Optional.
     /// - RiskLevel: Risk level filter (Low, Medium, High). Optional.
     /// - KycStatus: KYC status filter (Pending, Verified, Expired, Rejected). Optional.
     ///
-    /// Example: GET /api/clients?Page.Page=1&amp;Page.PageSize=20&amp;Page.SortBy=name&amp;Page.SortDir=asc&amp;CountryCode=BR
+    /// Example: GET /api/clients?Page.Page=1&amp;Page.PageSize=20&amp;Page.SortBy=Name&amp;Page.SortDir=asc&amp;CountryCode=BR
     /// </remarks>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<ClientResponseDto>), StatusCodes.Status200OK)]
