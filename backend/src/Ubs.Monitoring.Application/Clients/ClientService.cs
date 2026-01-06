@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Ubs.Monitoring.Application.Common.Pagination;
 using Ubs.Monitoring.Domain.Entities;
 using Ubs.Monitoring.Domain.Enums;
 
@@ -67,66 +68,19 @@ public sealed class ClientService : IClientService
     /// <summary>
     /// Retrieves a paginated list of clients with optional filters and sorting.
     /// </summary>
-    /// <param name="pageNumber">Page number (1-based).</param>
-    /// <param name="pageSize">Number of items per page.</param>
-    /// <param name="countryCode">Optional country code filter.</param>
-    /// <param name="riskLevel">Optional risk level filter (as string).</param>
-    /// <param name="kycStatus">Optional KYC status filter (as string).</param>
+    /// <param name="query">Query object containing pagination, sorting, and filter parameters.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>
-    /// Paginated response with clients list.
-    /// </returns>
-    public async Task<PagedClientsResponseDto> GetPagedClientsAsync(
-        int pageNumber,
-        int pageSize,
-        string? countryCode = null,
-        string? riskLevel = null,
-        string? kycStatus = null,
-        CancellationToken ct = default)
+    /// <returns>Paginated result containing client DTOs and metadata.</returns>
+    public async Task<PagedResult<ClientResponseDto>> GetPagedClientsAsync(ClientQuery query, CancellationToken ct)
     {
-        _logger.LogDebug("Fetching clients page {PageNumber} with size {PageSize}, filters: Country={CountryCode}, Risk={RiskLevel}, KYC={KycStatus}",
-            pageNumber, pageSize, countryCode, riskLevel, kycStatus);
+        ArgumentNullException.ThrowIfNull(query);
 
-        // Validate pagination parameters
-        if (pageNumber <= 0)
-            throw new ArgumentException("Page number must be greater than 0", nameof(pageNumber));
-        if (pageSize <= 0)
-            throw new ArgumentException("Page size must be greater than 0", nameof(pageSize));
-        if (pageSize > ClientServiceConstants.MaxPageSize)
-            throw new ArgumentException($"Page size cannot exceed {ClientServiceConstants.MaxPageSize}", nameof(pageSize));
+        _logger.LogDebug("Fetching clients page {Page} with size {PageSize}, filters: Country={CountryCode}, Risk={RiskLevel}, KYC={KycStatus}",
+            query.Page.Page, query.Page.PageSize, query.CountryCode, query.RiskLevel, query.KycStatus);
 
-        // Parse enum filters
-        RiskLevel? riskLevelEnum = null;
-        if (!string.IsNullOrWhiteSpace(riskLevel) && Enum.TryParse<RiskLevel>(riskLevel, ignoreCase: true, out var parsedRisk))
-            riskLevelEnum = parsedRisk;
+        var pagedClients = await _clients.GetPagedAsync(query, ct);
 
-        KycStatus? kycStatusEnum = null;
-        if (!string.IsNullOrWhiteSpace(kycStatus) && Enum.TryParse<KycStatus>(kycStatus, ignoreCase: true, out var parsedKyc))
-            kycStatusEnum = parsedKyc;
-
-        // Get data from repository
-        var (items, totalCount) = await _clients.GetPagedAsync(
-            pageNumber,
-            pageSize,
-            countryCode,
-            riskLevelEnum,
-            kycStatusEnum,
-            ct
-        );
-
-        // Calculate total pages
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-        // Map to DTOs
-        var clientDtos = items.Select(MapToResponseDto).ToList();
-
-        return new PagedClientsResponseDto(
-            Items: clientDtos,
-            TotalCount: totalCount,
-            PageNumber: pageNumber,
-            PageSize: pageSize,
-            TotalPages: totalPages
-        );
+        return pagedClients.Map(MapToResponseDto);
     }
 
     /// <summary>

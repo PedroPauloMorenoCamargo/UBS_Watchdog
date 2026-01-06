@@ -43,9 +43,6 @@ public sealed class ComplianceRulesController : ControllerBase
             !string.Equals(sortDir, "desc", StringComparison.OrdinalIgnoreCase))
             return Problem(title: "Invalid sort direction", statusCode: StatusCodes.Status400BadRequest);
 
-        if (scope is not null && !ComplianceRuleScopes.IsValid(scope))
-            return Problem(title: "Invalid scope", statusCode: StatusCodes.Status400BadRequest);
-
         var result = await _service.SearchAsync(
             new ComplianceRuleQuery
             {

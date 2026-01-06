@@ -1,3 +1,5 @@
+using Ubs.Monitoring.Application.Common.Pagination;
+
 namespace Ubs.Monitoring.Application.Clients;
 
 /// <summary>
@@ -20,20 +22,10 @@ public interface IClientService
     /// <summary>
     /// Retrieves a paginated list of clients with optional filters and sorting.
     /// </summary>
-    /// <param name="pageNumber">Page number (1-based).</param>
-    /// <param name="pageSize">Number of items per page.</param>
-    /// <param name="countryCode">Optional country code filter.</param>
-    /// <param name="riskLevel">Optional risk level filter.</param>
-    /// <param name="kycStatus">Optional KYC status filter.</param>
+    /// <param name="query">Query object containing pagination, sorting, and filter parameters.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>Paginated response with clients list.</returns>
-    Task<PagedClientsResponseDto> GetPagedClientsAsync(
-        int pageNumber,
-        int pageSize,
-        string? countryCode = null,
-        string? riskLevel = null,
-        string? kycStatus = null,
-        CancellationToken ct = default);
+    /// <returns>Paginated result containing client DTOs and metadata.</returns>
+    Task<PagedResult<ClientResponseDto>> GetPagedClientsAsync(ClientQuery query, CancellationToken ct);
 
     /// <summary>
     /// Retrieves detailed information about a specific client.

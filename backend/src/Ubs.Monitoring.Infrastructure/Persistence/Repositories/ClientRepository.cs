@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Ubs.Monitoring.Application.Clients;
+using Ubs.Monitoring.Application.Common.Pagination;
 using Ubs.Monitoring.Domain.Entities;
-using Ubs.Monitoring.Domain.Enums;
+using Ubs.Monitoring.Infrastructure.Persistence.Pagination;
 
 namespace Ubs.Monitoring.Infrastructure.Persistence.Repositories;
 
@@ -56,61 +57,61 @@ public sealed class ClientRepository : IClientRepository
               .FirstOrDefaultAsync(c => c.Id == clientId, ct);
 
     /// <summary>
-    /// Retrieves a paginated list of clients with optional filters.
+    /// Retrieves a paginated list of clients with optional filters and sorting.
     /// </summary>
-    /// <param name="pageNumber">Page number (1-based).</param>
-    /// <param name="pageSize">Number of items per page.</param>
-    /// <param name="countryCode">Optional country code filter.</param>
-    /// <param name="riskLevel">Optional risk level filter.</param>
-    /// <param name="kycStatus">Optional KYC status filter.</param>
+    /// <param name="query">Query object containing pagination, sorting, and filter parameters.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>
-    /// A tuple containing the paginated list of clients and the total count.
-    /// </returns>
-    /// <exception cref="ArgumentOutOfRangeException">
-    /// Thrown when <paramref name="pageNumber"/> is less than 1 or <paramref name="pageSize"/> is less than 1.
-    /// </exception>
-    public async Task<(IReadOnlyList<Client> Items, int TotalCount)> GetPagedAsync(
-        int pageNumber,
-        int pageSize,
-        string? countryCode = null,
-        RiskLevel? riskLevel = null,
-        KycStatus? kycStatus = null,
-        CancellationToken ct = default)
+    /// <returns>Paginated result containing clients and metadata.</returns>
+    public async Task<PagedResult<Client>> GetPagedAsync(ClientQuery query, CancellationToken ct)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(pageNumber, 1, nameof(pageNumber));
-        ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1, nameof(pageSize));
+        ArgumentNullException.ThrowIfNull(query);
 
-        var query = _db.Clients.AsNoTracking();
+        var q = _db.Clients.AsNoTracking();
 
         // Apply filters
-        if (!string.IsNullOrWhiteSpace(countryCode))
+        if (!string.IsNullOrWhiteSpace(query.CountryCode))
         {
-            var normalizedCountry = countryCode.ToUpperInvariant();
-            query = query.Where(c => c.CountryCode == normalizedCountry);
+            var normalizedCountry = query.CountryCode.ToUpperInvariant();
+            q = q.Where(c => c.CountryCode == normalizedCountry);
         }
 
-        if (riskLevel.HasValue)
+        if (query.RiskLevel.HasValue)
         {
-            query = query.Where(c => c.RiskLevel == riskLevel.Value);
+            q = q.Where(c => c.RiskLevel == query.RiskLevel.Value);
         }
 
-        if (kycStatus.HasValue)
+        if (query.KycStatus.HasValue)
         {
-            query = query.Where(c => c.KycStatus == kycStatus.Value);
+            q = q.Where(c => c.KycStatus == query.KycStatus.Value);
         }
 
-        // Get total count
-        var totalCount = await query.CountAsync(ct);
+        // Apply dynamic ordering
+        q = ApplyOrdering(q, query.Page.SortBy, query.Page.SortDir);
 
-        // Apply pagination
-        var items = await query
-            .OrderByDescending(c => c.CreatedAtUtc)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(ct);
+        // Use extension method to paginate (automatically handles Skip/Take/Count)
+        return await q.ToPagedResultAsync(query.Page, ct);
+    }
 
-        return (items, totalCount);
+    /// <summary>
+    /// Applies dynamic ordering to the query based on sortBy and sortDir parameters.
+    /// </summary>
+    private static IQueryable<Client> ApplyOrdering(IQueryable<Client> query, string? sortBy, string? sortDir)
+    {
+        if (string.IsNullOrWhiteSpace(sortBy))
+            return query.OrderByDescending(c => c.CreatedAtUtc); // Default ordering
+
+        var isAsc = sortDir?.ToLowerInvariant() == "asc";
+
+        return sortBy.ToLowerInvariant() switch
+        {
+            "name" => isAsc ? query.OrderBy(c => c.Name) : query.OrderByDescending(c => c.Name),
+            "country" or "countrycode" => isAsc ? query.OrderBy(c => c.CountryCode) : query.OrderByDescending(c => c.CountryCode),
+            "risk" or "risklevel" => isAsc ? query.OrderBy(c => c.RiskLevel) : query.OrderByDescending(c => c.RiskLevel),
+            "kyc" or "kycstatus" => isAsc ? query.OrderBy(c => c.KycStatus) : query.OrderByDescending(c => c.KycStatus),
+            "createdat" or "created" => isAsc ? query.OrderBy(c => c.CreatedAtUtc) : query.OrderByDescending(c => c.CreatedAtUtc),
+            "updatedat" or "updated" => isAsc ? query.OrderBy(c => c.UpdatedAtUtc) : query.OrderByDescending(c => c.UpdatedAtUtc),
+            _ => query.OrderByDescending(c => c.CreatedAtUtc) // Fallback to default
+        };
     }
 
     /// <summary>
