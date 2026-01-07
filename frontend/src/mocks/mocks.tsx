@@ -22,6 +22,7 @@ const weeklyActivity = [
 ];
 
 type Severity = "High" | "Medium" | "Low";
+type KYC = "Verified" | "Expired" | "Pending";
 interface Alert {
   id: string;
   client: string;
@@ -239,5 +240,49 @@ const transactionsMock: Transaction[] = [
   },
 ];
 
+interface Client {
+  id: string,
+  name: string,
+  country: string,
+  risk:Severity,
+  kyc:KYC,
+  alerts:number,
+  balance:number,
+  lastActivity:string,
+}
 
-export { weeklyActivity, transactionsByType, alertsBySeverity, COLORS, alertsMock, transactionsMock};
+const clientsMock: Client[] = [
+  {
+     id: "1",
+    name: "João Silva ",
+    country: "Brazil",
+    risk: "Medium",
+    kyc: "Verified",
+    alerts: 2,
+    balance: 15432.75,
+    lastActivity: "2026-01-05T14:32:00Z",
+  },
+  {
+     id: "2",
+    name: "Maria Silva ",
+    country: "Brazil",
+    risk: "Low",
+    kyc: "Pending",
+    alerts: 2,
+    balance: 15432.75,
+    lastActivity: "2026-01-05T14:32:00Z",
+  },
+  {
+     id: "3",
+    name: "Pedro Silva ",
+    country: "Brazil",
+    risk: "High",
+    kyc: "Expired",
+    alerts: 25,
+    balance: 1543662.75,
+    lastActivity: "2026-01-05T14:32:00Z",
+  }
+
+]
+
+export { weeklyActivity, transactionsByType, alertsBySeverity, COLORS, alertsMock, transactionsMock, clientsMock};
