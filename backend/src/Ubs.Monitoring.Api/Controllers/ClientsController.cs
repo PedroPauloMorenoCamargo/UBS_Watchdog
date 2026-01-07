@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ubs.Monitoring.Application.Clients;
+using Ubs.Monitoring.Application.Common.Pagination;
 
 namespace Ubs.Monitoring.Api.Controllers;
 
@@ -60,13 +61,9 @@ public sealed class ClientsController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieves a paginated list of clients with optional filters.
+    /// Retrieves a paginated list of clients with optional filters and sorting.
     /// </summary>
-    /// <param name="pageNumber">Page number (1-based). Default is 1.</param>
-    /// <param name="pageSize">Number of items per page (max 100). Default is 20.</param>
-    /// <param name="countryCode">Optional ISO country code filter (e.g., "BR", "US").</param>
-    /// <param name="riskLevel">Optional risk level filter ("Low", "Medium", "High").</param>
-    /// <param name="kycStatus">Optional KYC status filter ("Pending", "Verified", "Expired", "Rejected").</param>
+    /// <param name="query">Query parameters for pagination, sorting, and filtering.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>
     /// A paginated list of clients matching the filters.
@@ -74,39 +71,28 @@ public sealed class ClientsController : ControllerBase
     /// <response code="200">Returns the paginated client list.</response>
     /// <response code="400">Invalid pagination parameters.</response>
     /// <response code="401">Unauthorized - JWT token missing or invalid.</response>
+    /// <remarks>
+    /// Query parameters:
+    /// - Page.Page: Page number (1-based). Default is 1.
+    /// - Page.PageSize: Number of items per page (max 100). Default is 20.
+    /// - Page.SortBy: Field to sort by (Name, CountryCode, RiskLevel, KycStatus, CreatedAtUtc, UpdatedAtUtc). Optional. Case-insensitive.
+    /// - Page.SortDir: Sort direction (asc or desc). Default is desc.
+    /// - CountryCode: ISO country code filter (e.g., "BR", "US"). Optional.
+    /// - RiskLevel: Risk level filter (Low, Medium, High). Optional.
+    /// - KycStatus: KYC status filter (Pending, Verified, Expired, Rejected). Optional.
+    ///
+    /// Example: GET /api/clients?Page.Page=1&amp;Page.PageSize=20&amp;Page.SortBy=Name&amp;Page.SortDir=asc&amp;CountryCode=BR
+    /// </remarks>
     [HttpGet]
-    [ProducesResponseType(typeof(PagedClientsResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<ClientResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<PagedClientsResponseDto>> GetClients(
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] string? countryCode = null,
-        [FromQuery] string? riskLevel = null,
-        [FromQuery] string? kycStatus = null,
+    public async Task<ActionResult<PagedResult<ClientResponseDto>>> GetClients(
+        [FromQuery] ClientQuery query,
         CancellationToken ct = default)
     {
-        try
-        {
-            var result = await _clientService.GetPagedClientsAsync(
-                pageNumber,
-                pageSize,
-                countryCode,
-                riskLevel,
-                kycStatus,
-                ct
-            );
-
-            return Ok(result);
-        }
-        catch (ArgumentException ex)
-        {
-            return Problem(
-                title: "Invalid parameters",
-                detail: ex.Message,
-                statusCode: StatusCodes.Status400BadRequest
-            );
-        }
+        var result = await _clientService.GetPagedClientsAsync(query, ct);
+        return Ok(result);
     }
 
     /// <summary>

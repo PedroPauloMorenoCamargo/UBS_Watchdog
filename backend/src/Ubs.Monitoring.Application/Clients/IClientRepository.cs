@@ -1,5 +1,5 @@
+using Ubs.Monitoring.Application.Common.Pagination;
 using Ubs.Monitoring.Domain.Entities;
-using Ubs.Monitoring.Domain.Enums;
 
 namespace Ubs.Monitoring.Application.Clients;
 
@@ -25,22 +25,12 @@ public interface IClientRepository
     Task<Client?> GetByIdWithDetailsAsync(Guid clientId, CancellationToken ct);
 
     /// <summary>
-    /// Retrieves a paginated list of clients with optional filters.
+    /// Retrieves a paginated list of clients with optional filters and sorting.
     /// </summary>
-    /// <param name="pageNumber">Page number (1-based).</param>
-    /// <param name="pageSize">Number of items per page.</param>
-    /// <param name="countryCode">Optional country code filter.</param>
-    /// <param name="riskLevel">Optional risk level filter.</param>
-    /// <param name="kycStatus">Optional KYC status filter.</param>
+    /// <param name="query">Query object containing pagination, sorting, and filter parameters.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>Paginated list of clients and total count.</returns>
-    Task<(IReadOnlyList<Client> Items, int TotalCount)> GetPagedAsync(
-        int pageNumber,
-        int pageSize,
-        string? countryCode = null,
-        RiskLevel? riskLevel = null,
-        KycStatus? kycStatus = null,
-        CancellationToken ct = default);
+    /// <returns>Paginated result containing clients and metadata.</returns>
+    Task<PagedResult<Client>> GetPagedAsync(ClientQuery query, CancellationToken ct);
 
     /// <summary>
     /// Adds a new client to the database context.
