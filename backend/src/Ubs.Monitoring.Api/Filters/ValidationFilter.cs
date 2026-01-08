@@ -19,7 +19,6 @@ public sealed class ValidationFilter : IAsyncActionFilter
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        // Iterate through all action parameters
         foreach (var parameter in context.ActionDescriptor.Parameters)
         {
             if (!context.ActionArguments.TryGetValue(parameter.Name, out var argument) || argument == null)
@@ -27,20 +26,17 @@ public sealed class ValidationFilter : IAsyncActionFilter
 
             var argumentType = argument.GetType();
 
-            // Try to get validator for this parameter type
             var validatorType = typeof(IValidator<>).MakeGenericType(argumentType);
             var validator = _serviceProvider.GetService(validatorType) as IValidator;
 
             if (validator == null)
                 continue;
 
-            // Validate the argument
             var validationContext = new ValidationContext<object>(argument);
             var validationResult = await validator.ValidateAsync(validationContext, context.HttpContext.RequestAborted);
 
             if (!validationResult.IsValid)
             {
-                // Convert validation errors to Problem Details format
                 var problemDetails = new ValidationProblemDetails
                 {
                     Type = "https://tools.ietf.org/html/rfc7807#section-3.1",

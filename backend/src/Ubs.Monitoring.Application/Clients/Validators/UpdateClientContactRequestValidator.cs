@@ -16,7 +16,7 @@ public sealed class UpdateClientContactRequestValidator : AbstractValidator<Upda
             .Must(contact => !string.IsNullOrWhiteSpace(contact))
             .WithMessage("Contact number cannot contain only whitespace characters.")
             .Matches(@"^\+?[1-9]\d{1,14}$")
-            .WithMessage("Contact number must be in valid international format (E.164 standard).");
+            .WithMessage("Contact number must be in valid international format (Ex: +5511912345678).");
 
         // AddressJson is optional - no validation needed (null is acceptable)
     }

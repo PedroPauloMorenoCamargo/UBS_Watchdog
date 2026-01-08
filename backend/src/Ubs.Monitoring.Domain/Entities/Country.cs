@@ -8,7 +8,7 @@ namespace Ubs.Monitoring.Domain.Entities;
 /// </summary>
 public class Country
 {
-    private Country() { } // EF Core
+    private Country() { } 
 
     public Country(string code, string name, RiskLevel riskLevel = RiskLevel.Low)
     {
