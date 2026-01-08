@@ -53,7 +53,7 @@ public sealed class ComplianceRuleService : IComplianceRuleService
 
             if (patch.Parameters is not null)
             {
-                var errors = _validator.Validate(rule.RuleType, patch.Parameters.Value);
+                var errors = await _validator.ValidateAsync(rule.RuleType, patch.Parameters.Value, ct);
                 if (errors.Count > 0)
                     return new PatchComplianceRuleResult(PatchComplianceRuleStatus.InvalidParameters, Errors: errors);
 

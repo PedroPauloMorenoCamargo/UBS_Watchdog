@@ -1,10 +1,18 @@
 using System.Text.Json;
+using Ubs.Monitoring.Application.Countries;
 using Ubs.Monitoring.Domain.Enums;
 
 namespace Ubs.Monitoring.Application.ComplianceRules;
 
 public sealed class ComplianceRuleParametersValidator : IComplianceRuleParametersValidator
 {
+    private readonly ICountryRepository _countries;
+
+    public ComplianceRuleParametersValidator(ICountryRepository countries)
+    {
+        _countries = countries;
+    }
+
     public IReadOnlyList<string> Validate(RuleType ruleType, JsonElement parameters)
     {
         var errors = new List<string>();
@@ -28,7 +36,7 @@ public sealed class ComplianceRuleParametersValidator : IComplianceRuleParameter
                         if (c.ValueKind != JsonValueKind.String)
                             errors.Add("BannedCountries: each country must be a string.");
                         else if ((c.GetString() ?? "").Trim().Length != 2)
-                            errors.Add("BannedCountries: each country must be ISO alpha-2 (length 2).");
+                            errors.Add("BannedCountries: each country code must have exactly 2 characters (e.g., BR, US, DE)");
                     }
                 }
                 break;
@@ -51,6 +59,30 @@ public sealed class ComplianceRuleParametersValidator : IComplianceRuleParameter
             default:
                 errors.Add($"Unsupported rule type: {ruleType}");
                 break;
+        }
+
+        return errors;
+    }
+
+    public async Task<IReadOnlyList<string>> ValidateAsync(RuleType ruleType, JsonElement parameters, CancellationToken ct = default)
+    {
+        var errors = Validate(ruleType, parameters).ToList();
+
+        if (ruleType == RuleType.BannedCountries && errors.Count == 0)
+        {
+            if (parameters.TryGetProperty("countries", out var countries) && countries.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var c in countries.EnumerateArray())
+                {
+                    var countryCode = c.GetString()?.Trim().ToUpperInvariant();
+                    if (!string.IsNullOrEmpty(countryCode))
+                    {
+                        var exists = await _countries.ExistsAsync(countryCode, ct);
+                        if (!exists)
+                            errors.Add($"BannedCountries: country code '{countryCode}' does not exist in the system.");
+                    }
+                }
+            }
         }
 
         return errors;
