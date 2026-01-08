@@ -20,6 +20,15 @@ const weeklyActivity = [
   { day: "Sat", transactions: 2800, alerts: 9 },
   { day: "Sun", transactions: 1900, alerts: 6 },
 ];
+const weeklyAlertsBySeverity = [
+  { day: "Mon", high: 5, medium: 4, low: 3 },
+  { day: "Tue", high: 6, medium: 5, low: 4 },
+  { day: "Wed", high: 4, medium: 3, low: 3 },
+  { day: "Thu", high: 5, medium: 6, low: 3 },
+  { day: "Fri", high: 7, medium: 6, low: 5 },
+  { day: "Sat", high: 3, medium: 4, low: 2 },
+  { day: "Sun", high: 2, medium: 3, low: 1 },
+];
 
 type Severity = "High" | "Medium" | "Low";
 type KYC = "Verified" | "Expired" | "Pending";
@@ -285,4 +294,45 @@ const clientsMock: Client[] = [
 
 ]
 
-export { weeklyActivity, transactionsByType, alertsBySeverity, COLORS, alertsMock, transactionsMock, clientsMock};
+interface Report {
+  name: string,
+  date: string,
+  by: string,
+  status: string,
+}
+
+const reportsMock: Report[]=[
+   {
+    name: "Monthly Compliance Report",
+    date: "2025-12-01",
+    by: "John Doe",
+    status: "ready",
+  },
+  {
+    name: "KYC Risk Assessment",
+    date: "2025-12-05",
+    by: "Maria Silva",
+    status: "pending",
+  },
+  {
+    name: "Transaction Monitoring Summary",
+    date: "2025-11-28",
+    by: "Carlos Mendes",
+    status: "ready",
+  },
+  {
+    name: "Sanctions Screening Report",
+    date: "2025-12-10",
+    by: "Ana Costa",
+    status: "pending",
+  },
+  {
+    name: "PEP Analysis Report",
+    date: "2025-12-12",
+    by: "Lucas Pereira",
+    status: "failed",
+  },
+]
+
+
+export { weeklyActivity,weeklyAlertsBySeverity, transactionsByType, alertsBySeverity, COLORS, alertsMock, transactionsMock, clientsMock, reportsMock};
