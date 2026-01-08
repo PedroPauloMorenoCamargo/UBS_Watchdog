@@ -33,7 +33,7 @@ public sealed class CreateClientRequestValidator : AbstractValidator<CreateClien
             .Must(contact => !string.IsNullOrWhiteSpace(contact))
             .WithMessage("Contact number cannot contain only whitespace characters.")
             .Matches(@"^\+?[1-9]\d{1,14}$")
-            .WithMessage("Contact number must be in valid international format (E.164 standard).");
+            .WithMessage("Contact number must be in valid international format.");
 
         RuleFor(x => x.AddressJson)
             .NotNull()

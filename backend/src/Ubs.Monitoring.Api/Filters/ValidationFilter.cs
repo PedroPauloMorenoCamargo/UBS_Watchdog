@@ -28,16 +28,23 @@ public sealed class ValidationFilter : IAsyncActionFilter
 
             var argumentType = argument.GetType();
 
+            // Skip validation for primitive types and known non-validatable types
+            if (ShouldSkipValidation(argumentType))
+                continue;
+
             var validatorType = typeof(IValidator<>).MakeGenericType(argumentType);
             var validator = _serviceProvider.GetService(validatorType) as IValidator;
 
             if (validator == null)
             {
-                _logger.LogDebug(
-                    "No FluentValidation validator found for parameter '{ParameterName}' of type '{ParameterType}'. " +
-                    "This is expected for endpoints without validation. If validation was expected, ensure the validator is registered in DI.",
-                    parameter.Name,
-                    argumentType.Name);
+                // Only log warnings for request DTOs that likely should have validators
+                if (IsRequestDto(argumentType))
+                {
+                    _logger.LogWarning(
+                        "No validator registered for '{ParameterType}'. Validation skipped. " +
+                        "If validation is required, ensure a validator is registered in DI.",
+                        argumentType.Name);
+                }
                 continue;
             }
 
@@ -72,5 +79,34 @@ public sealed class ValidationFilter : IAsyncActionFilter
         }
 
         await next();
+    }
+
+    /// <summary>
+    /// Determines if a type should skip validation entirely (primitive types, Guids, etc.).
+    /// </summary>
+    private static bool ShouldSkipValidation(Type type)
+    {
+        return type.IsPrimitive ||
+               type == typeof(string) ||
+               type == typeof(Guid) ||
+               type == typeof(DateTime) ||
+               type == typeof(DateTimeOffset) ||
+               type == typeof(TimeSpan) ||
+               type.IsEnum;
+    }
+
+    /// <summary>
+    /// Determines if a type is a request DTO that should have a validator.
+    /// Checks for Application namespace and common DTO naming patterns.
+    /// </summary>
+    private static bool IsRequestDto(Type type)
+    {
+        var ns = type.Namespace ?? string.Empty;
+        var name = type.Name;
+
+        return ns.Contains("Application", StringComparison.OrdinalIgnoreCase) &&
+               (name.EndsWith("Request", StringComparison.OrdinalIgnoreCase) ||
+                name.EndsWith("Command", StringComparison.OrdinalIgnoreCase) ||
+                name.EndsWith("Query", StringComparison.OrdinalIgnoreCase));
     }
 }
