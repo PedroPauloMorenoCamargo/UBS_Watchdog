@@ -13,7 +13,11 @@ public sealed class ComplianceRuleParametersValidator : IComplianceRuleParameter
         _countries = countries;
     }
 
-    public IReadOnlyList<string> Validate(RuleType ruleType, JsonElement parameters)
+    /// <summary>
+    /// Performs structural validation (format, types, required fields) without database checks.
+    /// This is a private helper method used internally by ValidateAsync.
+    /// </summary>
+    private IReadOnlyList<string> ValidateStructure(RuleType ruleType, JsonElement parameters)
     {
         var errors = new List<string>();
 
@@ -66,20 +70,42 @@ public sealed class ComplianceRuleParametersValidator : IComplianceRuleParameter
 
     public async Task<IReadOnlyList<string>> ValidateAsync(RuleType ruleType, JsonElement parameters, CancellationToken ct = default)
     {
-        var errors = Validate(ruleType, parameters).ToList();
+        // First: structural validation (fast, synchronous - format, types, required fields)
+        var errors = ValidateStructure(ruleType, parameters).ToList();
 
-        if (ruleType == RuleType.BannedCountries && errors.Count == 0)
+        // Early return if structural validation failed - no point checking database with invalid format
+        if (errors.Count > 0)
+            return errors;
+
+        // Second: data validation (slow, asynchronous - database checks)
+        // Only runs if structural validation passed
+        if (ruleType == RuleType.BannedCountries)
         {
             if (parameters.TryGetProperty("countries", out var countries) && countries.ValueKind == JsonValueKind.Array)
             {
+
+                var countryCodesList = new List<string>();
                 foreach (var c in countries.EnumerateArray())
                 {
                     var countryCode = c.GetString()?.Trim().ToUpperInvariant();
                     if (!string.IsNullOrEmpty(countryCode))
                     {
-                        var exists = await _countries.ExistsAsync(countryCode, ct);
-                        if (!exists)
-                            errors.Add($"BannedCountries: country code '{countryCode}' does not exist in the system.");
+                        countryCodesList.Add(countryCode);
+                    }
+                }
+
+
+                if (countryCodesList.Count > 0)
+                {
+                    var existingCodes = await _countries.GetExistingCodesAsync(countryCodesList, ct);
+
+                    // Check which codes don't exist
+                    foreach (var code in countryCodesList)
+                    {
+                        if (!existingCodes.Contains(code))
+                        {
+                            errors.Add($"BannedCountries: country code '{code}' does not exist in the system.");
+                        }
                     }
                 }
             }

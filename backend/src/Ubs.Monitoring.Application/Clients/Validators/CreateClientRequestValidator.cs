@@ -1,15 +1,20 @@
 using FluentValidation;
+using Ubs.Monitoring.Application.Countries;
 
 namespace Ubs.Monitoring.Application.Clients.Validators;
 
 /// <summary>
 /// Validator for client creation requests.
 /// Ensures data integrity and compliance with business rules before client entity creation.
+/// Performs both structural validation (format) and data validation (country existence).
 /// </summary>
 public sealed class CreateClientRequestValidator : AbstractValidator<CreateClientRequest>
 {
-    public CreateClientRequestValidator()
+    private readonly ICountryRepository _countries;
+
+    public CreateClientRequestValidator(ICountryRepository countries)
     {
+        _countries = countries;
         RuleFor(x => x.LegalType)
             .IsInEnum()
             .WithMessage("Legal type must be a valid value (Individual or Corporate).");
@@ -38,9 +43,15 @@ public sealed class CreateClientRequestValidator : AbstractValidator<CreateClien
             .NotEmpty()
             .WithMessage("Country code is required for regulatory compliance.")
             .Length(2)
-            .WithMessage("Country code must be exactly 2 characters (ISO 3166-1 alpha-2 format).")
-            .Matches(@"^[A-Z]{2}$")
-            .WithMessage("Country code must contain only uppercase letters (ISO 3166-1 alpha-2 format).");
+            .WithMessage("Country code must be exactly 2 characters.")
+            .Matches(@"^[A-Za-z]{2}$")
+            .WithMessage("Country code must contain only letters. Example: BR, US, DE.")
+            .MustAsync(async (countryCode, cancellationToken) =>
+            {
+                var normalizedCode = countryCode.Trim().ToUpperInvariant();
+                return await _countries.ExistsAsync(normalizedCode, cancellationToken);
+            })
+            .WithMessage("Country code '{PropertyValue}' does not exist in the system. Please use a valid country code.");
 
         When(x => x.InitialRiskLevel.HasValue, () =>
         {

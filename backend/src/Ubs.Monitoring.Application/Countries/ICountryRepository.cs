@@ -39,6 +39,16 @@ public interface ICountryRepository
     Task<bool> ExistsAsync(string code, CancellationToken ct = default);
 
     /// <summary>
+    /// Retrieves a set of existing country codes from a collection of codes.
+    /// This method performs a single database query instead of multiple individual checks,
+    /// optimizing the N+1 query problem when validating multiple country codes.
+    /// </summary>
+    /// <param name="codes">Collection of ISO alpha-2 country codes to check (e.g., BR, US, GB).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>HashSet containing only the codes that exist in the database (normalized to uppercase).</returns>
+    Task<HashSet<string>> GetExistingCodesAsync(IEnumerable<string> codes, CancellationToken ct = default);
+
+    /// <summary>
     /// Persists changes to the database.
     /// </summary>
     /// <param name="ct">Cancellation token.</param>

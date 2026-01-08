@@ -11,10 +11,12 @@ namespace Ubs.Monitoring.Api.Filters;
 public sealed class ValidationFilter : IAsyncActionFilter
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<ValidationFilter> _logger;
 
-    public ValidationFilter(IServiceProvider serviceProvider)
+    public ValidationFilter(IServiceProvider serviceProvider, ILogger<ValidationFilter> logger)
     {
         _serviceProvider = serviceProvider;
+        _logger = logger;
     }
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -30,7 +32,14 @@ public sealed class ValidationFilter : IAsyncActionFilter
             var validator = _serviceProvider.GetService(validatorType) as IValidator;
 
             if (validator == null)
+            {
+                _logger.LogDebug(
+                    "No FluentValidation validator found for parameter '{ParameterName}' of type '{ParameterType}'. " +
+                    "This is expected for endpoints without validation. If validation was expected, ensure the validator is registered in DI.",
+                    parameter.Name,
+                    argumentType.Name);
                 continue;
+            }
 
             var validationContext = new ValidationContext<object>(argument);
             var validationResult = await validator.ValidateAsync(validationContext, context.HttpContext.RequestAborted);
