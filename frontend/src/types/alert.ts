@@ -8,3 +8,4 @@ export interface AlertItem {
   severity: Severity;
   date: string;
 }
+
