@@ -47,13 +47,10 @@ public static class PdfExportHelper
                 page.PageColor(Colors.White);
                 page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
 
-                // Header
                 page.Header().Element(header => ComposeHeader(header, reportTitle, options));
-
-                // Content (Table)
+                
                 page.Content().Element(content => ComposeContent(content, headers, rows));
-
-                // Footer
+                
                 page.Footer().Element(ComposeFooter);
             });
         });
