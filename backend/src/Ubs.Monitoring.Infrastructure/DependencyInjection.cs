@@ -65,6 +65,9 @@ public static class DependencyInjection
         services.AddScoped<IClientFileImportService, ClientFileImportService>();
         services.AddScoped<IClientService, ClientService>();
         services.AddScoped<ITransactionService, TransactionService>();
+        services.AddScoped<ITransactionSchedulerService, TransactionSchedulerService>();
+        services.AddHostedService<ScheduledTransactionWorker>();
+
 
 
         return services;
