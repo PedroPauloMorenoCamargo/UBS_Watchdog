@@ -9,13 +9,11 @@ import {
 
 import { Button } from "../button";
 import { Eye } from "lucide-react";
-import { SeverityBadge } from "../severitybadge";
-import { adminMock } from "@/mocks/mocks";
-import { useEffect, useRef } from "react";
-import { KYCStatusBadge } from "../kycstatusbadge";
+import { usersMock } from "@/mocks/mocks";
+import { useRef } from "react";
 
 interface AdminTableProps {
-  admin: typeof adminMock;
+  admin: typeof usersMock;
 }
 
 export function AdminTable({
@@ -46,29 +44,28 @@ export function AdminTable({
       className="rounded-lg border bg-white max-h-[420px] overflow-y-auto"
     >
       <Table className="w-full">
-        <TableHeader className="sticky top-0 z-10 bg-white">
+        <TableHeader className="sticky top-0 z-10 bg-slate-200">
           <TableRow>
-            <TableHead className="px-4 py-3">Client ID</TableHead>
+            <TableHead className="px-4 py-3">User ID</TableHead>
             <TableHead className="px-4 py-3">Name</TableHead>
-            <TableHead className="px-4 py-3">Country</TableHead>
-            <TableHead className="px-4 py-3 text-center">Risk Level</TableHead>
-            <TableHead className="px-4 py-3 text-center">KYC Status</TableHead>
-            <TableHead className="px-4 py-3 text-center">Alerts</TableHead>
-            <TableHead className="px-4 py-3 text-left">Balance</TableHead>
-            <TableHead className="px-4 py-3 text-left">Last Activity</TableHead>
+            <TableHead className="px-4 py-3">Email</TableHead>
+            <TableHead className="px-4 py-3 text-center">Role</TableHead>
+            <TableHead className="px-4 py-3 text-center">Department</TableHead>
+            <TableHead className="px-4 py-3 text-center">Status</TableHead>
+            <TableHead className="px-4 py-3 text-left">Last Login</TableHead>
             <TableHead className="px-4 py-3 text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {admin.map((client, index) => {
-            // const selected = client.id === selectedId;
+          {admin.map((user) => {
+            // const selected = user.id === selectedId;
 
             return (
               <TableRow
-                // key={`${client.id}-${index}`}
+                // key={`${user.id}-${index}`}
                 // onClick={() =>
-                //   onSelect(selected ? null : client.id)
+                //   onSelect(selected ? null : user.id)
                 // }
                 // className={`
                 //   cursor-pointer
@@ -77,45 +74,48 @@ export function AdminTable({
                 // aria-selected={selected}
               >
                 <TableCell className="px-4 py-3 text-sm font-medium text-slate-700">
-                  {client.id}
+                  {user.id}
                 </TableCell>
 
                 <TableCell className="px-4 py-3 text-sm font-medium text-slate-700">
-                  {client.name}
+                  {user.name}
                 </TableCell>
 
                 <TableCell className="px-4 py-3 text-sm text-slate-600">
-                  {client.country}
+                  {user.email}
                 </TableCell>
 
                 <TableCell className="px-4 py-3 text-sm text-center">
-                  <SeverityBadge severity={client.risk} />
+                  {user.role}
                 </TableCell>
 
                 <TableCell className="px-4 py-3 text-sm text-center">
-                  <KYCStatusBadge kyc={client.kyc} />
+                 {user.department}
                 </TableCell>
 
-                <TableCell className="px-4 py-3 text-sm text-center">{client.alerts}</TableCell>
-
-                <TableCell className="px-4 py-3 text-sm text-left font-medium">
+                <TableCell className="px-4 py-3 text-sm text-center">
                   <span
-                    className="inline-flex truncate"
-                    title={String(client.balance)}
+                    className={`inline-flex items-center justify-center min-w-[72px] rounded-md border px-2 py-1 text-xs font-medium
+                      ${
+                        user.status === "active"
+                          ? "bg-green-100 text-green-800 border-green-300"
+                          : "bg-gray-100 text-gray-700 border-gray-300"
+                      }
+                    `}
                   >
-                    {client.balance}
+                    {user.status === "active" ? "Active" : "Inactive"}
                   </span>
                 </TableCell>
                 
                 <TableCell className="px-4 py-3 text-sm text-left text-slate-600">
-                  {client.lastActivity}
+                  {user.lastLogin}
                 </TableCell>
 
                 <TableCell className="px-4 py-3 text-sm text-left text-slate-600">
                    <Button
                       variant="ghost"
                       size="sm"
-                      // onClick={() => setSelectedClient(client)} TODO: modal para tratar client
+                      // onClick={() => setSelectedClient(user)} TODO: modal para tratar user
                       className="text-[#e60028] hover:text-[#b8001f] hover:bg-red-50"
                     >
                       <Eye className="w-4 h-4 mr-1" />

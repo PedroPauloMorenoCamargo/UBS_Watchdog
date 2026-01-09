@@ -1,64 +1,99 @@
 import { ChartCard } from "@/components/ui/charts/chartcard";
-import { AlertsTable } from "@/components/ui/tables/alertstable";
+import { AdminTable } from "@/components/ui/tables/admintable";
+import { usersMock } from "@/mocks/mocks";
 
 import {
   Users,
   ShieldCheck,
   Settings,
-  HeartPulse,
+  Activity,
 } from "lucide-react";
+
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
+
 
 
 export function AdminPage() {
 
   return (
     
-    <div
-      className="relative bg-cover bg-center"
-    >
-      {/* Conteúdo */}
-     <div className="relative z-10 p-3">
+    <div className="relative bg-cover bg-center">
+      <Tabs defaultValue="users" className="w-full">
+          <TabsList className="mt-5 bg-white shadow rounded-xl grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <TabsTrigger value="users" 
+              className="flex 
+              gap-2 
+              rounded-lg 
+              transition
+              hover:bg-slate-50
+              data-[state=active]:bg-slate-200"
+            >
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
 
-        {/* Grid */}
-        <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
-          
-          
-        </div>
+            <TabsTrigger value="rules" 
+              className="flex 
+              gap-2 
+              rounded-lg 
+              transition
+              hover:bg-slate-50
+              data-[state=active]:bg-slate-200"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Rules
+            </TabsTrigger>
 
-        <div className="mt-2 rounded-xl bg-white p-2 shadow">
-            <div className="grid grid-cols-1 gap-3 place-items-center sm:grid-cols-2 lg:grid-cols-4">
-                {/* Users */}
-                <div className="flex items-center gap-3 hover:bg-slate-50 cursor-pointer">
-                <Users className="h-4 w-4 text-slate-600" />
-                <span className="font-medium text-slate-700">Users</span>
-                </div>
+            <TabsTrigger value="settings" 
+              className="flex 
+              gap-2 
+              rounded-lg 
+              transition
+              hover:bg-slate-50
+              data-[state=active]:bg-slate-200"
+            >
+              <Settings className="h-4 w-4" />
+              Settings
+            </TabsTrigger>
 
-                {/* Rules */}
-                <div className="flex items-center gap-3 hover:bg-slate-50 cursor-pointer">
-                <ShieldCheck className="h-4 w-4 text-slate-600" />
-                <span className="font-medium text-slate-700">Rules</span>
-                </div>
-
-                {/* Settings */}
-                <div className="flex items-center gap-3 hover:bg-slate-50 cursor-pointer">
-                <Settings className="h-4 w-4 text-slate-600" />
-                <span className="font-medium text-slate-700">Settings</span>
-                </div>
-
-                {/* Audit Log */}
-                <div className="flex items-center gap-3 hover:bg-slate-50 cursor-pointer">
-                <HeartPulse className="h-4 w-4 text-slate-600" />
-                <span className="font-medium text-slate-700">Audit Log</span>
-                </div>
-            </div>
-        </div>
+            <TabsTrigger value="audit" 
+              className="flex 
+              gap-2 
+              rounded-lg 
+              transition
+              hover:bg-slate-50
+              data-[state=active]:bg-slate-200"
+            >
+              <Activity className="h-4 w-4" />
+              Audit Log
+            </TabsTrigger>
+          </TabsList>
 
         <div className="mt-5">
-          <ChartCard title="Recent High-Priority Admin">
-            <AlertsTable severityFilter={"all"}/>
-          </ChartCard>
+          <TabsContent value="users">
+            <ChartCard title="System Users">
+              <AdminTable admin={usersMock}/>
+            </ChartCard>
+          </TabsContent>
+
+          <TabsContent value="rules">
+            {/* TODO: RULES CARDS */}
+          </TabsContent>
+
+          <TabsContent value="settings">
+            {/* TODO: SETTINGS OPTIONS */}
+          </TabsContent>
+
+          <TabsContent value="audit">
+            {/* TODO: HISTORY TABLE */}
+          </TabsContent>
         </div>
-      </div>
+      </Tabs>
     </div>
   );
 }
