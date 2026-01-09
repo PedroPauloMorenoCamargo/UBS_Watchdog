@@ -29,12 +29,33 @@ public static class PdfExportHelper
     /// <param name="title">Report title (optional).</param>
     /// <param name="options">Export options for customization.</param>
     /// <returns>PDF file content as byte array.</returns>
+    /// <exception cref="ArgumentException">Thrown when headers is null/empty or rows have inconsistent column counts.</exception>
     public static byte[] ExportToPdf(
         List<string> headers,
         List<List<string>> rows,
         string? title = null,
         ExportOptions? options = null)
     {
+        // Validate inputs to prevent malformed PDF
+        ArgumentNullException.ThrowIfNull(headers);
+        ArgumentNullException.ThrowIfNull(rows);
+
+        if (headers.Count == 0)
+            throw new ArgumentException("Headers list cannot be empty. At least one column header is required.", nameof(headers));
+
+        // Validate row column counts match header count
+        var expectedColumns = headers.Count;
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            if (row.Count != expectedColumns)
+            {
+                throw new ArgumentException(
+                    $"Row {i + 1} has {row.Count} columns but expected {expectedColumns} (based on headers count).",
+                    nameof(rows));
+            }
+        }
+
         options ??= new ExportOptions();
         var reportTitle = title ?? options.Title ?? "Report";
 
@@ -69,15 +90,29 @@ public static class PdfExportHelper
     /// <param name="title">Report title.</param>
     /// <param name="options">Export options.</param>
     /// <returns>PDF file content as byte array.</returns>
+    /// <exception cref="ArgumentException">Thrown when columnMappings is null/empty or no matching properties found.</exception>
     public static byte[] ExportToPdf<T>(
         IEnumerable<T> records,
         Dictionary<string, string> columnMappings,
         string? title = null,
         ExportOptions? options = null) where T : class
     {
+        // Validate inputs
+        ArgumentNullException.ThrowIfNull(records);
+        ArgumentNullException.ThrowIfNull(columnMappings);
+
+        if (columnMappings.Count == 0)
+            throw new ArgumentException("Column mappings cannot be empty. At least one property mapping is required.", nameof(columnMappings));
+
         var properties = typeof(T).GetProperties()
             .Where(p => columnMappings.ContainsKey(p.Name))
             .ToList();
+
+        if (properties.Count == 0)
+            throw new ArgumentException(
+                $"No properties of type '{typeof(T).Name}' match the provided column mappings. " +
+                $"Available properties: {string.Join(", ", typeof(T).GetProperties().Select(p => p.Name))}",
+                nameof(columnMappings));
 
         var headers = properties
             .Select(p => columnMappings.GetValueOrDefault(p.Name, p.Name))
