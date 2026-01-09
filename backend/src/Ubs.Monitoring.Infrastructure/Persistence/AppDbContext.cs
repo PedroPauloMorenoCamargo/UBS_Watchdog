@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Ubs.Monitoring.Domain.Entities;
 using Ubs.Monitoring.Domain.Enums;
+using Ubs.Monitoring.Infrastructure.Persistence.Seed;
 
 namespace Ubs.Monitoring.Infrastructure.Persistence;
 
@@ -10,6 +11,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Analyst> Analysts => Set<Analyst>();
     public DbSet<Client> Clients => Set<Client>();
+    public DbSet<Country> Countries => Set<Country>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<AccountIdentifier> AccountIdentifiers => Set<AccountIdentifier>();
     public DbSet<FxRate> FxRates => Set<FxRate>();
@@ -67,7 +69,13 @@ public class AppDbContext : DbContext
             b.Property(x => x.CreatedAtUtc).HasDefaultValueSql("now()").IsRequired();
             b.Property(x => x.UpdatedAtUtc).HasDefaultValueSql("now()").IsRequired();
 
-          
+            // Foreign key to countries
+            b.HasOne<Country>()
+                .WithMany()
+                .HasForeignKey(x => x.CountryCode)
+                .HasPrincipalKey(c => c.Code)
+                .OnDelete(DeleteBehavior.Restrict);
+
             b.HasIndex(x => x.CountryCode).HasDatabaseName("ix_clients_country");
             b.HasIndex(x => x.KycStatus).HasDatabaseName("ix_clients_kyc_status");
             b.HasIndex(x => x.RiskLevel).HasDatabaseName("ix_clients_risk_level");
@@ -299,6 +307,12 @@ public class AppDbContext : DbContext
             b.HasIndex(x => x.PerformedAtUtc).HasDatabaseName("ix_audit_performed_at");
             b.HasIndex(x => new { x.PerformedByAnalystId, x.PerformedAtUtc }).HasDatabaseName("ix_audit_by_analyst_time");
         });
+
+        // Apply all IEntityTypeConfiguration from this assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // Seed data
+        modelBuilder.SeedCountries();
 
         base.OnModelCreating(modelBuilder);
     }
