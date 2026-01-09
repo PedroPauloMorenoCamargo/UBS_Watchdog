@@ -64,6 +64,8 @@ public static class DependencyInjection
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IClientFileImportService, ClientFileImportService>();
         services.AddScoped<IClientService, ClientService>();
+        services.AddScoped<ITransactionService, TransactionService>();
+
 
         return services;
     }
