@@ -6,6 +6,7 @@ import { requireAuth } from "@/middlewares/authMiddleware";
 import { requireRole } from "@/middlewares/roleMiddleware";
 import { AlertsPage } from "@/pages/AlertsPage";
 import { TransactionsPage } from "@/pages/TransactionsPage";
+import { ClientsPage } from "@/pages/ClientsPage";
 
 export const router = createBrowserRouter([
   { 
@@ -39,7 +40,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/clients",
-        element: <div>Clients Page</div>,
+        element: <ClientsPage />,
         handle: {
           title: "Clients",
         },
