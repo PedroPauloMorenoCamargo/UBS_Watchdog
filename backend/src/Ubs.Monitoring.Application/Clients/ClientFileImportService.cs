@@ -1,14 +1,12 @@
-using System.Globalization;
-using ClosedXML.Excel;
-using CsvHelper;
-using CsvHelper.Configuration;
+using Ubs.Monitoring.Application.Common.FileImport;
 
 namespace Ubs.Monitoring.Application.Clients;
 
 /// <summary>
-/// Service for parsing client import files (CSV and Excel).
+/// Client-specific implementation of file parser.
+/// Handles CSV and Excel parsing with client-specific field mapping.
 /// </summary>
-public sealed class ClientFileImportService : IClientFileImportService
+public sealed class ClientFileImportService : IFileParser<ClientImportRow>
 {
     /// <summary>
     /// Parses a CSV or Excel file and returns a list of client import rows.
@@ -19,91 +17,56 @@ public sealed class ClientFileImportService : IClientFileImportService
     /// <exception cref="InvalidOperationException">Thrown when file format is invalid or unsupported.</exception>
     public List<ClientImportRow> ParseFile(Stream stream, string fileName)
     {
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        FileParsingHelper.ValidateFileExtension(fileName);
 
-        return extension switch
+        if (FileParsingHelper.IsCsvFile(fileName))
         {
-            ".csv" => ParseCsv(stream),
-            ".xlsx" or ".xls" => ParseExcel(stream),
-            _ => throw new InvalidOperationException($"Unsupported file format: {extension}. Only CSV and Excel files are supported.")
-        };
+            return ParseCsv(stream);
+        }
+
+        if (FileParsingHelper.IsExcelFile(fileName))
+        {
+            return ParseExcel(stream);
+        }
+
+        throw new InvalidOperationException($"Unsupported file format: {Path.GetExtension(fileName)}");
     }
 
     /// <summary>
-    /// Parses a CSV file.
+    /// Parses a CSV file using generic helper.
     /// </summary>
     private List<ClientImportRow> ParseCsv(Stream stream)
     {
-        using var reader = new StreamReader(stream, leaveOpen: true);
-        using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            HasHeaderRecord = true,
-            MissingFieldFound = null, // Ignore missing fields
-            HeaderValidated = null,   // Don't validate headers strictly
-            TrimOptions = TrimOptions.Trim
-        });
-
-        var records = csv.GetRecords<ClientImportRow>().ToList();
-        return records;
+        return FileParsingHelper.ParseCsv<ClientImportRow>(stream);
     }
 
     /// <summary>
-    /// Parses an Excel file (.xlsx or .xls).
+    /// Parses an Excel file using generic helper with client-specific mapping.
     /// </summary>
     private List<ClientImportRow> ParseExcel(Stream stream)
     {
+        var rawRows = FileParsingHelper.ParseExcelRaw(stream, worksheetIndex: 1);
         var clients = new List<ClientImportRow>();
 
-        using var workbook = new XLWorkbook(stream);
-        var worksheet = workbook.Worksheet(1); // First sheet
-
-        // Find header row (assumes first row is header)
-        var headerRow = worksheet.Row(1);
-
-        // Map column names to indices
-        var columnMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        for (int col = 1; col <= headerRow.CellsUsed().Count(); col++)
-        {
-            var headerName = headerRow.Cell(col).GetString().Trim();
-            columnMap[headerName] = col;
-        }
-
-        // Read data rows
-        var rows = worksheet.RowsUsed().Skip(1); // Skip header
-        foreach (var row in rows)
+        foreach (var row in rawRows)
         {
             var client = new ClientImportRow
             {
-                LegalType = GetCellValue(row, columnMap, "LegalType"),
-                Name = GetCellValue(row, columnMap, "Name"),
-                ContactNumber = GetCellValue(row, columnMap, "ContactNumber"),
-                Street = GetCellValue(row, columnMap, "Street"),
-                City = GetCellValue(row, columnMap, "City"),
-                State = GetCellValue(row, columnMap, "State"),
-                ZipCode = GetCellValue(row, columnMap, "ZipCode"),
-                Country = GetCellValue(row, columnMap, "Country"),
-                CountryCode = GetCellValue(row, columnMap, "CountryCode"),
-                RiskLevel = GetCellValue(row, columnMap, "RiskLevel", required: false)
+                LegalType = FileParsingHelper.GetColumnValue(row, "LegalType"),
+                Name = FileParsingHelper.GetColumnValue(row, "Name"),
+                ContactNumber = FileParsingHelper.GetColumnValue(row, "ContactNumber"),
+                Street = FileParsingHelper.GetColumnValue(row, "Street"),
+                City = FileParsingHelper.GetColumnValue(row, "City"),
+                State = FileParsingHelper.GetColumnValue(row, "State"),
+                ZipCode = FileParsingHelper.GetColumnValue(row, "ZipCode"),
+                Country = FileParsingHelper.GetColumnValue(row, "Country"),
+                CountryCode = FileParsingHelper.GetColumnValue(row, "CountryCode"),
+                RiskLevel = FileParsingHelper.GetColumnValue(row, "RiskLevel", required: false)
             };
 
             clients.Add(client);
         }
 
         return clients;
-    }
-
-    /// <summary>
-    /// Gets a cell value from an Excel row by column name.
-    /// </summary>
-    private string GetCellValue(IXLRow row, Dictionary<string, int> columnMap, string columnName, bool required = true)
-    {
-        if (!columnMap.TryGetValue(columnName, out var colIndex))
-        {
-            if (required)
-                throw new InvalidOperationException($"Required column '{columnName}' not found in Excel file.");
-            return string.Empty;
-        }
-
-        return row.Cell(colIndex).GetString().Trim();
     }
 }

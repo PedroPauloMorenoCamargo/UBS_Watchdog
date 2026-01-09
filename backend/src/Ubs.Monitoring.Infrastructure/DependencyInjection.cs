@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ubs.Monitoring.Application.Analysts;
 using Ubs.Monitoring.Application.Auth;
 using Ubs.Monitoring.Application.Clients;
+using Ubs.Monitoring.Application.Common.FileImport;
 using Ubs.Monitoring.Infrastructure.Auth;
 using Ubs.Monitoring.Infrastructure.Persistence;
 using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
@@ -62,7 +63,7 @@ public static class DependencyInjection
         services.AddScoped<IComplianceRuleService, ComplianceRuleService>();
         // Clients
         services.AddScoped<IClientRepository, ClientRepository>();
-        services.AddScoped<IClientFileImportService, ClientFileImportService>();
+        services.AddScoped<IFileParser<ClientImportRow>, ClientFileImportService>();
         services.AddScoped<IClientService, ClientService>();
 
         return services;
