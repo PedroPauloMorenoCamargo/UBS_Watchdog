@@ -17,19 +17,16 @@ public sealed class ClientFileImportService : IFileParser<ClientImportRow>
     /// <exception cref="InvalidOperationException">Thrown when file format is invalid or unsupported.</exception>
     public List<ClientImportRow> ParseFile(Stream stream, string fileName)
     {
-        FileParsingHelper.ValidateFileExtension(fileName);
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
 
-        if (FileParsingHelper.IsCsvFile(fileName))
+        return extension switch
         {
-            return ParseCsv(stream);
-        }
-
-        if (FileParsingHelper.IsExcelFile(fileName))
-        {
-            return ParseExcel(stream);
-        }
-
-        throw new InvalidOperationException($"Unsupported file format: {Path.GetExtension(fileName)}");
+            ".csv" => ParseCsv(stream),
+            ".xlsx" or ".xls" => ParseExcel(stream),
+            _ => throw new InvalidOperationException(
+                $"Unsupported file format: {extension}. " +
+                $"Supported formats: {string.Join(", ", FileParsingHelper.SupportedExtensions)}")
+        };
     }
 
     /// <summary>

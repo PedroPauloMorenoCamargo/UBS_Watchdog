@@ -77,26 +77,63 @@ public static class FileParsingHelper
     /// <param name="stream">File stream.</param>
     /// <param name="worksheetIndex">Worksheet index (1-based, default = 1).</param>
     /// <returns>List of rows, where each row is a dictionary of column name to cell value.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when worksheet is empty or has no data rows.</exception>
     public static List<Dictionary<string, string>> ParseExcelRaw(Stream stream, int worksheetIndex = 1)
     {
-        var rows = new List<Dictionary<string, string>>();
-
         using var workbook = new XLWorkbook(stream);
+        
+        // Validate worksheet exists
+        if (workbook.Worksheets.Count < worksheetIndex)
+        {
+            throw new InvalidOperationException(
+                $"Worksheet {worksheetIndex} not found. File has {workbook.Worksheets.Count} worksheet(s).");
+        }
+
         var worksheet = workbook.Worksheet(worksheetIndex);
 
-        // Extract header row
-        var headerRow = worksheet.Row(1);
-        var columnMap = new Dictionary<int, string>(); 
+        // Validate worksheet has rows
+        var usedRows = worksheet.RowsUsed().ToList();
+        if (usedRows.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Excel file is empty. Please provide a file with at least a header row and one data row.");
+        }
 
-        foreach (var cell in headerRow.CellsUsed())
+        // Extract header row
+        var headerRow = usedRows.First();
+        var headerCells = headerRow.CellsUsed().ToList();
+
+        if (headerCells.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Excel file header row is empty. Please ensure the first row contains column names.");
+        }
+
+        var columnMap = new Dictionary<int, string>();
+        foreach (var cell in headerCells)
         {
             var colIndex = cell.Address.ColumnNumber;
             var headerName = cell.GetString().Trim();
+            
+            if (string.IsNullOrWhiteSpace(headerName))
+            {
+                throw new InvalidOperationException(
+                    $"Empty column header found at position {colIndex}. All columns must have names.");
+            }
+
             columnMap[colIndex] = headerName;
         }
 
         // Extract data rows
-        var dataRows = worksheet.RowsUsed().Skip(1); 
+        var dataRows = usedRows.Skip(1).ToList();
+        
+        if (dataRows.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Excel file has no data rows. Please provide at least one row of data after the header.");
+        }
+
+        var rows = new List<Dictionary<string, string>>();
         foreach (var row in dataRows)
         {
             var rowData = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -108,7 +145,13 @@ public static class FileParsingHelper
                     rowData[columnName] = cell.GetString().Trim();
                 }
             }
-            rows.Add(rowData);
+
+            // Only add rows that have at least one value in the mapped columns
+            // This filters out rows that only have data outside the header columns
+            if (rowData.Count > 0)
+            {
+                rows.Add(rowData);
+            }
         }
 
         return rows;

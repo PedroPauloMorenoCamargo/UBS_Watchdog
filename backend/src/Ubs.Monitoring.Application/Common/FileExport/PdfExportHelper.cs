@@ -1,3 +1,4 @@
+using System.Globalization;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -148,7 +149,7 @@ public static class PdfExportHelper
                     if (options.IncludeTimestamp)
                     {
                         column.Item()
-                            .Text($"Generated: {DateTime.UtcNow.ToString(options.DateFormat)} UTC")
+                            .Text($"Generated: {DateTime.UtcNow.ToString(options.DateFormat, CultureInfo.InvariantCulture)} UTC")
                             .FontSize(8)
                             .FontColor(Colors.Grey.Darken1);
                     }
