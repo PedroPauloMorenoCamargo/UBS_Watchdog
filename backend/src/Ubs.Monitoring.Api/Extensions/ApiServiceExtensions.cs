@@ -1,4 +1,7 @@
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using Ubs.Monitoring.Api.Filters;
+using Ubs.Monitoring.Application.Clients;
 
 namespace Ubs.Monitoring.Api.Extensions;
 
@@ -10,11 +13,19 @@ public static class ApiServiceExtensions
     /// <returns>The same <see cref="IServiceCollection"/> instance for t registration.</returns>
     public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddControllers(options =>
+        {
+            // Global validation filter - automatically validates all requests
+            options.Filters.Add<ValidationFilter>();
+        });
+
         services.AddEndpointsApiExplorer();
 
         // RFC7807 / application/problem+json
         services.AddProblemDetails();
+
+        // FluentValidation - registers all validators from Application assembly
+        services.AddValidatorsFromAssemblyContaining<CreateClientRequest>();
 
         return services;
     }

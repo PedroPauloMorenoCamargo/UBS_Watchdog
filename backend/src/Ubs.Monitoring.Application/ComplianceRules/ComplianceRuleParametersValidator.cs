@@ -1,11 +1,23 @@
 using System.Text.Json;
+using Ubs.Monitoring.Application.Countries;
 using Ubs.Monitoring.Domain.Enums;
 
 namespace Ubs.Monitoring.Application.ComplianceRules;
 
 public sealed class ComplianceRuleParametersValidator : IComplianceRuleParametersValidator
 {
-    public IReadOnlyList<string> Validate(RuleType ruleType, JsonElement parameters)
+    private readonly ICountryRepository _countries;
+
+    public ComplianceRuleParametersValidator(ICountryRepository countries)
+    {
+        _countries = countries;
+    }
+
+    /// <summary>
+    /// Performs structural validation (format, types, required fields) without database checks.
+    /// This is a private helper method used internally by ValidateAsync.
+    /// </summary>
+    private IReadOnlyList<string> ValidateStructure(RuleType ruleType, JsonElement parameters)
     {
         var errors = new List<string>();
 
@@ -28,7 +40,7 @@ public sealed class ComplianceRuleParametersValidator : IComplianceRuleParameter
                         if (c.ValueKind != JsonValueKind.String)
                             errors.Add("BannedCountries: each country must be a string.");
                         else if ((c.GetString() ?? "").Trim().Length != 2)
-                            errors.Add("BannedCountries: each country must be ISO alpha-2 (length 2).");
+                            errors.Add("BannedCountries: each country code must have exactly 2 characters (e.g., BR, US, DE)");
                     }
                 }
                 break;
@@ -51,6 +63,52 @@ public sealed class ComplianceRuleParametersValidator : IComplianceRuleParameter
             default:
                 errors.Add($"Unsupported rule type: {ruleType}");
                 break;
+        }
+
+        return errors;
+    }
+
+    public async Task<IReadOnlyList<string>> ValidateAsync(RuleType ruleType, JsonElement parameters, CancellationToken ct = default)
+    {
+        // First: structural validation (fast, synchronous - format, types, required fields)
+        var errors = ValidateStructure(ruleType, parameters).ToList();
+
+        // Early return if structural validation failed - no point checking database with invalid format
+        if (errors.Count > 0)
+            return errors;
+
+        // Second: data validation (slow, asynchronous - database checks)
+        // Only runs if structural validation passed
+        if (ruleType == RuleType.BannedCountries)
+        {
+            if (parameters.TryGetProperty("countries", out var countries) && countries.ValueKind == JsonValueKind.Array)
+            {
+
+                var countryCodesList = new List<string>();
+                foreach (var c in countries.EnumerateArray())
+                {
+                    var countryCode = c.GetString()?.Trim().ToUpperInvariant();
+                    if (!string.IsNullOrEmpty(countryCode))
+                    {
+                        countryCodesList.Add(countryCode);
+                    }
+                }
+
+
+                if (countryCodesList.Count > 0)
+                {
+                    var existingCodes = await _countries.GetExistingCodesAsync(countryCodesList, ct);
+
+                    // Check which codes don't exist
+                    foreach (var code in countryCodesList)
+                    {
+                        if (!existingCodes.Contains(code))
+                        {
+                            errors.Add($"BannedCountries: country code '{code}' does not exist in the system.");
+                        }
+                    }
+                }
+            }
         }
 
         return errors;

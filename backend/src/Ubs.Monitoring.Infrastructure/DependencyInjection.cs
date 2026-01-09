@@ -5,12 +5,13 @@ using Ubs.Monitoring.Application.Analysts;
 using Ubs.Monitoring.Application.Auth;
 using Ubs.Monitoring.Application.Clients;
 using Ubs.Monitoring.Application.Common.FileImport;
+using Ubs.Monitoring.Application.ComplianceRules;
+using Ubs.Monitoring.Application.Countries;
 using Ubs.Monitoring.Infrastructure.Auth;
 using Ubs.Monitoring.Infrastructure.Persistence;
 using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
 using Ubs.Monitoring.Infrastructure.Persistence.Seeding;
-using Ubs.Monitoring.Application.ComplianceRules;
-
+using Ubs.Monitoring.Infrastructure.Repositories;
 
 namespace Ubs.Monitoring.Infrastructure;
 
@@ -59,12 +60,15 @@ public static class DependencyInjection
         services.AddScoped<IAnalystProfileService, AnalystProfileService>();
         // Compliance Rules
         services.AddScoped<IComplianceRuleRepository, ComplianceRuleRepository>();
-        services.AddSingleton<IComplianceRuleParametersValidator, ComplianceRuleParametersValidator>();
+        services.AddScoped<IComplianceRuleParametersValidator, ComplianceRuleParametersValidator>();
         services.AddScoped<IComplianceRuleService, ComplianceRuleService>();
         // Clients
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IFileParser<ClientImportRow>, ClientFileImportService>();
         services.AddScoped<IClientService, ClientService>();
+        // Countries
+        services.AddScoped<ICountryRepository, CountryRepository>();
+        services.AddScoped<ICountryService, CountryService>();
 
         return services;
     }
