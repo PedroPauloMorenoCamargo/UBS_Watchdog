@@ -25,7 +25,7 @@ export function RuleCard({
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h4 className="font-medium text-gray-900">{rule.name}</h4>
-            <SeverityBadge severity={rule.severity} className="rounded-sm px-2"
+            <SeverityBadge severity={rule.severity}
 />
           </div>
 

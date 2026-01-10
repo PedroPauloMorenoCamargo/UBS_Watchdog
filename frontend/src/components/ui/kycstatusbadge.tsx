@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface KYCStatusBadgeProps {
   kyc:  "Expired" | "Pending" | "Verified";
@@ -14,7 +15,10 @@ export function KYCStatusBadge({ kyc }: KYCStatusBadgeProps) {
   return (
     <Badge
       variant="outline"
-      className={styles[kyc]}
+      className={cn(
+        "rounded-sm text-xs font-medium capitalize",
+        styles[kyc],
+      )}
     >
       {kyc}
     </Badge>

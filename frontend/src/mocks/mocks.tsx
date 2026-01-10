@@ -36,6 +36,7 @@ interface Alert {
   id: string;
   client: string;
   severity: Severity;
+  status: Status;
   rule: string;
   amount: string;
   time: string;
@@ -46,74 +47,84 @@ const alertsMock:Alert[] = [
     id: "ALT-2024-1847",
     client: "Acme Corporation",
     severity: "High",
+    status: "New",
     rule: "Large Cash Deposit",
     amount: "$400,0000000085,000",
     time: "10 mins ago",
   },
   {
-    id: "ALT-2024-1846",
+    id: "ALT-2024-1806",
     client: "Global Trading Ltd",
     severity: "High",
+    status: "Analysis",
     rule: "Suspicious Pattern",
     amount: "$125,000",
     time: "25 mins ago",
   },
   {
-    id: "ALT-2024-1845",
+    id: "ALT-2024-1422",
     client: "Tech Ventures Inc",
     severity: "Medium",
+    status: "Resolved",
     rule: "Cross-Border Transaction",
     amount: "$67,500",
     time: "1 hour ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
-    severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    id: "ALT-2024-1427",
+    client: "Acme Corporation",
+    severity: "High",
+    status: "New",
+    rule: "Large Cash Deposit",
+    amount: "$400,0000000085,000",
+    time: "10 mins ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
+    id: "ALT-2024-1865",
+    client: "Global Trading Ltd",
     severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    status: "Analysis",
+    rule: "Suspicious Pattern",
+    amount: "$125,000",
+    time: "25 mins ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
-    severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    id: "ALT-2024-1841",
+    client: "Tech Ventures Inc",
+    severity: "Medium",
+    status: "Resolved",
+    rule: "Cross-Border Transaction",
+    amount: "$67,500",
+    time: "1 hour ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
+    id: "ALT-2024-1827",
+    client: "Acme Corporation",
     severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    status: "New",
+    rule: "Large Cash Deposit",
+    amount: "$400,0000000085,000",
+    time: "10 mins ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
-    severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    id: "ALT-2024-1836",
+    client: "Global Trading Ltd",
+    severity: "High",
+    status: "Analysis",
+    rule: "Suspicious Pattern",
+    amount: "$125,000",
+    time: "25 mins ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
+    id: "ALT-2024-1945",
+    client: "Tech Ventures Inc",
     severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    status: "Resolved",
+    rule: "Cross-Border Transaction",
+    amount: "$67,500",
+    time: "1 hour ago",
   },
+  
 ];
 interface Parties {
   sender: string;
@@ -375,6 +386,7 @@ const usersMock: User[]=[
 ]
 
 import type { Rule } from "@/types/rules";
+import type { Status } from "@/types/status";
 
 const rulesMock: Rule[] = [
   {
