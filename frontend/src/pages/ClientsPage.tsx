@@ -8,6 +8,9 @@ import { COUNTRIES, type CountriesFilter } from "@/types/countries";
 
 import { clientsMock } from "@/mocks/mocks";
 
+import { ClientFormDialog } from "@/components/ui/clients/ClientFormDialog";
+import type { CreateClientDTO } from "@/components/ui/clients/ClientForm";
+
 import { Search } from "lucide-react";
 
 import {
@@ -22,11 +25,15 @@ import { ChartCard } from "@/components/ui/charts/chartcard";
 import { ClientsTable } from "@/components/ui/tables/clientstable";
 
 
+
 export function ClientsPage() {
   const [search, setSearch] = useState("");
   const [risk, setRisk] = useState<SeverityFilter>("all");
   const [countries, setCountries] = useState<CountriesFilter>("all");
   const [kyc, setKyc] = useState<KycFilter>("all");
+
+  const [dialogOpen, setDialogOpen] = useState(false); 
+  const [isCreating, setIsCreating] = useState(false);
 
 
 function handleCountryChange(value: CountriesFilter) {
@@ -55,6 +62,28 @@ function handleCountryChange(value: CountriesFilter) {
   });
 }, [search, risk, countries, kyc]);
 
+const handleCreateClient = async (data: CreateClientDTO) => {
+    setIsCreating(true);
+
+    try {
+      // 🔹 AQUI VOCÊ VAI CHAMAR A API OU REDUX
+      console.log("Dados do cliente:", data);
+
+      // Simulando delay de API
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // TODO: Implementar chamada real
+      // await dispatch(createClient(data)).unwrap();
+
+      alert("Cliente criado com sucesso!");
+      setDialogOpen(false); // Fecha o dialog após sucesso
+    } catch (error) {
+      console.error("Erro ao criar cliente:", error);
+      alert("Erro ao criar cliente. Tente novamente.");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   return (
     <div className="relative">
@@ -162,8 +191,15 @@ function handleCountryChange(value: CountriesFilter) {
       
       <div className="mt-4 rounded-xl bg-white p-4 shadow">
           <div className="flex flex-wrap items-center gap-3">
-            <Button className="cursor-pointer hover:bg-slate-600"
+            {/* <Button className="cursor-pointer hover:bg-slate-600"
               onClick={() => console.log("Criar")}>
+              Criar Cliente
+            </Button> */}
+
+            <Button
+              className="cursor-pointer hover:bg-slate-600"
+              onClick={() => setDialogOpen(true)}
+            >
               Criar Cliente
             </Button>
 
@@ -180,6 +216,13 @@ function handleCountryChange(value: CountriesFilter) {
           <ClientsTable clients={filteredClients} />
         </ChartCard>
       </div>
+
+      <ClientFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSubmit={handleCreateClient}
+        isLoading={isCreating}
+      />
     </div>
   );
 }
