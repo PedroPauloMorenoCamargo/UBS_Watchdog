@@ -1,4 +1,4 @@
-export type Severity = "high" | "medium" | "low";
+export type Severity = "High" | "Medium" | "Low";
 export type SeverityFilter = Severity | "all";
 
 export interface AlertItem {
