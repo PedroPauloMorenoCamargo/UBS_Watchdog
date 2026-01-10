@@ -18,7 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<Case> Cases => Set<Case>();
     public DbSet<CaseFinding> CaseFindings => Set<CaseFinding>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
-    public DbSet<ScheduledTransaction> ScheduledTransactions => Set<ScheduledTransaction>();
+    
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
