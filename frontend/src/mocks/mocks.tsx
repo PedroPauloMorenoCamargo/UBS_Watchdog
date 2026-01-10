@@ -138,7 +138,7 @@ interface Transaction {
   parties: Parties;
   country: string;
   severity: Severity;
-  status: string;
+  status: TransactionStatus;
 }
 const transactionsMock: Transaction[] = [
   {
@@ -387,6 +387,7 @@ const usersMock: User[]=[
 
 import type { Rule } from "@/types/rules";
 import type { Status } from "@/types/status";
+import type { TransactionStatus } from "@/types/transactionstatus";
 
 const rulesMock: Rule[] = [
   {
