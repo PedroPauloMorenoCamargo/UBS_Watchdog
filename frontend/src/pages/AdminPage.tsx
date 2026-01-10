@@ -1,6 +1,7 @@
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AdminTable } from "@/components/ui/tables/admintable";
-import { usersMock } from "@/mocks/mocks";
+import { usersMock, rulesMock } from "@/mocks/mocks";
+import { RulesGrid } from "@/components/ui/grids/rules-grid";
 
 import {
   Users,
@@ -82,7 +83,12 @@ export function AdminPage() {
           </TabsContent>
 
           <TabsContent value="rules">
-            {/* TODO: RULES CARDS */}
+            <RulesGrid
+              rules={rulesMock}
+              onToggleRule={(id) => console.log("toggle", id)}
+              onConfigureRule={(rule) => console.log("configure", rule)}
+              onDeleteRule={(id) => console.log("delete", id)}
+            />
           </TabsContent>
 
           <TabsContent value="settings">

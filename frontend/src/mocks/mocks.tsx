@@ -374,4 +374,71 @@ const usersMock: User[]=[
   },
 ]
 
-export { weeklyActivity,weeklyAlertsBySeverity, transactionsByType, alertsBySeverity, COLORS, alertsMock, transactionsMock, clientsMock, reportsMock, usersMock};
+import type { Rule } from "@/types/rules";
+
+const rulesMock: Rule[] = [
+  {
+    id: "rule-001",
+    name: "High Transaction Volume",
+    description:
+      "Triggers when a user performs an unusually high number of transactions in a short period.",
+    severity: "High",
+    threshold: 50,
+    triggeredCount: 12,
+    enabled: true,
+  },
+  {
+    id: "rule-002",
+    name: "Multiple Failed Login Attempts",
+    description:
+      "Detects multiple failed login attempts that may indicate brute-force attacks.",
+    severity: "Medium",
+    threshold: 5,
+    triggeredCount: 34,
+    enabled: true,
+  },
+  {
+    id: "rule-003",
+    name: "New Device Login",
+    description:
+      "Alerts when a user logs in from a previously unseen device.",
+    severity: "Low",
+    threshold: 1,
+    triggeredCount: 87,
+    enabled: true,
+  },
+  {
+    id: "rule-004",
+    name: "Access From Blacklisted Country",
+    description:
+      "Triggers when access originates from a country on the blacklist.",
+    severity: "High",
+    threshold: 1,
+    triggeredCount: 4,
+    enabled: false,
+  },
+  {
+    id: "rule-005",
+    name: "Unusual Transaction Amount",
+    description:
+      "Detects transactions that exceed the user's normal transaction amount.",
+    severity: "Medium",
+    threshold: 10000,
+    triggeredCount: 9,
+    enabled: true,
+  },
+  {
+    id: "rule-006",
+    name: "Rapid Password Reset Requests",
+    description:
+      "Flags accounts requesting multiple password resets within a short time frame.",
+    severity: "Low",
+    threshold: 3,
+    triggeredCount: 21,
+    enabled: false,
+  },
+];
+
+
+export { weeklyActivity,weeklyAlertsBySeverity, transactionsByType, alertsBySeverity, COLORS, 
+alertsMock, transactionsMock, clientsMock, reportsMock, usersMock, rulesMock};
