@@ -47,8 +47,8 @@ public sealed class AccountsController : ControllerBase
             if (errorMessage?.Contains("not found", StringComparison.OrdinalIgnoreCase) == true)
             {
                 return Problem(
-                    title: "Client not found",
-                    detail: errorMessage,
+                    title: "Cannot create account",
+                    detail: $"Cannot create account for non-existent client. {errorMessage}",
                     statusCode: StatusCodes.Status404NotFound
                 );
             }
@@ -90,7 +90,7 @@ public sealed class AccountsController : ControllerBase
         {
             return Problem(
                 title: "Client not found",
-                detail: errorMessage ?? $"No client found with ID: {clientId}",
+                detail: $"Cannot retrieve accounts for client '{clientId}': client does not exist.",
                 statusCode: StatusCodes.Status404NotFound
             );
         }
@@ -157,7 +157,7 @@ public sealed class AccountsController : ControllerBase
     /// Maximum file size: 50 MB.
     /// </remarks>
     [HttpPost("clients/{clientId:guid}/accounts/import")]
-    [RequestSizeLimit(50 * 1024 * 1024)] // 50 MB limit
+    [RequestSizeLimit(50 * 1024 * 1024)]
     [ProducesResponseType(typeof(AccountImportResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -189,8 +189,8 @@ public sealed class AccountsController : ControllerBase
         if (result is null)
         {
             return Problem(
-                title: "Client not found",
-                detail: errorMessage ?? $"No client found with ID: {clientId}",
+                title: "Cannot import accounts",
+                detail: $"Cannot import accounts for non-existent client. Client ID '{clientId}' not found.",
                 statusCode: StatusCodes.Status404NotFound
             );
         }

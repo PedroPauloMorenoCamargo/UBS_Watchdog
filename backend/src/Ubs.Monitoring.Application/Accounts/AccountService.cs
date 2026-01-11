@@ -129,12 +129,15 @@ public sealed class AccountService : IAccountService
             return (null, $"Client with ID '{clientId}' not found.");
         }
 
+        // Tracks account identifiers within this import batch to detect duplicates in the same file
+        var batchAccountIdentifiers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         try
         {
             var rows = _fileParser.ParseFile(fileStream, fileName);
             _logger.LogInformation("Parsed {RowCount} rows from file: {FileName}", rows.Count, fileName);
 
-            var (successCount, errors) = await ProcessImportRowsAsync(clientId, rows, ct);
+            var (successCount, errors) = await ProcessImportRowsAsync(clientId, rows, ct, batchAccountIdentifiers);
 
             _logger.LogInformation("Import completed for {FileName}: {SuccessCount} succeeded, {ErrorCount} failed, {TotalRows} total",
                 fileName, successCount, errors.Count, rows.Count);
@@ -155,7 +158,8 @@ public sealed class AccountService : IAccountService
     private async Task<(int SuccessCount, List<AccountImportErrorDto> Errors)> ProcessImportRowsAsync(
         Guid clientId,
         List<AccountImportRow> rows,
-        CancellationToken ct)
+        CancellationToken ct,
+        HashSet<string> batchAccountIdentifiers)
     {
         var errors = new List<AccountImportErrorDto>();
         var successCount = 0;
@@ -163,7 +167,7 @@ public sealed class AccountService : IAccountService
         for (int i = 0; i < rows.Count; i++)
         {
             var lineNumber = i + AccountServiceConstants.ImportLineNumberOffset;
-            var processResult = await ProcessSingleRowAsync(clientId, rows[i], lineNumber, ct);
+            var processResult = await ProcessSingleRowAsync(clientId, rows[i], lineNumber, ct, batchAccountIdentifiers);
 
             if (processResult.IsSuccess)
             {
@@ -199,7 +203,8 @@ public sealed class AccountService : IAccountService
         Guid clientId,
         AccountImportRow row,
         int lineNumber,
-        CancellationToken ct)
+        CancellationToken ct,
+        HashSet<string> batchAccountIdentifiers)
     {
         try
         {
@@ -213,6 +218,14 @@ public sealed class AccountService : IAccountService
                     $"Account identifier '{request.AccountIdentifier}' already exists."));
             }
 
+            if (batchAccountIdentifiers.Contains(row.AccountIdentifier))
+            {
+                return (false, new AccountImportErrorDto(
+                    lineNumber,
+                    row.AccountIdentifier ?? "Unknown",
+                    $"Account identifier '{row.AccountIdentifier}' appears multiple times in this import file."
+                ));
+            }
 
             var account = new Account(
                 clientId: clientId,
@@ -223,6 +236,8 @@ public sealed class AccountService : IAccountService
             );
 
             _accounts.Add(account);
+
+            batchAccountIdentifiers.Add(row.AccountIdentifier);
 
             return (true, null);
         }

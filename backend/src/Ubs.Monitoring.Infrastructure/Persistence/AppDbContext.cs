@@ -102,7 +102,8 @@ public class AppDbContext : DbContext
             // Configure backing field for Identifiers collection
             b.HasMany(x => x.Identifiers)
                 .WithOne(i => i.Account)
-                .HasForeignKey(i => i.AccountId);
+                .HasForeignKey(i => i.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
             b.Navigation(x => x.Identifiers).UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 

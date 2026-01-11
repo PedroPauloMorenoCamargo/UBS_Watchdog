@@ -37,12 +37,13 @@ public sealed class AccountIdentifierService : IAccountIdentifierService
 
         var identifiers = account.Identifiers.Select(MapToDto).ToList();
 
+        _logger.LogDebug("Retrieved {Count} identifiers for account {AccountId}", identifiers.Count, accountId);
 
         return (identifiers, null);
     }
 
     /// <summary>
-    /// Creates a new identifier for an account.
+    /// Creates a new identifier for an account using domain method.
     /// </summary>
     public async Task<(AccountIdentifierDto? Result, string? ErrorMessage)> CreateIdentifierAsync(
         Guid accountId,
@@ -52,18 +53,22 @@ public sealed class AccountIdentifierService : IAccountIdentifierService
         _logger.LogInformation("Creating identifier {IdentifierType} for account {AccountId}",
             request.IdentifierType, accountId);
 
-        if (!await _accounts.ExistsAsync(accountId, ct))
-        {
-            _logger.LogWarning("Create identifier failed: Account {AccountId} not found", accountId);
-            return (null, $"Account with ID '{accountId}' not found.");
-        }
-
         var identifierValue = request.IdentifierValue?.Trim();
         if (string.IsNullOrWhiteSpace(identifierValue))
         {
             return (null, "Identifier value is required.");
         }
 
+        // Retrieve account with tracking for update
+        var account = await _accounts.GetForUpdateWithIdentifiersAsync(accountId, ct);
+
+        if (account is null)
+        {
+            _logger.LogWarning("Create identifier failed: Account {AccountId} not found", accountId);
+            return (null, $"Account with ID '{accountId}' not found.");
+        }
+
+        // Check for duplicate before domain operation
         if (await _accounts.IdentifierExistsAsync(accountId, request.IdentifierType, identifierValue, ct))
         {
             _logger.LogWarning("Create identifier failed: Identifier {IdentifierType} with value '{IdentifierValue}' already exists for account {AccountId}",
@@ -73,22 +78,29 @@ public sealed class AccountIdentifierService : IAccountIdentifierService
 
         try
         {
-            var identifier = new AccountIdentifier(
-                accountId,
+            account.AddIdentifier(
                 request.IdentifierType,
                 identifierValue,
                 request.IssuedCountryCode?.Trim().ToUpperInvariant()
             );
 
-            _accounts.AddIdentifier(identifier);
             await _accounts.SaveChangesAsync(ct);
 
-            _logger.LogInformation("Identifier {IdentifierId} created successfully for account {AccountId}",
-                identifier.Id, accountId);
+            var createdIdentifier = account.Identifiers
+                .First(i => i.IdentifierType == request.IdentifierType && i.IdentifierValue == identifierValue);
 
-            return (MapToDto(identifier), null);
+            _logger.LogInformation("Identifier {IdentifierId} created successfully for account {AccountId}",
+                createdIdentifier.Id, accountId);
+
+            return (MapToDto(createdIdentifier), null);
         }
         catch (ArgumentException ex)
+        {
+            _logger.LogWarning("Create identifier failed for account {AccountId}: {ErrorMessage}",
+                accountId, ex.Message);
+            return (null, ex.Message);
+        }
+        catch (InvalidOperationException ex)
         {
             _logger.LogWarning("Create identifier failed for account {AccountId}: {ErrorMessage}",
                 accountId, ex.Message);
