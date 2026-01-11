@@ -1,13 +1,11 @@
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AdminTable } from "@/components/ui/tables/admintable";
-import { usersMock, rulesMock } from "@/mocks/mocks";
 import { RulesGrid } from "@/components/ui/grids/rules-grid";
+import { usersMock } from "@/mocks/mocks";
 
 import {
   Users,
   ShieldCheck,
-  Settings,
-  Activity,
 } from "lucide-react";
 
 import {
@@ -17,9 +15,21 @@ import {
   TabsContent,
 } from "@/components/ui/tabs";
 
+import { useApi } from "@/hooks/useApi";
+import { fetchRules } from "@/services/rules.service";
+import { mapRuleToCard } from "@/mappers/rule.mapper";
+import { useMemo } from "react";
 
 
 export function AdminPage() {
+   const { data, loading, error } = useApi({
+    fetcher: fetchRules,
+  });
+
+  const rules = useMemo(() => {
+    if (!data) return [];
+    return data.items.map(mapRuleToCard);
+  }, [data]);
 
   return (
     
@@ -59,12 +69,17 @@ export function AdminPage() {
           </TabsContent>
 
           <TabsContent value="rules">
-            <RulesGrid
-              rules={rulesMock}
-              onToggleRule={(id) => console.log("toggle", id)}
-              onConfigureRule={(rule) => console.log("configure", rule)}
-              onDeleteRule={(id) => console.log("delete", id)}
-            />
+            {loading && <p>Loading rules...</p>}
+            {error && <p className="text-red-500">{error}</p>}
+
+            {!loading && !error && (
+              <RulesGrid
+                rules={rules}
+                onToggleRule={(id) => console.log("toggle", id)}
+                onConfigureRule={(rule) => console.log("configure", rule)}
+                onDeleteRule={(id) => console.log("delete", id)}
+              />
+            )}
           </TabsContent>
         </div>
       </Tabs>
