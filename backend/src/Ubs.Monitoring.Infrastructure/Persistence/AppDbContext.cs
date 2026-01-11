@@ -100,6 +100,13 @@ public class AppDbContext : DbContext
                 .WithMany(c => c.Accounts)
                 .HasForeignKey(x => x.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure backing field for Identifiers collection
+            b.HasMany(x => x.Identifiers)
+                .WithOne(i => i.Account)
+                .HasForeignKey(i => i.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+            b.Navigation(x => x.Identifiers).UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         // account_identifiers
@@ -111,11 +118,6 @@ public class AppDbContext : DbContext
             b.Property(x => x.IdentifierValue).HasMaxLength(200).IsRequired();
             b.Property(x => x.IssuedCountryCode).HasColumnType("char(2)");
             b.Property(x => x.CreatedAtUtc).HasDefaultValueSql("now()").IsRequired();
-
-            b.HasOne(x => x.Account)
-                .WithMany(a => a.Identifiers)
-                .HasForeignKey(x => x.AccountId)
-                .OnDelete(DeleteBehavior.Restrict);
 
             // PIX + IBAN unique globally (partial unique)
             b.HasIndex(x => new { x.IdentifierType, x.IdentifierValue })
