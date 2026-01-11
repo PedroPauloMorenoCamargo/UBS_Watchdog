@@ -6,7 +6,6 @@ import type { SeverityFilter } from "@/types/alert";
 import type { KycFilter } from "@/types/kycstatus";
 import { COUNTRIES, type CountriesFilter } from "@/types/countries";
 
-import { clientsMock } from "@/mocks/mocks";
 
 import { Search } from "lucide-react";
 
@@ -17,6 +16,11 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+
+import { useApi } from "@/hooks/useApi";
+import { fetchClients } from "@/services/clients.service";
+import { mapClientToTableRow } from "@/mappers/client.mapper";
+
 
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { ClientsTable } from "@/components/ui/tables/clientstable";
@@ -33,9 +37,18 @@ function handleCountryChange(value: CountriesFilter) {
   setCountries(value);
 }
 
+  const { data, loading, error } = useApi({
+    fetcher: fetchClients,
+  });
+
+  const clients = useMemo(() => {
+    if (!data) return [];
+
+    return data.items.map(mapClientToTableRow);
+  }, [data]);
 
   const filteredClients = useMemo(() => {
-  return clientsMock.filter((t) => {
+  return clients.filter((t) => {
 
       const searchMatch =
         !search ||
@@ -53,17 +66,19 @@ function handleCountryChange(value: CountriesFilter) {
 
     return searchMatch && riskMatch && countryMatch && kycMatch;
   });
-}, [search, risk, countries, kyc]);
+}, [clients, search, risk, countries, kyc]);
 
 
   return (
-    <div className="relative">
+    <div className="relative w-full max-w-full overflow-x-hidden">
       <div className="mt-4 rounded-xl bg-white p-5 shadow">
         
         <div
-          className="grid items-end gap-4"
-          style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1.5fr auto" }}
-        >
+          className="grid gap-4 items-end
+            grid-cols-1
+            sm:grid-cols-2
+            lg:grid-cols-[2fr_1.5fr_1.5fr_1.5fr_auto]
+          ">
           <div>
             <label className="text-xs font-medium text-slate-500">
               Search Client
@@ -175,9 +190,13 @@ function handleCountryChange(value: CountriesFilter) {
           </div>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-5 overflow-x-auto max-w-full">
         <ChartCard title="Clients">
-          <ClientsTable clients={filteredClients} />
+          {loading && <p>Loading...</p>}
+          {error && <p className="text-red-500">{error}</p>}
+          {!loading && !error && (
+            <ClientsTable clients={filteredClients} />
+          )}
         </ChartCard>
       </div>
     </div>
