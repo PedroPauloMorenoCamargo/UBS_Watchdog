@@ -1,15 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import type { TransactionStatus } from "@/types/transactionstatus";
 
-interface KYCStatusBadgeProps {
-  kyc:  "Expired" | "Pending" | "Verified";
+interface TransactionStatusBadgeProps {
+  status: TransactionStatus;
 }
 
-export function KYCStatusBadge({ kyc }: KYCStatusBadgeProps) {
+export function TransactionStatusBadge({ status }: TransactionStatusBadgeProps) {
   const styles = {
-    Expired: "bg-red-100 text-red-700 border-red-200",
+    Approved: "bg-green-100 text-green-700 border-green-200",
     Pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    Verified: "bg-green-100 text-green-700 border-green-200",
   };
 
   return (
@@ -17,10 +17,10 @@ export function KYCStatusBadge({ kyc }: KYCStatusBadgeProps) {
       variant="outline"
       className={cn(
         "rounded-sm text-xs font-medium capitalize",
-        styles[kyc],
+        styles[status],
       )}
     >
-      {kyc}
+      {status}
     </Badge>
   );
 }
