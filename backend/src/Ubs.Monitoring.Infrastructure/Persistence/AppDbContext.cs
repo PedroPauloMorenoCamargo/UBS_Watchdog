@@ -20,6 +20,8 @@ public class AppDbContext : DbContext
     public DbSet<Case> Cases => Set<Case>();
     public DbSet<CaseFinding> CaseFindings => Set<CaseFinding>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

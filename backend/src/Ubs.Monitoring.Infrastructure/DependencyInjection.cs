@@ -66,6 +66,10 @@ public static class DependencyInjection
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IFileParser<ClientImportRow>, ClientFileImportService>();
         services.AddScoped<IClientService, ClientService>();
+        services.AddScoped<ITransactionService, TransactionService>();
+        services.AddScoped<IAccountRepository, AccountRepository>();
+        services.AddScoped<ITransactionRepository, TransactionRepository>();
+          
         // Countries
         services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<ICountryService, CountryService>();

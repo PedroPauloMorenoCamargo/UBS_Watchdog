@@ -14,11 +14,15 @@ namespace Ubs.Monitoring.Api.Controllers;
 public sealed class ClientsController : ControllerBase
 {
     private readonly IClientService _clientService;
+    private readonly ITransactionService _transactionService;
 
-    public ClientsController(IClientService clientService)
-    {
-        _clientService = clientService;
-    }
+
+public ClientsController(IClientService clientService,ITransactionService transactionService)
+{
+    _clientService = clientService;
+    _transactionService = transactionService;
+}
+
 
     /// <summary>
     /// Creates a new client.
@@ -198,4 +202,22 @@ public sealed class ClientsController : ControllerBase
 
         return Ok(result);
     }
+
+    /// <summary>
+    /// Retrieves the transaction history for a specific client.
+    /// </summary>
+    /// <param name="clientId">Client unique identifier.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>List of client transactions.</returns>
+    [HttpGet("{clientId:guid}/transactions")]
+    [ProducesResponseType(typeof(IEnumerable<TransactionResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IEnumerable<TransactionResponseDto>>> GetClientTransactions(
+        [FromRoute] Guid clientId,
+        CancellationToken ct)
+    {
+        var transactions = await _transactionService.GetTransactionsByClientAsync(clientId, ct);
+        return Ok(transactions);
+    }
 }
+
