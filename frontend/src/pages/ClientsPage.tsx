@@ -1,9 +1,11 @@
 // Shadcn/ui
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMemo,useState } from "react";
-import type { SeverityFilter } from "@/types/alert";
-import type { KycFilter } from "@/types/kycstatus";
+import { useMemo,useState, useRef } from "react";
+import type { Severity, SeverityFilter } from "@/types/alert";
+import type { KYC, KycFilter } from "@/types/kycstatus";
+import type { Client } from "@/types/client";
+
 import { COUNTRIES, type CountriesFilter } from "@/types/countries";
 
 import { clientsMock } from "@/mocks/mocks";
@@ -21,12 +23,73 @@ import {
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { ClientsTable } from "@/components/ui/tables/clientstable";
 
+function isSeverity(value: string): value is Severity {
+  return value === "low" || value === "medium" || value === "high";
+}
+
+function isKyc(value: string): value is KYC {
+  return value === "pending" || value === "verified" || value === "expired";
+}
+
+
 
 export function ClientsPage() {
   const [search, setSearch] = useState("");
   const [risk, setRisk] = useState<SeverityFilter>("all");
   const [countries, setCountries] = useState<CountriesFilter>("all");
   const [kyc, setKyc] = useState<KycFilter>("all");
+
+  const [clients, setClients] = useState(clientsMock);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  function handleImportCSV(event: React.ChangeEvent<HTMLInputElement>) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    const text = reader.result as string;
+    const rows = text.split("\n").map((r) => r.trim());
+
+    const [header, ...data] = rows;
+    const columns = header.split(",");
+
+    const newClients = data
+      .filter(Boolean)
+      .map((row) => {
+        const values = row.split(",");
+
+        const record = Object.fromEntries(
+          columns.map((col, i) => [col, values[i]])
+        );
+
+        if (!isSeverity(record.risk) || !isKyc(record.kyc)) {
+          return null;
+        }
+
+        return {
+          id: crypto.randomUUID() as string,
+          name: record.name,
+          country: record.country,
+          risk: record.risk,
+          kyc: record.kyc,
+          alerts: Number(record.alerts ?? 0),
+          balance: Number(record.balance ?? 0),
+          lastActivity: record.lastActivity,
+        };
+
+      })
+      .filter((c): c is Client => c!== null);
+
+    setClients((prev) => [...prev, ...newClients]);
+  };
+
+  reader.readAsText(file);
+  event.target.value = "";
+}
+
+
 
 
 function handleCountryChange(value: CountriesFilter) {
@@ -35,7 +98,7 @@ function handleCountryChange(value: CountriesFilter) {
 
 
   const filteredClients = useMemo(() => {
-  return clientsMock.filter((t) => {
+  return clients.filter((t) => {
 
       const searchMatch =
         !search ||
@@ -43,13 +106,13 @@ function handleCountryChange(value: CountriesFilter) {
 
       
       const riskMatch =
-        risk === "all" || t.risk.toLowerCase() === risk;
+        risk === "all" || t.risk === risk;
 
       const countryMatch =
       countries === "all" || t.country === countries;
 
       const kycMatch =
-      kyc === "all" || t.kyc.toLowerCase() === kyc;
+      kyc === "all" || t.kyc === kyc;
 
     return searchMatch && riskMatch && countryMatch && kycMatch;
   });
@@ -160,6 +223,14 @@ function handleCountryChange(value: CountriesFilter) {
         </div>
       </div>
       
+      <input
+        type="file"
+        accept=".csv"
+        ref={fileInputRef}
+        className="hidden"
+        onChange={handleImportCSV}
+      />
+
       <div className="mt-4 rounded-xl bg-white p-4 shadow">
           <div className="flex flex-wrap items-center gap-3">
             <Button className="cursor-pointer hover:bg-slate-600"
@@ -169,7 +240,7 @@ function handleCountryChange(value: CountriesFilter) {
 
             <Button className="cursor-pointer hover:bg-slate-200"
               variant="outline" 
-              onClick={() => console.log("Importar CSV")}>
+              onClick={() => fileInputRef.current?.click()}>
               Importar CSV
             </Button>
           </div>
