@@ -34,7 +34,8 @@ import {
 
 import { AlertsBySeverityChart } from "@/components/ui/charts/alertsbyseveritychart";
 import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
-import { WeeklyActivityChart } from "@/components/ui/charts/weeklyactivitychart";
+import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
+import { weeklyActivity } from "@/mocks/mocks";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AlertsTable } from "@/components/ui/tables/alertstable";
 
@@ -78,7 +79,14 @@ export function Dashboard() {
           <ChartCard
             title="Weekly Activity Trend"
           >
-            <WeeklyActivityChart />
+            <AdaptiveLineChart
+              data={weeklyActivity}
+              xKey="day"
+              lines={[
+                { key: "alerts", label: "Alerts", color: "#dc2626" },
+                { key: "transactions", label: "Transactions", color: "#2563eb" },
+              ]}
+            />
           </ChartCard>
         </div>
 

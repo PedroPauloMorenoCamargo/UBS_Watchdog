@@ -1,34 +1,9 @@
 // Imports Padrões do React
-import { useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-// Imagens da UBS
-import UbsLogo from "@/assets/svg/ubs_logo.svg";
-import loginBg from "@/assets/png/ubs.jpg";
-
-import { useAuthStore } from "@/store/auth";
+import { useMemo, useState } from "react";
 
 // Shadcn/ui
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
-// Icones
-import {
-  AlertTriangle,
-  Clock,
-  CheckCircle
-} from "lucide-react";
-
-import { AlertsBySeverityChart } from "@/components/ui/charts/alertsbyseveritychart";
-import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
-import { WeeklyActivityChart } from "@/components/ui/charts/weeklyactivitychart";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AlertsTable } from "@/components/ui/tables/alertstable";
 import { StatCard    } from "@/components/ui/statcard";

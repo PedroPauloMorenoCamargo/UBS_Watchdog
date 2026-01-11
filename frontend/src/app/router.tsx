@@ -7,6 +7,8 @@ import { requireRole } from "@/middlewares/roleMiddleware";
 import { AlertsPage } from "@/pages/AlertsPage";
 import { TransactionsPage } from "@/pages/TransactionsPage";
 import { ClientsPage } from "@/pages/ClientsPage";
+import { ReportsPage } from "@/pages/ReportsPage";
+import { AdminPage } from "@/pages/AdminPage";
 
 export const router = createBrowserRouter([
   { 
@@ -47,17 +49,17 @@ export const router = createBrowserRouter([
       },
       {
         path: "/reports",
-        element: <div>Reports Page</div>,
+        element: <ReportsPage />,
         handle: {
-          title: "Reports",
+          title: "Compliance Reports",
         },
       },
       {
         path: "/admin",
-        loader: requireRole(["admin"]),
-        element: <div>Admin Page</div>,
+        loader: requireRole(["analyst@ubs.com"]), //TODO: Role check
+        element: <AdminPage />,
         handle: {
-          title: "Admin",
+          title: "Admin Console",
         },
       },
       {

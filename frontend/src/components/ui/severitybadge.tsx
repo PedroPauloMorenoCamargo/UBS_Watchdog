@@ -1,10 +1,13 @@
 import { Badge } from "@/components/ui/badge";
+import type { Severity } from "@/types/alert";
+import { cn } from "@/lib/utils";
 
 interface SeverityBadgeProps {
-  severity: "High" | "Medium" | "Low";
+  severity: Severity;
+  className?: string;
 }
 
-export function SeverityBadge({ severity }: SeverityBadgeProps) {
+export function SeverityBadge({ severity,className }: SeverityBadgeProps) {
   const styles = {
     High: "bg-red-100 text-red-700 border-red-200",
     Medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
@@ -14,7 +17,11 @@ export function SeverityBadge({ severity }: SeverityBadgeProps) {
   return (
     <Badge
       variant="outline"
-      className={styles[severity]}
+      className={cn(
+        "border text-xs font-medium capitalize",
+        styles[severity],
+        className,
+      )}
     >
       {severity}
     </Badge>
