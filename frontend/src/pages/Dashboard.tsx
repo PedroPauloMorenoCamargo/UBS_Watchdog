@@ -35,7 +35,7 @@ import {
 import { AlertsBySeverityChart } from "@/components/ui/charts/alertsbyseveritychart";
 import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
 import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
-import { weeklyActivity } from "@/mocks/mocks";
+import { alertsMock, weeklyActivity } from "@/mocks/mocks";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AlertsTable } from "@/components/ui/tables/alertstable";
 
@@ -92,7 +92,7 @@ export function Dashboard() {
 
         <div className="mt-5 rounded-xl bg-white p-6 shadow">
           <ChartCard title="Recent High-Priority Alerts">
-            <AlertsTable severityFilter="all"/>
+            <AlertsTable alerts={alertsMock}/>
           </ChartCard>
         </div>
       </div>
