@@ -1,8 +1,8 @@
 // src/mappers/client.mapper.ts
 import type { ClientResponseDto } from "@/types/Clients/client";
 import type { ClientTableRow } from "@/models/client";
-import { mapRiskLevel } from "./riskLevel.mapper";
-import { mapKycStatus } from "./kycStatus.mapper";
+import { mapRiskLevel } from "../riskLevel.mapper";
+import { mapKycStatus } from "../kycStatus.mapper";
 
 export function mapClientToTableRow(
   dto: ClientResponseDto

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useMemo,useState } from "react";
 import type { SeverityFilter } from "@/types/alert";
 import { transactionsMock } from "@/mocks/mocks";
+import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
 
 import {
   Select,
@@ -15,6 +16,8 @@ import {
 
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { TransactionsTable } from "@/components/ui/tables/transactionstable";
+import { useApi } from "@/hooks/useApi";
+import { fetchTransactions } from "@/services/transaction.service";
 
 export function TransactionsPage() {
   const [type, setType] = useState<"all" | "Wire Transfer" | "Cash Deposit">("all");
@@ -29,17 +32,23 @@ export function TransactionsPage() {
   const parseAmount = (value: string) =>
         Number(value.replace(/[$,]/g, ""));
 
+
+  const { data, loading, error } = useApi({
+    fetcher: fetchTransactions,
+  });
+
+const transactions = useMemo(() => {
+  if (!data) return [];
+  return data.items.map(mapTransactionToRow);
+}, [data]);
+
   const filteredTransactions = useMemo(() => {
-  return transactionsMock.filter((t) => {
+  return transactions.filter((t) => {
 
       const searchMatch =
         !search ||
-        t.parties.sender.toLowerCase().includes(search.toLowerCase()) ||
-        t.parties.receiver.toLowerCase().includes(search.toLowerCase());
-
-      
-      const severityMatch =
-        severity === "all" || t.severity.toLowerCase() === severity;
+        t.counterPartyName?.toLowerCase().includes(search.toLowerCase()) ||
+        t.clientId?.toLowerCase().includes(search.toLowerCase());
         
       const typeMatch =
         type === "all" || t.type === type;
@@ -59,7 +68,7 @@ export function TransactionsPage() {
       const endMatch =
         !endDate || transactionDate <= new Date(endDate).getTime();
 
-      return searchMatch && severityMatch && typeMatch && minMatch && maxMatch && startMatch && endMatch;
+      return searchMatch && typeMatch && minMatch && maxMatch && startMatch && endMatch;
     });
   }, [search, severity, type, minAmount, maxAmount, startDate, endDate]);
 
@@ -69,15 +78,20 @@ export function TransactionsPage() {
       <div className="mt-4 rounded-xl bg-white p-5 shadow">
         
         <div
-          className="grid items-end gap-4"
-          style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1.5fr auto" }}
+          className="grid 
+          gap-4 
+          items-end
+          grid-cols-1
+          sm:grid-cols-2
+          lg:grid-cols-3
+          xl:grid-cols-4"
         >
           <div>
             <label className="text-xs font-medium text-slate-500">
               Search Parties
             </label>
             <Input
-              placeholder="Sender or receiver name..."
+              placeholder="Sender Client Id or Receiver name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="h-9 rounded-none border-0 border-b border-slate-300 px-0 shadow-none focus-visible:ring-0"
@@ -219,10 +233,15 @@ export function TransactionsPage() {
       </div>
 
       <div className="mt-5">
-        <ChartCard title="Recent High-Priority Alerts">
-          <TransactionsTable transactions={filteredTransactions} 
-            selectedId={selectedTransactionId}
-            onSelect={setSelectedTransactionId}/>
+        <ChartCard title="Recent Transactions">
+          {loading && <p>Loading transactions...</p>}
+          {error && <p className="text-red-500">{error}</p>}
+          {!loading && !error && (
+            
+              <TransactionsTable transactions={filteredTransactions} 
+                selectedId={selectedTransactionId}
+                onSelect={setSelectedTransactionId}/>
+          )}
         </ChartCard>
       </div>
     </div>

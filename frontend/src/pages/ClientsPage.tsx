@@ -19,7 +19,7 @@ import {
 
 import { useApi } from "@/hooks/useApi";
 import { fetchClients } from "@/services/clients.service";
-import { mapClientToTableRow } from "@/mappers/client.mapper";
+import { mapClientToTableRow } from "@/mappers/client/client.mapper";
 
 
 import { ChartCard } from "@/components/ui/charts/chartcard";

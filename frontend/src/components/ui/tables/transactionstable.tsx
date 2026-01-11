@@ -10,9 +10,10 @@ import { SeverityBadge } from "../severitybadge";
 import { transactionsMock } from "@/mocks/mocks";
 import { useEffect, useRef } from "react";
 import { TransactionStatusBadge } from "../transactionstatusbadge";
+import type { TransactionRow } from "@/models/transaction";
 
 interface TransactionsTableProps {
-  transactions: typeof transactionsMock;
+  transactions: TransactionRow[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
 }
@@ -55,8 +56,7 @@ export function TransactionsTable({
             <TableHead className="px-4 py-3">Type</TableHead>
             <TableHead className="px-4 py-3">Parties</TableHead>
             <TableHead className="px-4 py-3">Country</TableHead>
-            <TableHead className="px-4 py-3 text-center">Risk</TableHead>
-            <TableHead className="px-4 py-3 text-center">Status</TableHead>
+        
           </TableRow>
         </TableHeader>
 
@@ -110,10 +110,10 @@ export function TransactionsTable({
                   <TableCell className="px-4 py-3">
                     <div className="flex flex-col text-sm">
                       <span className="font-medium text-slate-700">
-                        {transaction.parties.sender}
+                        {transaction.clientId}
                       </span>
                       <span className="text-slate-500">
-                        to {transaction.parties.receiver}
+                        to {transaction.counterPartyName}
                       </span>
                     </div>
                   </TableCell>
@@ -122,15 +122,6 @@ export function TransactionsTable({
                     {transaction.country}
                   </TableCell>
 
-                  <TableCell className="px-4 py-3 text-center">
-                    <SeverityBadge severity={transaction.severity} />
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3 text-center">
-                    
-                      <TransactionStatusBadge status={transaction.status}/>
-                    
-                  </TableCell>
                 </TableRow>
               );
             })

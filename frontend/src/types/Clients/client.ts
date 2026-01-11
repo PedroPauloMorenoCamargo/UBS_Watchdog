@@ -1,5 +1,5 @@
-export type RiskLevelApi = 0 | 1 | 2;
-export type KycStatusApi = 0 | 1 | 2 | 3;
+import type { RiskLevelApi } from "../alert";
+import type{ KycStatusApi } from "../kycstatus";
 
 export interface ClientResponseDto {
   id: string;

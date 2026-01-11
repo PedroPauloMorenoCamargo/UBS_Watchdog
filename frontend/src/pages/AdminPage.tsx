@@ -17,7 +17,7 @@ import {
 
 import { useApi } from "@/hooks/useApi";
 import { fetchRules } from "@/services/rules.service";
-import { mapRuleToCard } from "@/mappers/rule.mapper";
+import { mapRuleToCard } from "@/mappers/rule/rule.mapper";
 import { useMemo } from "react";
 
 

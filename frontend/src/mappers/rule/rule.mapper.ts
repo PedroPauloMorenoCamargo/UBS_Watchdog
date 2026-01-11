@@ -1,5 +1,5 @@
 import type { RuleRow } from "@/models/rule";
-import { mapRiskLevel } from "./riskLevel.mapper";
+import { mapRiskLevel } from "../riskLevel.mapper";
 import type { ComplianceRuleResponseDto } from "@/types/Rules/rule";
 
 

@@ -1,4 +1,4 @@
-export type RiskLevelApi = 0 | 1 | 2;
+import type { RiskLevelApi } from "../alert";
 
 export type ComplianceRuleResponseDto = {
   id: string;
