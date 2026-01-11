@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ubs.Monitoring.Application.AccountIdentifiers;
+using Ubs.Monitoring.Application.Accounts;
 using Ubs.Monitoring.Application.Analysts;
 using Ubs.Monitoring.Application.Auth;
 using Ubs.Monitoring.Application.Clients;
@@ -69,6 +71,12 @@ public static class DependencyInjection
         // Countries
         services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<ICountryService, CountryService>();
+        // Accounts
+        services.AddScoped<IAccountRepository, AccountRepository>();
+        services.AddScoped<IFileParser<AccountImportRow>, AccountFileImportService>();
+        services.AddScoped<IAccountService, AccountService>();
+        // Account Identifiers
+        services.AddScoped<IAccountIdentifierService, AccountIdentifierService>();
 
         return services;
     }

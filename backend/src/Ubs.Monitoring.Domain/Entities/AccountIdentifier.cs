@@ -6,7 +6,7 @@ public class AccountIdentifier
 {
     private AccountIdentifier() { }
 
-    internal AccountIdentifier(
+    public AccountIdentifier(
         Guid accountId,
         IdentifierType identifierType,
         string identifierValue,
