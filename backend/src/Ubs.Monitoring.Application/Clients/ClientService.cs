@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Ubs.Monitoring.Application.Common.FileImport;
 using Ubs.Monitoring.Application.Common.Pagination;
 using Ubs.Monitoring.Domain.Entities;
 using Ubs.Monitoring.Domain.Enums;
@@ -11,16 +12,16 @@ namespace Ubs.Monitoring.Application.Clients;
 public sealed class ClientService : IClientService
 {
     private readonly IClientRepository _clients;
-    private readonly IClientFileImportService _fileImport;
+    private readonly IFileParser<ClientImportRow> _fileParser;
     private readonly ILogger<ClientService> _logger;
 
     public ClientService(
         IClientRepository clients,
-        IClientFileImportService fileImport,
+        IFileParser<ClientImportRow> fileParser,
         ILogger<ClientService> logger)
     {
         _clients = clients;
-        _fileImport = fileImport;
+        _fileParser = fileParser;
         _logger = logger;
     }
 
@@ -123,7 +124,7 @@ public sealed class ClientService : IClientService
         try
         {
             // Parse file (CSV or Excel)
-            var rows = _fileImport.ParseFile(fileStream, fileName);
+            var rows = _fileParser.ParseFile(fileStream, fileName);
             _logger.LogInformation("Parsed {RowCount} rows from file: {FileName}", rows.Count, fileName);
 
             // Process all rows
