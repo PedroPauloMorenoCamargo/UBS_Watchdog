@@ -5,7 +5,8 @@ namespace Ubs.Monitoring.Application.Transactions.Compliance;
 public interface ITransactionComplianceChecker
 {
     /// <summary>
-    /// Evaluates the transaction against active compliance rules and logs any violations found.
+    /// Evaluates the transaction against active compliance rules and returns any violations found.
+    /// Creates cases and case findings automatically if violations are detected.
     /// </summary>
-    Task CheckAsync(Transaction transaction, CancellationToken ct);
+    Task CheckAndCreateCaseIfNeededAsync(Transaction transaction, CancellationToken ct);
 }

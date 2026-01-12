@@ -99,7 +99,8 @@ public sealed class TransactionService : ITransactionService
             _logger.LogInformation("Transaction created successfully: {TransactionId} for account {AccountId}",
                 transaction.Id, request.AccountId);
 
-            await _compliance.CheckAsync(transaction, ct);
+            // Check compliance and automatically create case if violations found
+            await _compliance.CheckAndCreateCaseIfNeededAsync(transaction, ct);
 
             return (MapToResponseDto(transaction), null);
         }
@@ -187,6 +188,7 @@ public sealed class TransactionService : ITransactionService
         var errors = new List<TransactionImportErrorDto>();
         var successCount = 0;
         var lastSaveCount = 0;
+        var transactionsToCheck = new List<Transaction>();
 
         for (int i = 0; i < rows.Count; i++)
         {
@@ -196,11 +198,20 @@ public sealed class TransactionService : ITransactionService
             if (processResult.IsSuccess)
             {
                 successCount++;
+                if (processResult.Transaction is not null)
+                {
+                    transactionsToCheck.Add(processResult.Transaction);
+                }
 
                 // Save batch periodically
                 if (successCount % TransactionServiceConstants.ImportBatchSize == 0)
                 {
                     await _transactions.SaveChangesAsync(ct);
+
+                    // Check compliance for saved transactions
+                    await CheckComplianceForBatchAsync(transactionsToCheck, ct);
+                    transactionsToCheck.Clear();
+
                     lastSaveCount = successCount;
                     _logger.LogDebug("Saved batch of {BatchSize} transactions. Total processed: {TotalProcessed}",
                         TransactionServiceConstants.ImportBatchSize, successCount);
@@ -216,6 +227,13 @@ public sealed class TransactionService : ITransactionService
         if (successCount > lastSaveCount)
         {
             await _transactions.SaveChangesAsync(ct);
+
+            // Check compliance for remaining transactions
+            if (transactionsToCheck.Count > 0)
+            {
+                await CheckComplianceForBatchAsync(transactionsToCheck, ct);
+            }
+
             _logger.LogDebug("Saved final batch of {Count} remaining transactions", successCount - lastSaveCount);
         }
 
@@ -223,9 +241,28 @@ public sealed class TransactionService : ITransactionService
     }
 
     /// <summary>
+    /// Checks compliance for a batch of transactions.
+    /// </summary>
+    private async Task CheckComplianceForBatchAsync(List<Transaction> transactions, CancellationToken ct)
+    {
+        foreach (var transaction in transactions)
+        {
+            try
+            {
+                await _compliance.CheckAndCreateCaseIfNeededAsync(transaction, ct);
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail the import
+                _logger.LogError(ex, "Failed to check compliance for transaction {TransactionId} during import", transaction.Id);
+            }
+        }
+    }
+
+    /// <summary>
     /// Processes a single import row and creates a transaction.
     /// </summary>
-    private async Task<(bool IsSuccess, TransactionImportErrorDto? Error)> ProcessSingleRowAsync(
+    private async Task<(bool IsSuccess, TransactionImportErrorDto? Error, Transaction? Transaction)> ProcessSingleRowAsync(
         TransactionImportRow row,
         int lineNumber,
         CancellationToken ct,
@@ -242,7 +279,7 @@ public sealed class TransactionService : ITransactionService
                     return (false, new TransactionImportErrorDto(
                         lineNumber,
                         row.AccountIdentifier,
-                        $"Account with identifier '{row.AccountIdentifier}' not found."));
+                        $"Account with identifier '{row.AccountIdentifier}' not found."), null);
                 }
                 accountCache[row.AccountIdentifier] = account;
             }
@@ -253,7 +290,7 @@ public sealed class TransactionService : ITransactionService
             var transferValidationError = ValidateTransferFieldsForImport(request, lineNumber, row.AccountIdentifier);
             if (transferValidationError is not null)
             {
-                return (false, transferValidationError);
+                return (false, transferValidationError, null);
             }
 
             // Validate Brazilian transfer counterparty exists in system
@@ -271,7 +308,7 @@ public sealed class TransactionService : ITransactionService
                         lineNumber,
                         row.AccountIdentifier,
                         $"Counterparty identifier '{request.CpIdentifier}' of type '{request.CpIdentifierType}' was not found in the system. " +
-                        $"For Brazilian transfers (BR), the counterparty must have a registered account with this identifier."));
+                        $"For Brazilian transfers (BR), the counterparty must have a registered account with this identifier."), null);
                 }
             }
 
@@ -281,7 +318,7 @@ public sealed class TransactionService : ITransactionService
 
             if (fxError is not null)
             {
-                return (false, new TransactionImportErrorDto(lineNumber, row.AccountIdentifier, fxError));
+                return (false, new TransactionImportErrorDto(lineNumber, row.AccountIdentifier, fxError), null);
             }
 
             // Create transaction
@@ -306,15 +343,15 @@ public sealed class TransactionService : ITransactionService
             );
 
             _transactions.Add(transaction);
-            return (true, null);
+            return (true, null, transaction);
         }
         catch (ArgumentException ex)
         {
-            return (false, new TransactionImportErrorDto(lineNumber, row.AccountIdentifier, ex.Message));
+            return (false, new TransactionImportErrorDto(lineNumber, row.AccountIdentifier, ex.Message), null);
         }
         catch (InvalidOperationException ex)
         {
-            return (false, new TransactionImportErrorDto(lineNumber, row.AccountIdentifier, ex.Message));
+            return (false, new TransactionImportErrorDto(lineNumber, row.AccountIdentifier, ex.Message), null);
         }
     }
 

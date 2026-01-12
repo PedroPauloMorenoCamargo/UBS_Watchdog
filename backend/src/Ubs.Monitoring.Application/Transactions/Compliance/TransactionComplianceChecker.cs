@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using Ubs.Monitoring.Application.Cases;
 using Ubs.Monitoring.Application.ComplianceRules;
 using Ubs.Monitoring.Application.Transactions.Repositories;
 using Ubs.Monitoring.Domain.Entities;
@@ -11,22 +12,33 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
 {
     private readonly IComplianceRuleRepository _rules;
     private readonly ITransactionRepository _transactions;
+    private readonly ICaseRepository _cases;
     private readonly ILogger<TransactionComplianceChecker> _logger;
 
     public TransactionComplianceChecker(
         IComplianceRuleRepository rules,
         ITransactionRepository transactions,
+        ICaseRepository cases,
         ILogger<TransactionComplianceChecker> logger)
     {
         _rules = rules;
         _transactions = transactions;
+        _cases = cases;
         _logger = logger;
     }
 
-    public async Task CheckAsync(Transaction tx, CancellationToken ct)
+    public async Task CheckAndCreateCaseIfNeededAsync(Transaction tx, CancellationToken ct)
     {
         try
         {
+            // Check if a case already exists for this transaction
+            var existingCase = await _cases.GetByTransactionIdAsync(tx.Id, ct);
+            if (existingCase is not null)
+            {
+                _logger.LogDebug("Case already exists for transaction {TransactionId}, skipping compliance check", tx.Id);
+                return;
+            }
+
             var rules = await _rules.SearchAsync(
                 new ComplianceRuleQuery
                 {
@@ -36,13 +48,22 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
                 ct
             );
 
+            var violations = new List<ComplianceViolation>();
+
             foreach (var rule in rules.Items)
             {
                 var violation = await EvaluateRuleAsync(rule, tx, ct);
                 if (violation is null)
                     continue;
 
+                violations.Add(violation);
                 LogViolation(tx, violation);
+            }
+
+            // If violations found, create case with findings
+            if (violations.Count > 0)
+            {
+                await CreateCaseWithFindingsAsync(tx, violations, ct);
             }
         }
         catch (Exception ex)
@@ -159,6 +180,71 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
             rule.RuleType,
             rule.Severity,
             $"Structuring detected: {count} transfers under {max} in one day"
+        );
+    }
+
+    // -----------------------
+    // Case creation
+    // -----------------------
+
+    private async Task CreateCaseWithFindingsAsync(
+        Transaction tx,
+        List<ComplianceViolation> violations,
+        CancellationToken ct)
+    {
+        // Calculate aggregate severity (maximum severity from all violations)
+        var maxSeverity = violations.Max(v => v.Severity);
+
+        // Create the case
+        var caseEntity = new Case(
+            transactionId: tx.Id,
+            clientId: tx.ClientId,
+            accountId: tx.AccountId,
+            initialSeverity: maxSeverity,
+            analystId: null // No analyst assigned initially (status will be New)
+        );
+
+        _cases.Add(caseEntity);
+
+        // Create a finding for each violation
+        foreach (var violation in violations)
+        {
+            var evidence = JsonDocument.Parse(JsonSerializer.Serialize(new
+            {
+                ruleCode = violation.RuleCode,
+                message = violation.Message,
+                transactionId = tx.Id,
+                transactionType = tx.Type.ToString(),
+                amount = tx.Amount,
+                currencyCode = tx.CurrencyCode,
+                baseAmount = tx.BaseAmount,
+                occurredAtUtc = tx.OccurredAtUtc,
+                counterpartyCountry = tx.CpCountryCode,
+                counterpartyName = tx.CpName,
+                counterpartyIdentifier = tx.CpIdentifier,
+                evaluatedAtUtc = DateTimeOffset.UtcNow
+            }));
+
+            var finding = new CaseFinding(
+                caseId: caseEntity.Id,
+                ruleId: violation.RuleId,
+                ruleType: violation.RuleType,
+                severity: violation.Severity,
+                evidenceJson: evidence
+            );
+
+            _cases.AddFinding(finding);
+        }
+
+        await _cases.SaveChangesAsync(ct);
+
+        _logger.LogWarning(
+            "CASE_CREATED | CaseId={CaseId} | Tx={TransactionId} | Client={ClientId} | Severity={Severity} | ViolationCount={ViolationCount}",
+            caseEntity.Id,
+            tx.Id,
+            tx.ClientId,
+            maxSeverity,
+            violations.Count
         );
     }
 
