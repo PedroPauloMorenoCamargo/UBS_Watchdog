@@ -11,8 +11,8 @@ import type { TransactionRow } from "@/models/transaction";
 
 interface TransactionsTableProps {
   transactions: TransactionRow[];
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
+  selectedId?: string | null;
+  onSelect?: (id: string | null) => void;
 }
 
 export function TransactionsTable({
@@ -28,7 +28,7 @@ export function TransactionsTable({
         tableRef.current &&
         !tableRef.current.contains(event.target as Node)
       ) {
-        onSelect(null);
+        onSelect?.(null);
       }
     }
 
@@ -75,7 +75,7 @@ export function TransactionsTable({
                 <TableRow
                   key={`${transaction.id}-${index}`}
                   onClick={() =>
-                    onSelect(selected ? null : transaction.id)
+                    onSelect?.(selected ? null : transaction.id)
                   }
                   className={`
                     cursor-pointer

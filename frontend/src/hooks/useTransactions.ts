@@ -11,12 +11,19 @@ interface TransactionsByType {
   value: number;
 }
 
+export interface WeeklyActivity {
+  day: string;
+  transactions: number;
+  alerts: number;
+}
+
 interface UseTransactionsResult {
   totalTransactionsAmount: number;
   totalTransactionsCount: number;
   transactionTrend: Trend;
   transactionPercentageChange: number | null;
   transactionsByType: TransactionsByType[];
+  weeklyActivity: WeeklyActivity[];
 }
 
 export function useTransactions(transactions: TransactionResponseDto[]): UseTransactionsResult {
@@ -82,6 +89,50 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
     }));
   }, [transactions]);
 
+  const weeklyActivity = useMemo<WeeklyActivity[]>(() => {
+  const map = new Map<string, WeeklyActivity>();
+
+  // ⬇️ DEFINE O RANGE (UTC)
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+  start.setUTCDate(start.getUTCDate() - 6);
+
+  const end = new Date(); // agora (UTC)
+
+  // Inicializa os 7 dias
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setUTCDate(start.getUTCDate() + i);
+
+    const label = d.toLocaleDateString("en-US", {
+      weekday: "short",
+    });
+
+    map.set(label, {
+      day: label,
+      transactions: 0,
+      alerts: 0, // placeholder
+    });
+  }
+
+  // Conta transações reais
+  transactions.forEach((t) => {
+    const txDate = new Date(t.occurredAtUtc);
+
+    if (txDate >= start && txDate <= end) {
+      const label = txDate.toLocaleDateString("en-US", {
+        weekday: "short",
+      });
+
+      const entry = map.get(label);
+      if (entry) {
+        entry.transactions += 1;
+      }
+    }
+  });
+
+  return Array.from(map.values());
+}, [transactions]);
   
 
   return {
@@ -90,5 +141,6 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
     transactionTrend,
     transactionPercentageChange,
     transactionsByType,
+    weeklyActivity,
   };
 }

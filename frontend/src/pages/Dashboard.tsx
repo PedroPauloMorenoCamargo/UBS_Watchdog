@@ -2,11 +2,13 @@ import { useMemo } from "react";
 import { GeographicDistributionChart } from "@/components/ui/charts/geographicdistributionchart";
 import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
 import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
-import { alertsMock, transactionsByCountry, weeklyActivity } from "@/mocks/mocks";
+import { transactionsByCountry} from "@/mocks/mocks";
 import { ChartCard } from "@/components/ui/charts/chartcard";
-import { AlertsTable } from "@/components/ui/tables/alertstable";
+import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
+import { TransactionsTable } from "@/components/ui/tables/transactionstable";
 import { DollarSign, ArrowUpRight, ArrowDownRight, 
   ShieldAlert, Minus, Users, TrendingUp, TrendingDown } from "lucide-react";
+
 import { useApi } from "@/hooks/useApi";
 import { useTransactions } from "@/hooks/useTransactions";
 import { fetchTransactions } from "@/services/transaction.service";
@@ -23,13 +25,18 @@ export function Dashboard() {
   });
 
   const transactions = transactionsData?.items ?? [];
+  const transactionRows = useMemo(() => {
+  return transactions.map(mapTransactionToRow);
+}, [transactions]);
+
 
   const {
     totalTransactionsAmount,
     totalTransactionsCount,
     transactionTrend,
     transactionPercentageChange,
-    transactionsByType
+    transactionsByType,
+    weeklyActivity,
   } = useTransactions(transactions);
 
   const { data : clientsData} = 
@@ -258,8 +265,8 @@ export function Dashboard() {
         </div>
 
         <div className="mt-5">
-          <ChartCard title="Recent High-Priority Alerts">
-            <AlertsTable alerts={alertsMock}/>
+          <ChartCard title="Recent Transactions">      
+            <TransactionsTable transactions={transactionRows} />
           </ChartCard>
         </div>
       </div>
