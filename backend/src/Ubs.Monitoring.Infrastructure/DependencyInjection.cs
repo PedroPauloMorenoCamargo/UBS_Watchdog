@@ -19,7 +19,7 @@ using Ubs.Monitoring.Infrastructure.Persistence;
 using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
 using Ubs.Monitoring.Infrastructure.Persistence.Seeding;
 using Ubs.Monitoring.Infrastructure.Repositories;
-
+using Ubs.Monitoring.Application.Transactions.Compliance;
 namespace Ubs.Monitoring.Infrastructure;
 
 public static class DependencyInjection
@@ -69,6 +69,7 @@ public static class DependencyInjection
         services.AddScoped<IComplianceRuleRepository, ComplianceRuleRepository>();
         services.AddScoped<IComplianceRuleParametersValidator, ComplianceRuleParametersValidator>();
         services.AddScoped<IComplianceRuleService, ComplianceRuleService>();
+        services.AddScoped<ITransactionComplianceChecker, TransactionComplianceChecker>();
         // Clients
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IFileParser<ClientImportRow>, ClientFileImportService>();

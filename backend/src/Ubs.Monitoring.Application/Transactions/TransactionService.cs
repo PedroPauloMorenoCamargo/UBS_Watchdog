@@ -5,6 +5,8 @@ using Ubs.Monitoring.Application.FxRates;
 using Ubs.Monitoring.Application.Transactions.Repositories;
 using Ubs.Monitoring.Domain.Entities;
 using Ubs.Monitoring.Domain.Enums;
+using Ubs.Monitoring.Application.Transactions.Compliance;
+
 
 namespace Ubs.Monitoring.Application.Transactions;
 
@@ -18,19 +20,23 @@ public sealed class TransactionService : ITransactionService
     private readonly IFxRateService _fxRateService;
     private readonly IFileParser<TransactionImportRow> _fileParser;
     private readonly ILogger<TransactionService> _logger;
+    private readonly ITransactionComplianceChecker _compliance;
+
 
     public TransactionService(
         ITransactionRepository transactions,
         IAccountRepository accounts,
         IFxRateService fxRateService,
         IFileParser<TransactionImportRow> fileParser,
-        ILogger<TransactionService> logger)
+        ILogger<TransactionService> logger,
+        ITransactionComplianceChecker compliance)
     {
         _transactions = transactions;
         _accounts = accounts;
         _fxRateService = fxRateService;
         _fileParser = fileParser;
         _logger = logger;
+        _compliance = compliance;
     }
 
     /// <summary>
@@ -92,6 +98,8 @@ public sealed class TransactionService : ITransactionService
 
             _logger.LogInformation("Transaction created successfully: {TransactionId} for account {AccountId}",
                 transaction.Id, request.AccountId);
+
+            await _compliance.CheckAsync(transaction, ct);
 
             return (MapToResponseDto(transaction), null);
         }

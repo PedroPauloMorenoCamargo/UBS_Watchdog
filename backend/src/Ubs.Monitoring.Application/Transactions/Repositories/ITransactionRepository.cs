@@ -47,19 +47,32 @@ public interface ITransactionRepository
     /// <param name="filter">The filter and pagination parameters.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Paginated result with transactions and total count.</returns>
-    Task<(IReadOnlyList<Transaction> Items, int TotalCount)> GetPagedAsync(
-        TransactionFilterRequest filter,
-        CancellationToken ct);
+    Task<(IReadOnlyList<Transaction> Items, int TotalCount)> GetPagedAsync( TransactionFilterRequest filter, CancellationToken ct);
+
+    // <summary>
+    /// Gets the total base amount of transactions for a client on a specific date (UTC).
+    /// Intended for compliance rule evaluation.
+    /// </summary>
+    Task<decimal> GetDailyTotalByClientAsync(Guid clientId, DateOnly date, CancellationToken ct);
 
     /// <summary>
-    /// Gets the total base amount of transactions for a client on a specific date.
-    /// Used for compliance rules like daily limit checking.
+    /// Gets the total base amount of transactions for an account on a specific date (UTC).
+    /// Intended for compliance rule evaluation.
     /// </summary>
-    /// <param name="clientId">The unique identifier of the client.</param>
-    /// <param name="date">The date to calculate the total for (UTC).</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>The sum of base amounts for the specified date.</returns>
-    Task<decimal> GetDailyTotalAsync(Guid clientId, DateOnly date, CancellationToken ct);
+    Task<decimal> GetDailyTotalByAccountAsync(Guid accountId, DateOnly date, CancellationToken ct);
+
+    /// <summary>
+    /// Counts how many TRANSFER transactions for a client on a specific date (UTC) have BaseAmount <= maxBaseAmount.
+    /// Intended for structuring detection rules.
+    /// </summary>
+    Task<int> CountDailyTransfersUnderBaseAmountByClientAsync(Guid clientId, DateOnly date, decimal maxBaseAmount, CancellationToken ct);
+
+    /// <summary>
+    /// Counts how many TRANSFER transactions for an account on a specific date (UTC) have BaseAmount <= maxBaseAmount.
+    /// Intended for structuring detection rules.
+    /// </summary>
+    Task<int> CountDailyTransfersUnderBaseAmountByAccountAsync( Guid accountId, DateOnly date, decimal maxBaseAmount, CancellationToken ct);
+
 
     /// <summary>
     /// Checks if a transaction with the specified ID exists.
