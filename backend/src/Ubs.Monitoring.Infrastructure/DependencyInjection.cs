@@ -10,6 +10,7 @@ using Ubs.Monitoring.Application.Common.FileImport;
 using Ubs.Monitoring.Application.ComplianceRules;
 using Ubs.Monitoring.Application.Countries;
 using Ubs.Monitoring.Application.FxRates;
+using Ubs.Monitoring.Application.Cases;
 using Ubs.Monitoring.Application.Transactions;
 using Ubs.Monitoring.Application.Transactions.Repositories;
 using Ubs.Monitoring.Infrastructure.Auth;
@@ -95,6 +96,9 @@ public static class DependencyInjection
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IFileParser<TransactionImportRow>, TransactionFileImportService>();
         services.AddScoped<ITransactionService, TransactionService>();
+        // Cases
+        services.AddScoped<ICaseRepository, CaseRepository>();
+        services.AddScoped<ICaseService, CaseService>();
 
         return services;
     }
