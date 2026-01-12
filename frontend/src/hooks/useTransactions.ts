@@ -15,8 +15,8 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
 
   const totalTransactionsAmount = useMemo(() => {
     return transactions
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter(t => t.baseAmount > 0)
+      .reduce((sum, t) => sum + t.baseAmount, 0);
   }, [transactions]);
 
   const totalTransactionsCount = transactions.length;
