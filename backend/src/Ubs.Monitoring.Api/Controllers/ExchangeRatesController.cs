@@ -141,12 +141,12 @@ public class ExchangeRatesController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(request.FromCurrency) || request.FromCurrency.Length != 3)
         {
-            return BadRequest("FromCurrency must be a valid 3-letter ISO currency code.");
+            return BadRequest("FromCurrency must be a valid  3 letter ISO currency code.");
         }
 
         if (string.IsNullOrWhiteSpace(request.ToCurrency) || request.ToCurrency.Length != 3)
         {
-            return BadRequest("ToCurrency must be a valid 3-letter ISO currency code.");
+            return BadRequest("ToCurrency must be a valid 3 letter ISO currency code.");
         }
 
         _logger.LogInformation("Converting {Amount} from {From} to {To}",
