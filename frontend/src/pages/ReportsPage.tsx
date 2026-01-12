@@ -74,7 +74,7 @@ export function ReportsPage() {
                 {
                   key: "volume",
                   label: "Transaction Volume",
-                  color: "#2563eb",
+                  color: "#fa0101a2",
                 },
               ]}
             />
