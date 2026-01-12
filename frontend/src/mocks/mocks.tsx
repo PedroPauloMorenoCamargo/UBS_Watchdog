@@ -4,12 +4,12 @@ const alertsBySeverity = [
   { severity: "Low", value: 40 },
 ];
 const transactionsByType = [
-  { name: "SWIFT", value: 45 },
-  { name: "ACH", value: 30 },
+  { name: "Deposit", value: 7 },
+  { name: "Withdrawal", value: 30 },
   { name: "Wire", value: 18 },
-  { name: "Crypto", value: 7 },
 ];
-const COLORS = ["#dc2626", "#f59e0b", "#10b981", "#6366f1"];
+
+
 
 const weeklyActivity = [
   { day: "Mon", transactions: 4200, alerts: 12 },
@@ -411,5 +411,5 @@ const transactionsByCountry: TransactionCountry[] = [
 ];
 
 
-export { weeklyActivity,weeklyAlertsBySeverity, transactionsByType, alertsBySeverity, COLORS, 
+export { weeklyActivity,weeklyAlertsBySeverity, transactionsByType, alertsBySeverity, 
 alertsMock, transactionsMock, clientsMock, reportsMock, usersMock, transactionsByCountry};

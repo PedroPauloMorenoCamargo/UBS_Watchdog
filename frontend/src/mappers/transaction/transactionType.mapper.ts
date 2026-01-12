@@ -1,11 +1,11 @@
 export function mapTransactionType(type: number): string {
   switch (type) {
     case 0:
-      return "Debit";
+      return "Deposit";
     case 1:
-      return "Credit";
+      return "Withdrawal";
     case 2:
-      return "Transfer";
+      return "Wire";
     default:
       return "Unknown";
   }

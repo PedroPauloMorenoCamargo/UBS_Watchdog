@@ -1,13 +1,22 @@
 import { useMemo } from "react";
 import type { TransactionResponseDto } from "@/types/Transactions/transaction";
+import { mapTransactionType } from "@/mappers/transaction/transactionType.mapper";
+
+import { TRANSACTION_TYPES } from "@/constants/transactionTypes";
 
 type Trend = "up" | "down" | "neutral";
+
+interface TransactionsByType {
+  name: string;
+  value: number;
+}
 
 interface UseTransactionsResult {
   totalTransactionsAmount: number;
   totalTransactionsCount: number;
   transactionTrend: Trend;
   transactionPercentageChange: number | null;
+  transactionsByType: TransactionsByType[];
 }
 
 export function useTransactions(transactions: TransactionResponseDto[]): UseTransactionsResult {
@@ -52,10 +61,34 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
       ? null
       : ((currentTotal - previousTotal) / previousTotal) * 100;
 
+  const transactionsByType = useMemo<TransactionsByType[]>(() => {
+    const map = new Map<string, number>();
+
+    
+    TRANSACTION_TYPES.forEach(type => {
+      map.set(type, 0);
+    });
+
+    transactions.forEach(t => {
+      const type = mapTransactionType(t.type);
+      if (map.has(type)) {
+        map.set(type, (map.get(type) ?? 0) + 1);
+      }
+    });
+
+    return TRANSACTION_TYPES.map(type => ({
+      name: type,
+      value: map.get(type) ?? 0,
+    }));
+  }, [transactions]);
+
+  
+
   return {
     totalTransactionsAmount,
     totalTransactionsCount,
     transactionTrend,
     transactionPercentageChange,
+    transactionsByType,
   };
 }

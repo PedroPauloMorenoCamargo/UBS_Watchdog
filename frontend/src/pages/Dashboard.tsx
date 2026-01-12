@@ -29,6 +29,7 @@ export function Dashboard() {
     totalTransactionsCount,
     transactionTrend,
     transactionPercentageChange,
+    transactionsByType
   } = useTransactions(transactions);
 
   const { data : clientsData} = 
@@ -51,7 +52,7 @@ export function Dashboard() {
 
   } = useClients(clients)
 
-
+  
 
 
   return (
@@ -236,7 +237,8 @@ export function Dashboard() {
           </ChartCard>
 
           <ChartCard title="Transactions Type Distribution">
-            <TransactionsByTypeChart />
+            <TransactionsByTypeChart 
+              data={transactionsByType} />
           </ChartCard>
         </div>
 
