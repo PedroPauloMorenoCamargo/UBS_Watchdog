@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Ubs.Monitoring.Application.Transactions;
 using Ubs.Monitoring.Application.Transactions.Repositories;
 using Ubs.Monitoring.Domain.Entities;
+using Ubs.Monitoring.Domain.Enums;
 using Ubs.Monitoring.Infrastructure.Persistence;
 
 namespace Ubs.Monitoring.Infrastructure.Repositories;
@@ -36,8 +37,7 @@ public sealed class TransactionRepository : ITransactionRepository
     {
         _logger.LogDebug("Retrieving transaction {TransactionId} with details", transactionId);
 
-        return await _db.Transactions
-            .AsNoTracking()
+        return await _db.Transactions.AsNoTracking()
             .Include(t => t.Account)
             .Include(t => t.Client)
             .Include(t => t.FxRate)
@@ -48,8 +48,7 @@ public sealed class TransactionRepository : ITransactionRepository
     {
         _logger.LogDebug("Retrieving transactions for client {ClientId}", clientId);
 
-        var transactions = await _db.Transactions
-            .AsNoTracking()
+        var transactions = await _db.Transactions.AsNoTracking()
             .Where(t => t.ClientId == clientId)
             .OrderByDescending(t => t.OccurredAtUtc)
             .ToListAsync(ct);
@@ -63,8 +62,7 @@ public sealed class TransactionRepository : ITransactionRepository
     {
         _logger.LogDebug("Retrieving transactions for account {AccountId}", accountId);
 
-        var transactions = await _db.Transactions
-            .AsNoTracking()
+        var transactions = await _db.Transactions.AsNoTracking()
             .Where(t => t.AccountId == accountId)
             .OrderByDescending(t => t.OccurredAtUtc)
             .ToListAsync(ct);
@@ -121,8 +119,7 @@ public sealed class TransactionRepository : ITransactionRepository
 
         // Apply pagination
         var skip = (filter.Page - 1) * filter.PageSize;
-        var items = await query
-            .Skip(skip)
+        var items = await query.Skip(skip)
             .Take(filter.PageSize)
             .ToListAsync(ct);
 
@@ -131,23 +128,99 @@ public sealed class TransactionRepository : ITransactionRepository
         return (items, totalCount);
     }
 
-    public async Task<decimal> GetDailyTotalAsync(Guid clientId, DateOnly date, CancellationToken ct)
+    public async Task<decimal> GetDailyTotalByClientAsync(Guid clientId, DateOnly date, CancellationToken ct)
     {
-        _logger.LogDebug("Calculating daily total for client {ClientId} on {Date}", clientId, date);
+        _logger.LogDebug("Calculating daily total by client {ClientId} on {Date}", clientId, date);
 
-        var startOfDay = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
-        var endOfDay = startOfDay.AddDays(1);
+        var (from, to) = UtcDayRange(date);
 
+        // SumAsync on decimal returns 0 for empty sets in EF Core. If provider differs, wrap with DefaultIfEmpty(0m).
         var total = await _db.Transactions
             .AsNoTracking()
             .Where(t => t.ClientId == clientId &&
-                        t.OccurredAtUtc >= startOfDay &&
-                        t.OccurredAtUtc < endOfDay)
+                        t.OccurredAtUtc >= from &&
+                        t.OccurredAtUtc < to)
             .SumAsync(t => t.BaseAmount, ct);
 
-        _logger.LogDebug("Daily total for client {ClientId} on {Date}: {Total}", clientId, date, total);
+        _logger.LogDebug("Daily total by client {ClientId} on {Date}: {Total}", clientId, date, total);
 
         return total;
+    }
+
+    public async Task<decimal> GetDailyTotalByAccountAsync(Guid accountId, DateOnly date, CancellationToken ct)
+    {
+        _logger.LogDebug("Calculating daily total by account {AccountId} on {Date}", accountId, date);
+
+        var (from, to) = UtcDayRange(date);
+
+        var total = await _db.Transactions
+            .AsNoTracking()
+            .Where(t => t.AccountId == accountId &&
+                        t.OccurredAtUtc >= from &&
+                        t.OccurredAtUtc < to)
+            .SumAsync(t => t.BaseAmount, ct);
+
+        _logger.LogDebug("Daily total by account {AccountId} on {Date}: {Total}", accountId, date, total);
+
+        return total;
+    }
+
+    public async Task<int> CountDailyTransfersUnderBaseAmountByClientAsync(
+        Guid clientId,
+        DateOnly date,
+        decimal maxBaseAmount,
+        CancellationToken ct)
+    {
+        _logger.LogDebug(
+            "Counting daily transfers by client {ClientId} on {Date} with BaseAmount <= {MaxBaseAmount}",
+            clientId, date, maxBaseAmount);
+
+        var (from, to) = UtcDayRange(date);
+
+        var count = await _db.Transactions
+            .AsNoTracking()
+            .Where(t =>
+                t.ClientId == clientId &&
+                t.Type == TransactionType.Transfer &&
+                t.BaseAmount <= maxBaseAmount &&
+                t.OccurredAtUtc >= from &&
+                t.OccurredAtUtc < to)
+            .CountAsync(ct);
+
+        _logger.LogDebug(
+            "Daily transfer count by client {ClientId} on {Date} (<= {MaxBaseAmount}): {Count}",
+            clientId, date, maxBaseAmount, count);
+
+        return count;
+    }
+
+    public async Task<int> CountDailyTransfersUnderBaseAmountByAccountAsync(
+        Guid accountId,
+        DateOnly date,
+        decimal maxBaseAmount,
+        CancellationToken ct)
+    {
+        _logger.LogDebug(
+            "Counting daily transfers by account {AccountId} on {Date} with BaseAmount <= {MaxBaseAmount}",
+            accountId, date, maxBaseAmount);
+
+        var (from, to) = UtcDayRange(date);
+
+        var count = await _db.Transactions
+            .AsNoTracking()
+            .Where(t =>
+                t.AccountId == accountId &&
+                t.Type == TransactionType.Transfer &&
+                t.BaseAmount <= maxBaseAmount &&
+                t.OccurredAtUtc >= from &&
+                t.OccurredAtUtc < to)
+            .CountAsync(ct);
+
+        _logger.LogDebug(
+            "Daily transfer count by account {AccountId} on {Date} (<= {MaxBaseAmount}): {Count}",
+            accountId, date, maxBaseAmount, count);
+
+        return count;
     }
 
     public async Task<bool> ExistsAsync(Guid transactionId, CancellationToken ct)
@@ -183,6 +256,13 @@ public sealed class TransactionRepository : ITransactionRepository
     #endregion
 
     #region Private Methods
+
+    private static (DateTimeOffset from, DateTimeOffset to) UtcDayRange(DateOnly day)
+    {
+        // UTC midnight start; end is exclusive
+        var from = new DateTimeOffset(day.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
+        return (from, from.AddDays(1));
+    }
 
     private static IQueryable<Transaction> ApplySorting(
         IQueryable<Transaction> query,
