@@ -126,6 +126,7 @@ const transactions = useMemo(() => {
                 <SelectItem value="all">All</SelectItem>
                 <SelectItem value="Wire Transfer">Wire Transfer</SelectItem>
                 <SelectItem value="Cash Deposit">Cash Deposit</SelectItem>
+                <SelectItem value="Withdrawal">Withdrawal</SelectItem>
               </SelectContent>
             </Select>
           </div>

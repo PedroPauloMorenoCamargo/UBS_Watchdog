@@ -2,7 +2,6 @@ import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { ReportsTable } from "@/components/ui/tables/reportstable";
 import { reportsMock } from "@/mocks/mocks";
-import { weeklyAlertsBySeverity } from "@/mocks/mocks";
 import { useApi } from "@/hooks/useApi";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useClients } from "@/hooks/useClients";
