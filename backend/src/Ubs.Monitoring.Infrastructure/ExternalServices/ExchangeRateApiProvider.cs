@@ -193,7 +193,6 @@ public sealed class ExchangeRateApiProvider : IExchangeRateProvider
         CancellationToken ct)
     {
         var url = $"{_options.BaseUrl}/{_options.ApiKey}/latest/{baseCurrencyCode}";
-        _logger.LogDebug("Calling ExchangeRate-API: GET /latest/{Base}", baseCurrencyCode);
 
         using var response = await _httpClient.GetAsync(url, ct);
 
@@ -362,12 +361,14 @@ public sealed class ExchangeRateApiProvider : IExchangeRateProvider
     #region Private Methods - Retry Logic
 
     /// <summary>
-    /// Calculates retry delay with exponential backoff.
+    /// Calculates retry delay with exponential backoff and maximum cap.
+    /// Prevents excessive delays due to high retry counts or misconfiguration.
     /// </summary>
     private int CalculateRetryDelay(int attemptNumber)
     {
-        // Exponential backoff: baseDelay * 2^attempt
-        return _options.BaseRetryDelayMs * (int)Math.Pow(2, attemptNumber);
+        // Exponential backoff: baseDelay * 2^attempt, capped at MaxDelayMs
+        var calculatedDelay = _options.BaseRetryDelayMs * (int)Math.Pow(2, attemptNumber);
+        return Math.Min(calculatedDelay, _options.MaxDelayMs);
     }
 
     #endregion

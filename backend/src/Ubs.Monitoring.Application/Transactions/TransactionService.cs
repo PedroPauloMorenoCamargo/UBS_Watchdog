@@ -178,6 +178,7 @@ public sealed class TransactionService : ITransactionService
     {
         var errors = new List<TransactionImportErrorDto>();
         var successCount = 0;
+        var lastSaveCount = 0;
 
         for (int i = 0; i < rows.Count; i++)
         {
@@ -192,6 +193,7 @@ public sealed class TransactionService : ITransactionService
                 if (successCount % TransactionServiceConstants.ImportBatchSize == 0)
                 {
                     await _transactions.SaveChangesAsync(ct);
+                    lastSaveCount = successCount;
                     _logger.LogDebug("Saved batch of {BatchSize} transactions. Total processed: {TotalProcessed}",
                         TransactionServiceConstants.ImportBatchSize, successCount);
                 }
@@ -202,10 +204,11 @@ public sealed class TransactionService : ITransactionService
             }
         }
 
-        // Save remaining records
-        if (successCount % TransactionServiceConstants.ImportBatchSize != 0 && successCount > 0)
+        // Save remaining records only if there were changes since last save
+        if (successCount > lastSaveCount)
         {
             await _transactions.SaveChangesAsync(ct);
+            _logger.LogDebug("Saved final batch of {Count} remaining transactions", successCount - lastSaveCount);
         }
 
         return (successCount, errors);
@@ -247,7 +250,7 @@ public sealed class TransactionService : ITransactionService
 
             // Validate Brazilian transfer counterparty exists in system
             if (request.Type == TransactionType.Transfer &&
-                request.CpCountryCode?.Equals("BR", StringComparison.OrdinalIgnoreCase) == true &&
+                request.CpCountryCode == "BR" &&
                 request.CpIdentifierType.HasValue &&
                 !string.IsNullOrWhiteSpace(request.CpIdentifier))
             {

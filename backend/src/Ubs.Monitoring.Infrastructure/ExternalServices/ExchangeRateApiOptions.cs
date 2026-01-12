@@ -43,10 +43,17 @@ public sealed class ExchangeRateApiOptions
 
     /// <summary>
     /// Base delay in milliseconds for exponential backoff between retries.
-    /// Actual delay = BaseRetryDelayMs * 2^attemptNumber.
+    /// Actual delay = Math.Min(BaseRetryDelayMs * 2^attemptNumber, MaxDelayMs).
     /// Default: 500ms.
     /// </summary>
     public int BaseRetryDelayMs { get; set; } = 500;
+
+    /// <summary>
+    /// Maximum delay cap in milliseconds for retry attempts.
+    /// Prevents excessive wait times even with high retry counts or misconfiguration.
+    /// Default: 30000ms (30 seconds).
+    /// </summary>
+    public int MaxDelayMs { get; set; } = 30000;
 
     /// <summary>
     /// Whether to use the database as a fallback when the external API is unavailable.

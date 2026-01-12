@@ -108,10 +108,10 @@ public sealed class TransactionRepository : ITransactionRepository
             query = query.Where(t => t.BaseAmount <= filter.MaxAmount.Value);
 
         if (!string.IsNullOrWhiteSpace(filter.CurrencyCode))
-            query = query.Where(t => t.CurrencyCode == filter.CurrencyCode.ToUpperInvariant());
+            query = query.Where(t => t.CurrencyCode == filter.CurrencyCode.Trim().ToUpperInvariant());
 
         if (!string.IsNullOrWhiteSpace(filter.CpCountryCode))
-            query = query.Where(t => t.CpCountryCode == filter.CpCountryCode.ToUpperInvariant());
+            query = query.Where(t => t.CpCountryCode == filter.CpCountryCode.Trim().ToUpperInvariant());
 
         // Get total count before pagination
         var totalCount = await query.CountAsync(ct);
