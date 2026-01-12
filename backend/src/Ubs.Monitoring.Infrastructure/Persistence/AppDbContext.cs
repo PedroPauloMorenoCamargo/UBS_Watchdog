@@ -106,7 +106,11 @@ public class AppDbContext : DbContext
                 .WithOne(i => i.Account)
                 .HasForeignKey(i => i.AccountId)
                 .OnDelete(DeleteBehavior.Restrict);
-            b.Navigation(x => x.Identifiers).UsePropertyAccessMode(PropertyAccessMode.Field);
+
+            // Explicitly specify backing field so EF Core can properly track changes
+            var identifiersNavigation = b.Metadata.FindNavigation(nameof(Account.Identifiers))!;
+            identifiersNavigation.SetPropertyAccessMode(PropertyAccessMode.Field);
+            identifiersNavigation.SetField("_identifiers");
         });
 
         // account_identifiers
@@ -186,9 +190,26 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.FxRateId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            b.HasIndex(x => new { x.ClientId, x.OccurredAtUtc });
-            b.HasIndex(x => new { x.AccountId, x.OccurredAtUtc });
-            b.HasIndex(x => x.OccurredAtUtc);
+            b.HasIndex(x => new { x.ClientId, x.OccurredAtUtc })
+                .HasDatabaseName("IX_Transactions_ClientId_OccurredAtUtc");
+            b.HasIndex(x => new { x.AccountId, x.OccurredAtUtc })
+                .HasDatabaseName("IX_Transactions_AccountId_OccurredAtUtc");
+            b.HasIndex(x => x.OccurredAtUtc)
+                .HasDatabaseName("IX_Transactions_OccurredAtUtc");
+
+            // Additional performance indexes for frequently filtered columns
+            b.HasIndex(x => x.ClientId)
+                .HasDatabaseName("IX_Transactions_ClientId");
+            b.HasIndex(x => x.AccountId)
+                .HasDatabaseName("IX_Transactions_AccountId");
+            b.HasIndex(x => x.Type)
+                .HasDatabaseName("IX_Transactions_Type");
+            b.HasIndex(x => x.TransferMethod)
+                .HasDatabaseName("IX_Transactions_TransferMethod");
+            b.HasIndex(x => x.CurrencyCode)
+                .HasDatabaseName("IX_Transactions_CurrencyCode");
+            b.HasIndex(x => x.CpCountryCode)
+                .HasDatabaseName("IX_Transactions_CpCountryCode");
 
             b.ToTable(t =>
             {
