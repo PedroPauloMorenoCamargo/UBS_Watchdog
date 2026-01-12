@@ -37,6 +37,7 @@ export function Dashboard() {
     transactionPercentageChange,
     transactionsByType,
     weeklyActivity,
+    transactionsCountry
   } = useTransactions(transactions);
 
   const { data : clientsData} = 
@@ -240,7 +241,7 @@ export function Dashboard() {
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <ChartCard title="Geographic Distribution">
             <GeographicDistributionChart
-              data={transactionsByCountry} />
+              data={transactionsCountry} />
           </ChartCard>
 
           <ChartCard title="Transactions Type Distribution">

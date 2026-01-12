@@ -1,14 +1,22 @@
 import { useMemo } from "react";
 import type { TransactionResponseDto } from "@/types/Transactions/transaction";
 import { mapTransactionType } from "@/mappers/transaction/transactionType.mapper";
+import { mapCountryCode } from "@/constants/countries";
 
 import { TRANSACTION_TYPES } from "@/constants/transactionTypes";
 import { MONTHS } from "@/constants/months";
+import { COUNTRY_MAP } from "@/constants/countries";
 type Trend = "up" | "down" | "neutral";
 
 interface TransactionsByType {
   name: string;
   value: number;
+}
+
+interface TransactionCountry {
+  country: string;
+  totalAmount: number;
+  count: number;
 }
 
 export interface WeeklyActivity {
@@ -30,6 +38,7 @@ interface UseTransactionsResult {
   transactionsByType: TransactionsByType[];
   weeklyActivity: WeeklyActivity[];
   monthlyVolume : MonthlyVolume[];
+  transactionsCountry: TransactionCountry[];
 }
 
 export function useTransactions(transactions: TransactionResponseDto[]): UseTransactionsResult {
@@ -145,7 +154,6 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
   const monthlyVolume = useMemo(() => {
   const volumeByMonth = new Map<number, number>();
 
-  // inicializa todos os meses com 0
   for (let i = 0; i < 12; i++) {
     volumeByMonth.set(i, 0);
   }
@@ -154,7 +162,7 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
     if (!t.occurredAtUtc) return;
 
     const date = new Date(t.occurredAtUtc);
-    const monthIndex = date.getUTCMonth(); // 0–11
+    const monthIndex = date.getUTCMonth(); 
 
     const current = volumeByMonth.get(monthIndex) ?? 0;
     volumeByMonth.set(
@@ -169,6 +177,30 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
   }));
 }, [transactions]);
 
+const transactionsCountry = useMemo<TransactionCountry[]>(() => {
+  const map = new Map<string, { totalAmount: number; count: number }>();
+
+
+  Object.values(COUNTRY_MAP).forEach(code => {
+    map.set(code, { totalAmount: 0, count: 0 });
+  });
+  map.set("Others", { totalAmount: 0, count: 0 });
+
+  transactions.forEach(t => {
+    const country = mapCountryCode(t.cpCountryCode);
+    const entry = map.get(country)!;
+    entry.totalAmount += Math.max(t.baseAmount ?? 0, 0);
+    entry.count += 1;
+    map.set(country, entry);
+  });
+
+  return Array.from(map.entries()).map(([country, values]) => ({
+    country,
+    totalAmount: values.totalAmount,
+    count: values.count,
+  }));
+}, [transactions]);
+
 
   return {
     totalTransactionsAmount,
@@ -178,5 +210,6 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
     transactionsByType,
     weeklyActivity,
     monthlyVolume,
+    transactionsCountry,
   };
 }

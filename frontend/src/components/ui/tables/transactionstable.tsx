@@ -109,8 +109,9 @@ export function TransactionsTable({
                       <span className="font-medium text-slate-700">
                         {transaction.clientId}
                       </span>
-                      <span className="text-slate-500">
-                        to {transaction.counterPartyName}
+                      <span className="text-slate-500">to </span>
+                      <span className="text-slate-500 font-medium">
+                        {transaction.counterPartyName}
                       </span>
                     </div>
                   </TableCell>
