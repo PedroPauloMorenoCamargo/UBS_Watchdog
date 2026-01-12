@@ -41,6 +41,14 @@ public interface IAccountRepository
     Task<bool> AccountIdentifierExistsAsync(string accountIdentifier, CancellationToken ct);
 
     /// <summary>
+    /// Retrieves an account by its account identifier string.
+    /// </summary>
+    /// <param name="accountIdentifier">The account identifier (e.g., "BR-001-12345-6").</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The account if found; otherwise, null.</returns>
+    Task<Account?> GetByAccountIdentifierAsync(string accountIdentifier, CancellationToken ct);
+
+    /// <summary>
     /// Checks if an account with the specified ID exists.
     /// </summary>
     /// <param name="accountId">The unique identifier of the account.</param>
@@ -94,6 +102,16 @@ public interface IAccountRepository
     /// <param name="ct">Cancellation token.</param>
     /// <returns>True if the identifier exists; otherwise, false.</returns>
     Task<bool> IdentifierExistsAsync(Guid accountId, IdentifierType identifierType, string identifierValue, CancellationToken ct);
+
+    /// <summary>
+    /// Checks if an identifier with the specified type and value exists globally (across all accounts).
+    /// Used for validating counterparty identifiers in transfer transactions.
+    /// </summary>
+    /// <param name="identifierType">The type of identifier.</param>
+    /// <param name="identifierValue">The value of the identifier.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the identifier exists; otherwise, false.</returns>
+    Task<bool> IdentifierExistsGloballyAsync(IdentifierType identifierType, string identifierValue, CancellationToken ct);
 
     /// <summary>
     /// Persists all pending changes to the database.

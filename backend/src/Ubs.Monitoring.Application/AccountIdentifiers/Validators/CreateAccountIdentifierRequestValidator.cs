@@ -38,6 +38,6 @@ public sealed class CreateAccountIdentifierRequestValidator : AbstractValidator<
                 var normalizedCode = countryCode.Trim().ToUpperInvariant();
                 return await countries.ExistsAsync(normalizedCode, ct);
             })
-            .WithMessage("Issued country code '{PropertyValue}' does not exist in the system.");
+            .WithMessage("Invalid country code '{PropertyValue}'. This country does not exist in the countries table. Please use a valid ISO 3166-1 alpha-2 code (e.g., BR, US, GB, DE).");
     }
 }

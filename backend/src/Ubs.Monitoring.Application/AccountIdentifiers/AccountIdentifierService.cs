@@ -78,16 +78,17 @@ public sealed class AccountIdentifierService : IAccountIdentifierService
 
         try
         {
-            account.AddIdentifier(
+            // Create identifier through domain method
+            var createdIdentifier = account.AddIdentifier(
                 request.IdentifierType,
                 identifierValue,
                 request.IssuedCountryCode?.Trim().ToUpperInvariant()
             );
 
-            await _accounts.SaveChangesAsync(ct);
+            // Explicitly add to DbContext to ensure proper tracking
+            _accounts.AddIdentifier(createdIdentifier);
 
-            var createdIdentifier = account.Identifiers
-                .First(i => i.IdentifierType == request.IdentifierType && i.IdentifierValue == identifierValue);
+            await _accounts.SaveChangesAsync(ct);
 
             _logger.LogInformation("Identifier {IdentifierId} created successfully for account {AccountId}",
                 createdIdentifier.Id, accountId);

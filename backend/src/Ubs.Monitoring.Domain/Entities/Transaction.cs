@@ -40,27 +40,27 @@ public class Transaction
         Type = type;
         TransferMethod = transferMethod;
         Amount = amount;
-        CurrencyCode = currencyCode.ToUpperInvariant();
-        BaseCurrencyCode = baseCurrencyCode.ToUpperInvariant();
+        CurrencyCode = currencyCode.Trim().ToUpperInvariant();
+        BaseCurrencyCode = baseCurrencyCode.Trim().ToUpperInvariant();
         BaseAmount = baseAmount;
         FxRateId = fxRateId;
         OccurredAtUtc = occurredAtUtc;
-        CpName = cpName;
-        CpBank = cpBank;
-        CpBranch = cpBranch;
-        CpAccount = cpAccount;
+        CpName = cpName?.Trim();
+        CpBank = cpBank?.Trim();
+        CpBranch = cpBranch?.Trim();
+        CpAccount = cpAccount?.Trim();
         CpIdentifierType = cpIdentifierType;
-        CpIdentifier = cpIdentifier;
-        CpCountryCode = cpCountryCode?.ToUpperInvariant();
+        CpIdentifier = cpIdentifier?.Trim();
+        CpCountryCode = cpCountryCode?.Trim().ToUpperInvariant();
         CreatedAtUtc = DateTimeOffset.UtcNow;
     }
 
     public Guid Id { get; private set; }
 
     public Guid AccountId { get; private set; }
-    public Account Account { get; set; } = null!;
+    public Account Account { get; private set; } = null!;
     public Guid ClientId { get; private set; }
-    public Client Client { get; set; } = null!;
+    public Client Client { get; private set; } = null!;
 
     public TransactionType Type { get; private set; }
     public TransferMethod? TransferMethod { get; private set; }
@@ -72,7 +72,7 @@ public class Transaction
     public decimal BaseAmount { get; private set; }
 
     public Guid? FxRateId { get; private set; }
-    public FxRate? FxRate { get; set; }
+    public FxRate? FxRate { get; private set; }
 
     public DateTimeOffset OccurredAtUtc { get; private set; }
 
@@ -86,5 +86,5 @@ public class Transaction
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
-    public Case? Case { get; set; }
+    public Case? Case { get; private set; }
 }

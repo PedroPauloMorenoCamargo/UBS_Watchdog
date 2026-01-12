@@ -106,7 +106,11 @@ public class AppDbContext : DbContext
                 .WithOne(i => i.Account)
                 .HasForeignKey(i => i.AccountId)
                 .OnDelete(DeleteBehavior.Restrict);
-            b.Navigation(x => x.Identifiers).UsePropertyAccessMode(PropertyAccessMode.Field);
+
+            // Explicitly specify backing field so EF Core can properly track changes
+            var identifiersNavigation = b.Metadata.FindNavigation(nameof(Account.Identifiers))!;
+            identifiersNavigation.SetPropertyAccessMode(PropertyAccessMode.Field);
+            identifiersNavigation.SetField("_identifiers");
         });
 
         // account_identifiers
