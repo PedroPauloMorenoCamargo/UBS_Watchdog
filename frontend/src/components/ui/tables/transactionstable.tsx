@@ -6,10 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { SeverityBadge } from "../severitybadge";
-import { transactionsMock } from "@/mocks/mocks";
 import { useEffect, useRef } from "react";
-import { TransactionStatusBadge } from "../transactionstatusbadge";
 import type { TransactionRow } from "@/models/transaction";
 
 interface TransactionsTableProps {
@@ -54,7 +51,7 @@ export function TransactionsTable({
             <TableHead className="px-4 py-3 text-center">Date</TableHead>
             <TableHead className="px-4 py-3 text-left">Amount</TableHead>
             <TableHead className="px-4 py-3">Type</TableHead>
-            <TableHead className="px-4 py-3">Parties</TableHead>
+            <TableHead className="px-4 py-3">Sender Id to Receiver</TableHead>
             <TableHead className="px-4 py-3">Country</TableHead>
         
           </TableRow>
@@ -97,7 +94,7 @@ export function TransactionsTable({
                   <TableCell className="px-4 py-3 text-left font-medium">
                     <span
                       className="block max-w-[120px] truncate"
-                      title={String(transaction.amount)}
+                      title={transaction.amount}
                     >
                       {transaction.amount}
                     </span>

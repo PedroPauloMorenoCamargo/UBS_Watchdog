@@ -30,6 +30,8 @@ const weeklyAlertsBySeverity = [
   { day: "Sun", high: 2, medium: 3, low: 1 },
 ];
 
+import type { Status } from "@/types/status";
+import type { TransactionStatus } from "@/types/transactionstatus";
 type Severity = "High" | "Medium" | "Low";
 type KYC = "Verified" | "Expired" | "Pending";
 interface Alert {
@@ -385,73 +387,29 @@ const usersMock: User[]=[
   },
 ]
 
-import type { Rule } from "@/types/rules";
-import type { Status } from "@/types/status";
-import type { TransactionStatus } from "@/types/transactionstatus";
-
-const rulesMock: Rule[] = [
+export interface TransactionCountry {
+  country: string,
+  totalAmount: number,
+  count: number,
+}
+const transactionsByCountry: TransactionCountry[] = [
   {
-    id: "rule-001",
-    name: "High Transaction Volume",
-    description:
-      "Triggers when a user performs an unusually high number of transactions in a short period.",
-    severity: "High",
-    threshold: 50,
-    triggeredCount: 12,
-    enabled: true,
+    country: "BR",
+    totalAmount: 120000000,
+    count: 320,
   },
   {
-    id: "rule-002",
-    name: "Multiple Failed Login Attempts",
-    description:
-      "Detects multiple failed login attempts that may indicate brute-force attacks.",
-    severity: "Medium",
-    threshold: 5,
-    triggeredCount: 34,
-    enabled: true,
+    country: "US",
+    totalAmount: 120000000,
+    count: 210,
   },
   {
-    id: "rule-003",
-    name: "New Device Login",
-    description:
-      "Alerts when a user logs in from a previously unseen device.",
-    severity: "Low",
-    threshold: 1,
-    triggeredCount: 87,
-    enabled: true,
-  },
-  {
-    id: "rule-004",
-    name: "Access From Blacklisted Country",
-    description:
-      "Triggers when access originates from a country on the blacklist.",
-    severity: "High",
-    threshold: 1,
-    triggeredCount: 4,
-    enabled: false,
-  },
-  {
-    id: "rule-005",
-    name: "Unusual Transaction Amount",
-    description:
-      "Detects transactions that exceed the user's normal transaction amount.",
-    severity: "Medium",
-    threshold: 10000,
-    triggeredCount: 9,
-    enabled: true,
-  },
-  {
-    id: "rule-006",
-    name: "Rapid Password Reset Requests",
-    description:
-      "Flags accounts requesting multiple password resets within a short time frame.",
-    severity: "Low",
-    threshold: 3,
-    triggeredCount: 21,
-    enabled: false,
+    country: "DE",
+    totalAmount: 200000000,
+    count: 95,
   },
 ];
 
 
 export { weeklyActivity,weeklyAlertsBySeverity, transactionsByType, alertsBySeverity, COLORS, 
-alertsMock, transactionsMock, clientsMock, reportsMock, usersMock, rulesMock};
+alertsMock, transactionsMock, clientsMock, reportsMock, usersMock, transactionsByCountry};

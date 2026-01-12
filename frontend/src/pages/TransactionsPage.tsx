@@ -29,10 +29,6 @@ export function TransactionsPage() {
   const [endDate, setEndDate] = useState("");
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
 
-  const parseAmount = (value: string) =>
-        Number(value.replace(/[$,]/g, ""));
-
-
   const { data, loading, error } = useApi({
     fetcher: fetchTransactions,
   });
@@ -53,7 +49,7 @@ const transactions = useMemo(() => {
       const typeMatch =
         type === "all" || t.type === type;
 
-      const amount = parseAmount(t.amount);
+      const amount = t.rawAmount;
       const min = minAmount ? Number(minAmount) : null;
       const max = maxAmount ? Number(maxAmount) : null;
 
@@ -70,7 +66,7 @@ const transactions = useMemo(() => {
 
       return searchMatch && typeMatch && minMatch && maxMatch && startMatch && endMatch;
     });
-  }, [search, severity, type, minAmount, maxAmount, startDate, endDate]);
+  }, [transactions,search, severity, type, minAmount, maxAmount, startDate, endDate]);
 
 
   return (

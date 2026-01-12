@@ -10,6 +10,7 @@ export function mapTransactionToRow(
     id: dto.id,
     date: new Date(dto.occurredAtUtc).toLocaleString("pt-BR"),
     amount: `${dto.amount.toFixed(2)} ${dto.currencyCode}`,
+    rawAmount: dto.amount,
     type: mapTransactionType(dto.type),
     method: mapTransferMethod(dto.transferMethod),
     clientId: dto.clientId,

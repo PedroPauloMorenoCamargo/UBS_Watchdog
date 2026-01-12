@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { AlertsBySeverityChart } from "@/components/ui/charts/alertsbyseveritychart";
+import { GeographicDistributionChart } from "@/components/ui/charts/geographicdistributionchart";
 import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
 import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
-import { alertsMock, weeklyActivity } from "@/mocks/mocks";
+import { alertsMock, transactionsByCountry, weeklyActivity } from "@/mocks/mocks";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AlertsTable } from "@/components/ui/tables/alertstable";
 import { DollarSign, ArrowUpRight, ArrowDownRight, 
@@ -110,15 +110,16 @@ export function Dashboard() {
 
                   <span className={
                   transactionTrend === "up"
-                    ? "text-red-600"
-                    : transactionTrend === "down"
-                    ? "text-green-600"
+                  ?   "text-green-600"
+                  : transactionTrend === "down"
+                  ?   "text-red-600"
                     : "text-gray-400"
                   }
                 >
                   {transactionTrend === "up" && "+"}
                   {transactionTrend === "down" && "-"}
-                  {transactionPercentageChange} vs last period</span>
+                  {transactionPercentageChange}</span> 
+                  <span className="text-gray-500"> vs last period</span>
                 </div>
             </div>
 
@@ -167,7 +168,8 @@ export function Dashboard() {
                 >
                   {highRiskTrend === "up" && "+"}
                   {highRiskTrend === "down" && "-"}
-                  {highRiskCurrentPeriod} vs last period</span>
+                  {highRiskCurrentPeriod}</span>
+                  <span className="text-gray-500"> vs last period</span>
               </div>
             </div>
           
@@ -221,14 +223,16 @@ export function Dashboard() {
                 >
                   {clientTrend === "up" && "+"}
                   {clientTrend === "down" && "-"}
-                  {newClientsCurrentPeriod} vs last period</span>
+                  {clientPercentageChange}</span>
+                  <span className="text-gray-500"> vs last period</span>
             </div>
           </div>
 
         </div>
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <ChartCard title="Geographic Distribution">
-            <AlertsBySeverityChart />
+            <GeographicDistributionChart
+              data={transactionsByCountry} />
           </ChartCard>
 
           <ChartCard title="Transactions Type Distribution">
