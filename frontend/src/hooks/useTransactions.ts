@@ -3,7 +3,7 @@ import type { TransactionResponseDto } from "@/types/Transactions/transaction";
 import { mapTransactionType } from "@/mappers/transaction/transactionType.mapper";
 
 import { TRANSACTION_TYPES } from "@/constants/transactionTypes";
-
+import { MONTHS } from "@/constants/months";
 type Trend = "up" | "down" | "neutral";
 
 interface TransactionsByType {
@@ -17,6 +17,11 @@ export interface WeeklyActivity {
   alerts: number;
 }
 
+export interface MonthlyVolume {
+  month: string;
+  volume: number;
+}
+
 interface UseTransactionsResult {
   totalTransactionsAmount: number;
   totalTransactionsCount: number;
@@ -24,6 +29,7 @@ interface UseTransactionsResult {
   transactionPercentageChange: number | null;
   transactionsByType: TransactionsByType[];
   weeklyActivity: WeeklyActivity[];
+  monthlyVolume : MonthlyVolume[];
 }
 
 export function useTransactions(transactions: TransactionResponseDto[]): UseTransactionsResult {
@@ -68,6 +74,8 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
       ? null
       : ((currentTotal - previousTotal) / previousTotal) * 100;
 
+  
+
   const transactionsByType = useMemo<TransactionsByType[]>(() => {
     const map = new Map<string, number>();
 
@@ -92,14 +100,14 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
   const weeklyActivity = useMemo<WeeklyActivity[]>(() => {
   const map = new Map<string, WeeklyActivity>();
 
-  // ⬇️ DEFINE O RANGE (UTC)
+
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
   start.setUTCDate(start.getUTCDate() - 6);
 
-  const end = new Date(); // agora (UTC)
+  const end = new Date(); 
 
-  // Inicializa os 7 dias
+  
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
     d.setUTCDate(start.getUTCDate() + i);
@@ -111,11 +119,11 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
     map.set(label, {
       day: label,
       transactions: 0,
-      alerts: 0, // placeholder
+      alerts: 0, 
     });
   }
 
-  // Conta transações reais
+  
   transactions.forEach((t) => {
     const txDate = new Date(t.occurredAtUtc);
 
@@ -133,7 +141,34 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
 
   return Array.from(map.values());
 }, [transactions]);
-  
+
+  const monthlyVolume = useMemo(() => {
+  const volumeByMonth = new Map<number, number>();
+
+  // inicializa todos os meses com 0
+  for (let i = 0; i < 12; i++) {
+    volumeByMonth.set(i, 0);
+  }
+
+  transactions.forEach(t => {
+    if (!t.occurredAtUtc) return;
+
+    const date = new Date(t.occurredAtUtc);
+    const monthIndex = date.getUTCMonth(); // 0–11
+
+    const current = volumeByMonth.get(monthIndex) ?? 0;
+    volumeByMonth.set(
+      monthIndex,
+      current + Math.max(t.baseAmount ?? 0, 0)
+    );
+  });
+
+  return MONTHS.map((month, index) => ({
+    month,
+    volume: volumeByMonth.get(index) ?? 0,
+  }));
+}, [transactions]);
+
 
   return {
     totalTransactionsAmount,
@@ -142,5 +177,6 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
     transactionPercentageChange,
     transactionsByType,
     weeklyActivity,
+    monthlyVolume,
   };
 }

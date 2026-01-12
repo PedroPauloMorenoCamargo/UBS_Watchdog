@@ -4,6 +4,12 @@ import type { ClientResponseDto } from "@/types/Clients/client";
 
 type Trend = "up" | "down" | "neutral";
 
+interface RiskLevelChartItem {
+  name: string;
+  value: number;
+}
+
+
 interface UseClientsResult {
   totalUsersCount: number;
 
@@ -18,6 +24,7 @@ interface UseClientsResult {
   highRiskCurrentPeriod: number;
   highRiskPreviousPeriod: number;
   highRiskTrend: Trend;
+  usersByRiskLevel: RiskLevelChartItem[];
 }
 
 export function useClients(
@@ -60,6 +67,34 @@ export function useClients(
 
   const highRiskClients = useMemo(() => {
     return clients.filter(c => c.riskLevel === 2);
+  }, [clients]);
+
+  const usersByRiskLevel = useMemo<RiskLevelChartItem[]>(() => {
+    const counts = {
+      low: 0,
+      medium: 0,
+      high: 0,
+    };
+
+    clients.forEach(client => {
+      switch (client.riskLevel) {
+        case 0:
+          counts.low += 1;
+          break;
+        case 1:
+          counts.medium += 1;
+          break;
+        case 2:
+          counts.high += 1;
+          break;
+      }
+    });
+
+    return [
+      { name: "Low", value: counts.low },
+      { name: "Medium", value: counts.medium },
+      { name: "High", value: counts.high },
+    ];
   }, [clients]);
 
   const highRiskCount = highRiskClients.length;
@@ -111,5 +146,6 @@ export function useClients(
     highRiskCurrentPeriod,
     highRiskPreviousPeriod,
     highRiskTrend,
+    usersByRiskLevel,
   };
 }
