@@ -1,8 +1,7 @@
 using FluentValidation;
-using Microsoft.Extensions.DependencyInjection;
 using Ubs.Monitoring.Api.Filters;
 using Ubs.Monitoring.Application.Clients;
-
+using Ubs.Monitoring.Application.Common;
 namespace Ubs.Monitoring.Api.Extensions;
 
 public static class ApiServiceExtensions
@@ -26,6 +25,9 @@ public static class ApiServiceExtensions
 
         // FluentValidation - registers all validators from Application assembly
         services.AddValidatorsFromAssemblyContaining<CreateClientRequest>();
+        // Saber quem faz a request
+        services.AddScoped<ICurrentRequestContext, CurrentRequestContext>();
+
 
         return services;
     }

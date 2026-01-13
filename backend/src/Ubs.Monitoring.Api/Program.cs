@@ -8,6 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Logging
 builder.Host.AddSerilogLogging(builder.Configuration);
 
+// HTTP context
+builder.Services.AddHttpContextAccessor();
+
 // Application + Infrastructure registrations
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApiHealthChecks();
