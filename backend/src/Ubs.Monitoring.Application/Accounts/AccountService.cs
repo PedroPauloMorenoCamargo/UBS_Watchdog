@@ -6,9 +6,6 @@ using Ubs.Monitoring.Domain.Entities;
 
 namespace Ubs.Monitoring.Application.Accounts;
 
-/// <summary>
-/// Service implementation for account business operations.
-/// </summary>
 public sealed class AccountService : IAccountService
 {
     private readonly IAccountRepository _accounts;
@@ -28,9 +25,6 @@ public sealed class AccountService : IAccountService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Creates a new account for a client.
-    /// </summary>
     public async Task<(AccountResponseDto? Result, string? ErrorMessage)> CreateAccountAsync(
         Guid clientId,
         CreateAccountRequest request,
@@ -146,15 +140,11 @@ public sealed class AccountService : IAccountService
         }
         catch (Exception ex)
         {
-            // File parsing error
             _logger.LogError(ex, "Error parsing import file: {FileName}", fileName);
             return (BuildFileParsingErrorResult(ex.Message), null);
         }
     }
 
-    /// <summary>
-    /// Processes all import rows and creates accounts.
-    /// </summary>
     private async Task<(int SuccessCount, List<AccountImportErrorDto> Errors)> ProcessImportRowsAsync(
         Guid clientId,
         List<AccountImportRow> rows,
@@ -196,9 +186,6 @@ public sealed class AccountService : IAccountService
         return (successCount, errors);
     }
 
-    /// <summary>
-    /// Processes a single import row and creates an account.
-    /// </summary>
     private async Task<(bool IsSuccess, AccountImportErrorDto? Error)> ProcessSingleRowAsync(
         Guid clientId,
         AccountImportRow row,
@@ -251,9 +238,6 @@ public sealed class AccountService : IAccountService
         }
     }
 
-    /// <summary>
-    /// Builds the import result DTO.
-    /// </summary>
     private static AccountImportResultDto BuildImportResult(
         int totalProcessed,
         int successCount,
@@ -265,9 +249,6 @@ public sealed class AccountService : IAccountService
             Errors: errors
         );
 
-    /// <summary>
-    /// Builds an import result for file parsing errors.
-    /// </summary>
     private static AccountImportResultDto BuildFileParsingErrorResult(string errorMessage) =>
         new(
             TotalProcessed: 0,
@@ -279,9 +260,6 @@ public sealed class AccountService : IAccountService
             }
         );
 
-    /// <summary>
-    /// Maps a domain Account entity to a AccountResponseDto.
-    /// </summary>
     private static AccountResponseDto MapToResponseDto(Account account) =>
         new(
             Id: account.Id,
@@ -295,9 +273,6 @@ public sealed class AccountService : IAccountService
             UpdatedAtUtc: account.UpdatedAtUtc
         );
 
-    /// <summary>
-    /// Maps a domain Account entity with related data to a AccountDetailDto.
-    /// </summary>
     private static AccountDetailDto MapToDetailDto(Account account) =>
         new(
             Id: account.Id,
@@ -313,9 +288,6 @@ public sealed class AccountService : IAccountService
             Identifiers: account.Identifiers.Select(MapToIdentifierDto).ToList()
         );
 
-    /// <summary>
-    /// Maps a domain AccountIdentifier entity to a AccountIdentifierDto.
-    /// </summary>
     private static AccountIdentifierDto MapToIdentifierDto(AccountIdentifier identifier) =>
         new(
             Id: identifier.Id,

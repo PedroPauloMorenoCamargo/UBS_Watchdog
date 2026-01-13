@@ -5,9 +5,6 @@ using Ubs.Monitoring.Domain.Enums;
 
 namespace Ubs.Monitoring.Application.Cases;
 
-/// <summary>
-/// Service implementation for case business operations.
-/// </summary>
 public sealed class CaseService : ICaseService
 {
     private readonly ICaseRepository _cases;

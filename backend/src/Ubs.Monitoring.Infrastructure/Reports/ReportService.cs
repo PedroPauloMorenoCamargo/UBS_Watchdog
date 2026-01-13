@@ -9,9 +9,6 @@ using Ubs.Monitoring.Infrastructure.Persistence;
 
 namespace Ubs.Monitoring.Infrastructure.Reports;
 
-/// <summary>
-/// Service implementation for generating reports and analytics.
-/// </summary>
 public sealed class ReportService : IReportService
 {
     private readonly AppDbContext _db;

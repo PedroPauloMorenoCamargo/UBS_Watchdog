@@ -27,20 +27,8 @@ namespace Ubs.Monitoring.Infrastructure;
 public static class DependencyInjection
 {   
     /// <summary>
-    /// Registers all infrastructure services, including persistence, authentication, application support services, etc.
+    /// Registers all infrastructure services: persistence, authentication, repositories, etc.
     /// </summary>
-    /// <param name="services">
-    /// The service collection to which infrastructure services are added.
-    /// </param>
-    /// <param name="config">
-    /// The application configuration used to bind infrastructure settings.
-    /// </param>
-    /// <returns>
-    /// The same <see cref="IServiceCollection"/> instance to allow fluent service registration.
-    /// </returns>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown when the default database connection string is missing from the configuration.
-    /// </exception>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
         var cs = config.GetConnectionString("Default");
@@ -109,7 +97,7 @@ public static class DependencyInjection
     }
 
     /// <summary>
-    /// Registers the ExchangeRate-API provider with HttpClient, caching, and retry policies.
+    /// Registers ExchangeRate-API provider with HttpClient, caching, and retry.
     /// </summary>
     private static IServiceCollection AddExchangeRateApiProvider(this IServiceCollection services, IConfiguration config)
     {
