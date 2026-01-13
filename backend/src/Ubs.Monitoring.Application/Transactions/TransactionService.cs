@@ -10,9 +10,6 @@ using Ubs.Monitoring.Application.Transactions.Compliance;
 
 namespace Ubs.Monitoring.Application.Transactions;
 
-/// <summary>
-/// Service implementation for transaction business operations.
-/// </summary>
 public sealed class TransactionService : ITransactionService
 {
     private readonly ITransactionRepository _transactions;
@@ -39,9 +36,6 @@ public sealed class TransactionService : ITransactionService
         _compliance = compliance;
     }
 
-    /// <summary>
-    /// Creates a new transaction.
-    /// </summary>
     public async Task<(TransactionResponseDto? Result, string? ErrorMessage)> CreateTransactionAsync(
         CreateTransactionRequest request,
         CancellationToken ct)
@@ -57,9 +51,6 @@ public sealed class TransactionService : ITransactionService
             return (null, $"Account with ID '{request.AccountId}' not found.");
         }
 
-        // Note: Transfer-specific field validation is handled by FluentValidation (CreateTransactionRequestValidator)
-
-        // Get FxRate for currency conversion
         var (baseAmount, fxRateId, fxError) = await _fxRateService.ConvertToBaseCurrencyAsync(
             request.Amount, request.CurrencyCode, ct);
 
@@ -71,7 +62,6 @@ public sealed class TransactionService : ITransactionService
 
         try
         {
-            // Create domain entity (normalization is handled by the entity constructor)
             var transaction = new Transaction(
                 accountId: request.AccountId,
                 clientId: account.ClientId,
@@ -112,18 +102,12 @@ public sealed class TransactionService : ITransactionService
         }
     }
 
-    /// <summary>
-    /// Retrieves a transaction by its unique identifier.
-    /// </summary>
     public async Task<TransactionDetailDto?> GetTransactionByIdAsync(Guid transactionId, CancellationToken ct)
     {
         var transaction = await _transactions.GetByIdWithDetailsAsync(transactionId, ct);
         return transaction is null ? null : MapToDetailDto(transaction);
     }
 
-    /// <summary>
-    /// Retrieves a paginated and filtered list of transactions.
-    /// </summary>
     public async Task<PagedTransactionsResponseDto> GetTransactionsAsync(
         TransactionFilterRequest filter,
         CancellationToken ct)
@@ -143,9 +127,6 @@ public sealed class TransactionService : ITransactionService
         );
     }
 
-    /// <summary>
-    /// Imports multiple transactions from a CSV or Excel file.
-    /// </summary>
     public async Task<(TransactionImportResultDto? Result, string? ErrorMessage)> ImportTransactionsFromFileAsync(
         Stream fileStream,
         string fileName,
@@ -153,7 +134,7 @@ public sealed class TransactionService : ITransactionService
     {
         _logger.LogInformation("Starting transaction import from file: {FileName}", fileName);
 
-        // Tracks resolved accounts within this import batch to avoid repeated DB queries
+        // Cache de contas resolvidas para evitar queries repetidas no mesmo batch de import
         var accountCache = new Dictionary<string, Account>(StringComparer.OrdinalIgnoreCase);
 
         try
@@ -177,9 +158,6 @@ public sealed class TransactionService : ITransactionService
 
     #region Private Methods - Import Processing
 
-    /// <summary>
-    /// Processes all import rows and creates transactions.
-    /// </summary>
     private async Task<(int SuccessCount, List<TransactionImportErrorDto> Errors)> ProcessImportRowsAsync(
         List<TransactionImportRow> rows,
         CancellationToken ct,
@@ -240,9 +218,6 @@ public sealed class TransactionService : ITransactionService
         return (successCount, errors);
     }
 
-    /// <summary>
-    /// Checks compliance for a batch of transactions.
-    /// </summary>
     private async Task CheckComplianceForBatchAsync(List<Transaction> transactions, CancellationToken ct)
     {
         foreach (var transaction in transactions)
@@ -259,9 +234,6 @@ public sealed class TransactionService : ITransactionService
         }
     }
 
-    /// <summary>
-    /// Processes a single import row and creates a transaction.
-    /// </summary>
     private async Task<(bool IsSuccess, TransactionImportErrorDto? Error, Transaction? Transaction)> ProcessSingleRowAsync(
         TransactionImportRow row,
         int lineNumber,
@@ -270,7 +242,6 @@ public sealed class TransactionService : ITransactionService
     {
         try
         {
-            // Resolve account from identifier (with caching)
             if (!accountCache.TryGetValue(row.AccountIdentifier, out var account))
             {
                 account = await _accounts.GetByAccountIdentifierAsync(row.AccountIdentifier, ct);
@@ -355,9 +326,6 @@ public sealed class TransactionService : ITransactionService
         }
     }
 
-    /// <summary>
-    /// Validates required fields for Transfer transactions during import.
-    /// </summary>
     private static TransactionImportErrorDto? ValidateTransferFieldsForImport(
         CreateTransactionRequest request,
         int lineNumber,

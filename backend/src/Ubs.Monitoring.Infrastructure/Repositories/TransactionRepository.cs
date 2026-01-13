@@ -8,9 +8,6 @@ using Ubs.Monitoring.Infrastructure.Persistence;
 
 namespace Ubs.Monitoring.Infrastructure.Repositories;
 
-/// <summary>
-/// Repository implementation for transaction data access operations.
-/// </summary>
 public sealed class TransactionRepository : ITransactionRepository
 {
     private readonly AppDbContext _db;

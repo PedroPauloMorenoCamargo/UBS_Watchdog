@@ -11,26 +11,9 @@ public sealed class AnalystProfileService : IAnalystProfileService
     }
 
     /// <summary>
-    /// Updates or clears the profile picture of an analyst.
+    /// Updates or clears profile picture. Accepts optional data URI prefix.
+    /// Max size: 2MB. If null/empty, clears the picture.
     /// </summary>
-    /// <param name="analystId">
-    /// Identifier of the analyst whose profile picture should be updated.
-    /// </param>
-    /// <param name="base64">
-    /// Base64-encoded image data. May optionally include a data URI prefix
-    /// (e.g. <c>data:image/png;base64,...</c>).  
-    /// If <c>null</c>, empty, or whitespace, the profile picture will be cleared.
-    /// </param>
-    /// <param name="ct">
-    /// Cancellation token used to cancel the operation.
-    /// </param>
-    /// <returns>
-    /// <c>true</c> if the update (or clear) succeeded;  
-    /// <c>false</c> if the analyst does not exist.
-    /// </returns>
-    /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="base64"/> is not valid Base64 or exceeds the maximum allowed size.
-    /// </exception>
     public async Task<bool> UpdateProfilePictureAsync(Guid analystId, string? base64, CancellationToken ct)
     {
         var analyst = await _repo.GetForUpdateAsync(analystId, ct);

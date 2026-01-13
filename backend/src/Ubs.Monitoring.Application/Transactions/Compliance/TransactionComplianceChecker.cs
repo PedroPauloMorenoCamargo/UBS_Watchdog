@@ -70,7 +70,7 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
         }
         catch (Exception ex)
         {
-            // Compliance must NEVER break the transaction flow
+            // Compliance check must never break transaction flow
             _logger.LogError(
                 ex,
                 "Compliance evaluation failed for transaction {TransactionId}",
@@ -78,10 +78,6 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
             );
         }
     }
-
-    // -----------------------
-    // Rule evaluation
-    // -----------------------
 
     private async Task<ComplianceViolation?> EvaluateRuleAsync(
         ComplianceRule rule,
@@ -104,10 +100,6 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
             _ => null
         };
     }
-
-    // -----------------------
-    // Individual rules
-    // -----------------------
 
     private async Task<ComplianceViolation?> CheckDailyLimit(
         ComplianceRule rule,
@@ -185,10 +177,6 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
         );
     }
 
-    // -----------------------
-    // Case creation
-    // -----------------------
-
     private async Task CreateCaseWithFindingsAsync(
         Transaction tx,
         List<ComplianceViolation> violations,
@@ -253,19 +241,13 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == "23505")
         {
-            // 23505 = unique_violation (PostgreSQL error code)
-            // This means another concurrent request already created a case for this transaction
+            // Concurrent request already created a case for this transaction
             _logger.LogInformation(
                 "Case already created by concurrent request for transaction {TransactionId}. Skipping duplicate creation.",
                 tx.Id
             );
-            // Gracefully ignore - the case was already created by another thread/request
         }
     }
-
-    // -----------------------
-    // Logging
-    // -----------------------
 
     private void LogViolation(Transaction tx, ComplianceViolation v)
     {

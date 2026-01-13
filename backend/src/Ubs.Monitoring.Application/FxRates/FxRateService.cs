@@ -4,9 +4,6 @@ using Ubs.Monitoring.Domain.Entities;
 
 namespace Ubs.Monitoring.Application.FxRates;
 
-/// <summary>
-/// Service implementation for FX rate business operations.
-/// </summary>
 public sealed class FxRateService : IFxRateService
 {
     private readonly IFxRateRepository _fxRateRepository;
@@ -26,14 +23,8 @@ public sealed class FxRateService : IFxRateService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Gets the base currency code used for all conversions.
-    /// </summary>
     public string BaseCurrencyCode => _options.BaseCurrencyCode;
 
-    /// <summary>
-    /// Converts an amount from one currency to the base currency (USD).
-    /// </summary>
     public async Task<(decimal BaseAmount, Guid? FxRateId, string? Error)> ConvertToBaseCurrencyAsync(
         decimal amount,
         string currencyCode,
@@ -85,8 +76,7 @@ public sealed class FxRateService : IFxRateService
     }
 
     /// <summary>
-    /// Gets an existing FX rate from the database if one exists within the reuse window,
-    /// or creates a new one from the API response.
+    /// Reuses existing FX rate within time window, or creates new from API response.
     /// </summary>
     private async Task<Guid> GetOrCreateFxRateAsync(ExchangeRateDto exchangeRate, CancellationToken ct)
     {

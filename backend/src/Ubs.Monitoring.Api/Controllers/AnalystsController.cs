@@ -6,6 +6,9 @@ using Ubs.Monitoring.Application.Analysts;
 
 namespace Ubs.Monitoring.Api.Controllers;
 
+/// <summary>
+/// Controller for managing analyst profiles.
+/// </summary>
 [ApiController]
 [Authorize]
 [Route("api/analysts")]
@@ -15,16 +18,24 @@ public sealed class AnalystsController : ControllerBase
     private readonly IAnalystProfileRepository _analystRead;
     private readonly IAnalystProfileService _profile;
 
-    public AnalystsController( IAnalystProfileRepository analystRead, IAnalystProfileService profile)
+    public AnalystsController(IAnalystProfileRepository analystRead, IAnalystProfileService profile)
     {
         _analystRead = analystRead;
         _profile = profile;
     }
+
     /// <summary>
-    /// Retrieve an analyst profile by its unique identifier.
+    /// Retrieves an analyst profile by its unique identifier.
     /// </summary>
+    /// <param name="id">The unique identifier of the analyst.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The analyst profile information.</returns>
+    /// <response code="200">Returns the analyst profile.</response>
+    /// <response code="401">Unauthorized - JWT token missing or invalid.</response>
+    /// <response code="404">Analyst not found.</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AnalystProfileResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AnalystProfileResponse>> GetById(Guid id, CancellationToken ct)
     {
@@ -46,9 +57,21 @@ public sealed class AnalystsController : ControllerBase
             a.CreatedAtUtc
         ));
     }
+
     /// <summary>
-    /// Update or clear the authenticated analyst's profile picture.
+    /// Updates or clears the authenticated analyst's profile picture.
     /// </summary>
+    /// <param name="req">Request containing the new profile picture (base64) or null to clear.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>No content on success.</returns>
+    /// <response code="204">Profile picture updated successfully.</response>
+    /// <response code="400">Invalid profile picture format or size.</response>
+    /// <response code="401">Unauthorized - JWT token missing or invalid.</response>
+    /// <response code="404">Analyst not found.</response>
+    /// <remarks>
+    /// Send a base64-encoded image to update, or null to clear the profile picture.
+    /// Supported formats: JPEG, PNG. Maximum size: 1MB.
+    /// </remarks>
     [HttpPatch("me/profile-picture")]
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -92,13 +115,7 @@ public sealed class AnalystsController : ControllerBase
             );
         }
     }
-    /// <summary>
-    /// Extracts the authenticated analyst's ID from JWT claims.
-    /// This method assumes [Authorize] has already validated authentication.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown when the authenticated principal is missing required claims.
-    /// </exception>
+
     private bool TryGetAnalystId(out Guid id)
     {
         var raw =
