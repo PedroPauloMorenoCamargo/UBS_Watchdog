@@ -18,11 +18,13 @@ using Ubs.Monitoring.Application.Transactions.Repositories;
 using Ubs.Monitoring.Infrastructure.Auth;
 using Ubs.Monitoring.Infrastructure.ExternalServices;
 using Ubs.Monitoring.Infrastructure.Persistence;
-using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
 using Ubs.Monitoring.Infrastructure.Persistence.Seeding;
 using Ubs.Monitoring.Infrastructure.Repositories;
 using Ubs.Monitoring.Application.Transactions.Compliance;
 namespace Ubs.Monitoring.Infrastructure;
+using Ubs.Monitoring.Application.AuditLogs;
+using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
+using Ubs.Monitoring.Infrastructure.Persistence.Auditing;
 
 public static class DependencyInjection
 {   
@@ -35,12 +37,16 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(cs))
             throw new InvalidOperationException("ConnectionStrings:Default is missing.");
 
-        services.AddDbContext<AppDbContext>(options =>
+        services.AddScoped<AuditSaveChangesInterceptor>();
+
+        services.AddDbContext<AppDbContext>((sp,options) =>
         {
             options.UseNpgsql(cs, npgsql =>
             {
                 npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
             });
+
+            options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
         });
         // Seed
         services.Configure<SeedOptions>(config.GetSection("Seed"));
@@ -92,6 +98,9 @@ public static class DependencyInjection
         services.AddScoped<ICaseService, CaseService>();
         // Reports
         services.AddScoped<IReportService, ReportService>();
+        // Logs
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
 
         return services;
     }
