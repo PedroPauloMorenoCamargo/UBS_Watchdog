@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface UseApiOptions<T> {
   fetcher: () => Promise<T>;
@@ -12,6 +12,11 @@ export function useApi<T>({
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refetch = useCallback(() => {
+    setRefreshKey((prev) => prev + 1);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -36,7 +41,7 @@ export function useApi<T>({
     return () => {
       mounted = false;
     };
-  }, [fetcher, enabled]);
+  }, [fetcher, enabled, refreshKey]);
 
-  return { data, loading, error };
+  return { data, loading, error, refetch };
 }
