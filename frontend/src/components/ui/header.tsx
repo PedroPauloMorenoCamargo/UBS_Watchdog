@@ -59,6 +59,30 @@ export function Header() {
       {/* Ações */}
       <div className="relative flex items-center gap-4">
 
+        {/* Notificações */}
+        <div ref={notificationsRef} className="relative">
+          <button
+            onClick={() => {
+              setOpenNotifications(!openNotifications);
+              setOpenProfile(false);
+            }}
+            className="relative p-2 rounded-full hover:bg-slate-200 cursor-pointer transition"
+          >
+            <Bell size={20} />
+          </button>
+
+          {openNotifications && (
+            <div className="absolute right-0 top-12 w-64 bg-white border rounded-lg shadow-lg p-3">
+              <p className="font-semibold mb-2">Notificações</p>
+              <ul className="text-sm text-slate-600 space-y-1">
+                <li>🔔 Nova transação registrada</li>
+                <li>⚠️ Alerta de risco</li>
+                <li>📊 Relatório disponível</li>
+              </ul>
+            </div>
+          )}
+        </div>
+
         {/* Perfil */}
         <div ref={profileRef} className="relative">
           <button
@@ -104,29 +128,7 @@ export function Header() {
           )}
         </div>
 
-        {/* Notificações */}
-        <div ref={notificationsRef} className="relative">
-          <button
-            onClick={() => {
-              setOpenNotifications(!openNotifications);
-              setOpenProfile(false);
-            }}
-            className="relative p-2 rounded-full hover:bg-slate-200 cursor-pointer transition"
-          >
-            <Bell size={20} />
-          </button>
-
-          {openNotifications && (
-            <div className="absolute right-0 top-12 w-64 bg-white border rounded-lg shadow-lg p-3">
-              <p className="font-semibold mb-2">Notificações</p>
-              <ul className="text-sm text-slate-600 space-y-1">
-                <li>🔔 Nova transação registrada</li>
-                <li>⚠️ Alerta de risco</li>
-                <li>📊 Relatório disponível</li>
-              </ul>
-            </div>
-          )}
-        </div>
+        
 
       </div>
     </header>

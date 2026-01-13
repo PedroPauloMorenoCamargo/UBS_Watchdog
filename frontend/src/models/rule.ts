@@ -1,11 +1,12 @@
-import type { Severity } from "./alert";
+import type { Severity } from "@/types/alert";
 
-export type Rule = {
+export type RuleRow = {
   id: string;
   name: string;
-  description: string;
+  code: string;
   severity: Severity;
   threshold: number;
   triggeredCount: number;
   enabled: boolean;
+  createdAt: string;
 };

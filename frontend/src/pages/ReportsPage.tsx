@@ -1,54 +1,51 @@
-// Imports Padrões do React
-import { useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-// Imagens da UBS
-import UbsLogo from "@/assets/svg/ubs_logo.svg";
-import loginBg from "@/assets/png/ubs.jpg";
-
-import { useAuthStore } from "@/store/auth";
-
-// Shadcn/ui
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
-// Icones
-import {
-  Eye,
-  EyeOff,
-  Loader2,
-  ShieldAlert,
-  Users,
-  ArrowLeftRight,
-  ShieldCheck,
-  FileBarChart,
-  Search
-} from "lucide-react";
-
 import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { ReportsTable } from "@/components/ui/tables/reportstable";
 import { reportsMock } from "@/mocks/mocks";
-import { weeklyAlertsBySeverity } from "@/mocks/mocks";
+import { useApi } from "@/hooks/useApi";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useClients } from "@/hooks/useClients";
+import { fetchTransactions } from "@/services/transaction.service";
+import { fetchClients } from "@/services/clients.service";
+import type { PagedClientsResponseDto } from "@/types/Clients/client";
+import type { PagedTransactionsResponseDto } from "@/types/Transactions/transaction";
+import { UsersByRiskLevelChart } from "@/components/ui/charts/userrisklevelchart";
 
 export function ReportsPage() {
+
+ const { data : clientsData} = 
+     useApi<PagedClientsResponseDto>({
+       fetcher: fetchClients
+     })
+ 
+   const clients = clientsData?.items ?? []
+ 
+   const {
+    usersByRiskLevel
+ 
+   } = useClients(clients)
+
+  const { data: transactionsData} =
+    useApi<PagedTransactionsResponseDto>({
+      fetcher: fetchTransactions,
+    });
+  
+    const transactions = transactionsData?.items ?? [];
+
+  const {
+  monthlyVolume,
+} = useTransactions(transactions);
+
   return (
     <div className="relative bg-cover bg-center">
      <div className="relative z-10 p-3">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          
+{/*           
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">Average Resolution Time</h3>
-            <p className="text-3xl font-bold text-black-600">4.2 hrs</p> {/*mock*/}
-             <p className="text-sm mt-2 font-bold text-green-600">-12% vs. last month</p> {/*mock*/}
-          </div>
+            <p className="text-3xl font-bold text-black-600">4.2 hrs</p> 
+             <p className="text-sm mt-2 font-bold text-green-600">-12% vs. last month</p> 
+          </div> */}
 
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">Total Alerts Processed</h3>
@@ -56,14 +53,42 @@ export function ReportsPage() {
              <p className="text-sm mt-2 font-bold text-gray-500">Last 30 days</p> {/*mock*/}
           </div>
           
-          <div className="rounded-xl bg-white/90 p-6 shadow-lg">
+          {/* <div className="rounded-xl bg-white/90 p-6 shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">False Positive Rate</h3>
-            <p className="text-3xl font-bold text-black-600">18%</p> {/*mock*/}
-            <p className="text-sm mt-2 font-bold text-red-600">+2% vs. last month</p> {/*mock*/}
-          </div>
+            <p className="text-3xl font-bold text-black-600">18%</p> 
+            <p className="text-sm mt-2 font-bold text-red-600">+2% vs. last month</p>
+          </div> */}
 
         </div>
+
+        {/*  PIE CHART CLIENTS BY RISK LEVEL */}
+
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <ChartCard title="Transaction Volume by Month">
+            <AdaptiveLineChart
+              data={monthlyVolume}
+              xKey="month"
+              showLegend= {false}
+              lines={[
+                {
+                  key: "volume",
+                  label: "Transaction Volume",
+                  color: "#fa0101a2",
+                },
+              ]}
+            />
+          </ChartCard>
+
+          <ChartCard title="Users by Risk Level">
+            <UsersByRiskLevelChart data={usersByRiskLevel} />
+          </ChartCard>
+        </div>
         
+        {/* 
+          TODO: ALTERAR PARA GRAFICO DE COLUNAS
+          Eixo X dias, colunas com os tipos de alertas
+          eixo y quantidade de alertas naquele dia
+
         <div className="mt-6">
           <ChartCard
             title="Alert Trends (Last 7 Days)"
@@ -78,7 +103,7 @@ export function ReportsPage() {
                 ]}
             />
           </ChartCard>
-        </div>
+        </div> */}
 
         <div className="mt-5">
           <ChartCard title="Generated Reports">

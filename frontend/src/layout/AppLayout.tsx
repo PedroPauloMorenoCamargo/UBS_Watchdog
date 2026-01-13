@@ -12,14 +12,14 @@ export function AppLayout() {
   const title = handle?.title ?? "";
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen w-full overflow-x-hidden">
       <Navbar />
 
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 min-w-0">
         <Header />
 
-        <main className="flex-1 bg-slate-100 p-6">
-          <h3 className="text-xl font-semibold mb-1 leading-tight">
+        <main className="flex-1 bg-slate-100 p-6 min-w-0 overflow-x-hidden">
+          <h3 className="mb-1 text-xl font-semibold leading-tight">
             {title}</h3>
           <Outlet />
         </main>

@@ -4,12 +4,12 @@ const alertsBySeverity = [
   { severity: "Low", value: 40 },
 ];
 const transactionsByType = [
-  { name: "SWIFT", value: 45 },
-  { name: "ACH", value: 30 },
+  { name: "Deposit", value: 7 },
+  { name: "Withdrawal", value: 30 },
   { name: "Wire", value: 18 },
-  { name: "Crypto", value: 7 },
 ];
-const COLORS = ["#dc2626", "#f59e0b", "#10b981", "#6366f1"];
+
+
 
 const weeklyActivity = [
   { day: "Mon", transactions: 4200, alerts: 12 },
@@ -30,12 +30,15 @@ const weeklyAlertsBySeverity = [
   { day: "Sun", high: 2, medium: 3, low: 1 },
 ];
 
+import type { Status } from "@/types/status";
+import type { TransactionStatus } from "@/types/transactionstatus";
 type Severity = "High" | "Medium" | "Low";
 type KYC = "Verified" | "Expired" | "Pending";
 interface Alert {
   id: string;
   client: string;
   severity: Severity;
+  status: Status;
   rule: string;
   amount: string;
   time: string;
@@ -46,74 +49,84 @@ const alertsMock:Alert[] = [
     id: "ALT-2024-1847",
     client: "Acme Corporation",
     severity: "High",
+    status: "New",
     rule: "Large Cash Deposit",
     amount: "$400,0000000085,000",
     time: "10 mins ago",
   },
   {
-    id: "ALT-2024-1846",
+    id: "ALT-2024-1806",
     client: "Global Trading Ltd",
     severity: "High",
+    status: "Analysis",
     rule: "Suspicious Pattern",
     amount: "$125,000",
     time: "25 mins ago",
   },
   {
-    id: "ALT-2024-1845",
+    id: "ALT-2024-1422",
     client: "Tech Ventures Inc",
     severity: "Medium",
+    status: "Resolved",
     rule: "Cross-Border Transaction",
     amount: "$67,500",
     time: "1 hour ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
-    severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    id: "ALT-2024-1427",
+    client: "Acme Corporation",
+    severity: "High",
+    status: "New",
+    rule: "Large Cash Deposit",
+    amount: "$400,0000000085,000",
+    time: "10 mins ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
+    id: "ALT-2024-1865",
+    client: "Global Trading Ltd",
     severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    status: "Analysis",
+    rule: "Suspicious Pattern",
+    amount: "$125,000",
+    time: "25 mins ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
-    severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    id: "ALT-2024-1841",
+    client: "Tech Ventures Inc",
+    severity: "Medium",
+    status: "Resolved",
+    rule: "Cross-Border Transaction",
+    amount: "$67,500",
+    time: "1 hour ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
+    id: "ALT-2024-1827",
+    client: "Acme Corporation",
     severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    status: "New",
+    rule: "Large Cash Deposit",
+    amount: "$400,0000000085,000",
+    time: "10 mins ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
-    severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    id: "ALT-2024-1836",
+    client: "Global Trading Ltd",
+    severity: "High",
+    status: "Analysis",
+    rule: "Suspicious Pattern",
+    amount: "$125,000",
+    time: "25 mins ago",
   },
   {
-    id: "ALT-2024-1844",
-    client: "Investment Group SA",
+    id: "ALT-2024-1945",
+    client: "Tech Ventures Inc",
     severity: "Low",
-    rule: "Tax Haven Country",
-    amount: "$310,000",
-    time: "2 hours ago",
+    status: "Resolved",
+    rule: "Cross-Border Transaction",
+    amount: "$67,500",
+    time: "1 hour ago",
   },
+  
 ];
 interface Parties {
   sender: string;
@@ -127,7 +140,7 @@ interface Transaction {
   parties: Parties;
   country: string;
   severity: Severity;
-  status: string;
+  status: TransactionStatus;
 }
 const transactionsMock: Transaction[] = [
   {
@@ -374,71 +387,29 @@ const usersMock: User[]=[
   },
 ]
 
-import type { Rule } from "@/types/rules";
-
-const rulesMock: Rule[] = [
+export interface TransactionCountry {
+  country: string,
+  totalAmount: number,
+  count: number,
+}
+const transactionsByCountry: TransactionCountry[] = [
   {
-    id: "rule-001",
-    name: "High Transaction Volume",
-    description:
-      "Triggers when a user performs an unusually high number of transactions in a short period.",
-    severity: "High",
-    threshold: 50,
-    triggeredCount: 12,
-    enabled: true,
+    country: "BR",
+    totalAmount: 120000000,
+    count: 320,
   },
   {
-    id: "rule-002",
-    name: "Multiple Failed Login Attempts",
-    description:
-      "Detects multiple failed login attempts that may indicate brute-force attacks.",
-    severity: "Medium",
-    threshold: 5,
-    triggeredCount: 34,
-    enabled: true,
+    country: "US",
+    totalAmount: 120000000,
+    count: 210,
   },
   {
-    id: "rule-003",
-    name: "New Device Login",
-    description:
-      "Alerts when a user logs in from a previously unseen device.",
-    severity: "Low",
-    threshold: 1,
-    triggeredCount: 87,
-    enabled: true,
-  },
-  {
-    id: "rule-004",
-    name: "Access From Blacklisted Country",
-    description:
-      "Triggers when access originates from a country on the blacklist.",
-    severity: "High",
-    threshold: 1,
-    triggeredCount: 4,
-    enabled: false,
-  },
-  {
-    id: "rule-005",
-    name: "Unusual Transaction Amount",
-    description:
-      "Detects transactions that exceed the user's normal transaction amount.",
-    severity: "Medium",
-    threshold: 10000,
-    triggeredCount: 9,
-    enabled: true,
-  },
-  {
-    id: "rule-006",
-    name: "Rapid Password Reset Requests",
-    description:
-      "Flags accounts requesting multiple password resets within a short time frame.",
-    severity: "Low",
-    threshold: 3,
-    triggeredCount: 21,
-    enabled: false,
+    country: "DE",
+    totalAmount: 200000000,
+    count: 95,
   },
 ];
 
 
-export { weeklyActivity,weeklyAlertsBySeverity, transactionsByType, alertsBySeverity, COLORS, 
-alertsMock, transactionsMock, clientsMock, reportsMock, usersMock, rulesMock};
+export { weeklyActivity,weeklyAlertsBySeverity, transactionsByType, alertsBySeverity, 
+alertsMock, transactionsMock, clientsMock, reportsMock, usersMock, transactionsByCountry};
