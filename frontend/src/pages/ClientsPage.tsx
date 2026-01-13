@@ -1,10 +1,9 @@
-// src/pages/ClientsPage.tsx
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMemo, useState, useRef } from "react";
 import type { SeverityFilter } from "@/types/alert";
 import type { KycFilter } from "@/types/kycstatus";
-import { COUNTRIES, type CountriesFilter } from "@/types/countries";
+import { useCountries } from "@/hooks/useCountries";
 import { Search } from "lucide-react";
 import {
   Select,
@@ -23,17 +22,18 @@ import { useCreateClient } from "@/hooks/useCreateClient";
 import { useImportClientsCsv } from "@/hooks/useImportCsv";
 import type { CreateClientFormData } from "@/components/ui/clients/ClientForm";
 import type { CreateClientDto } from "@/types/Clients/client";
+import { CreateClientDialog } from "@/components/ui/dialogs/create-client-dialog";
+
 
 export function ClientsPage() {
   const [search, setSearch] = useState("");
   const [risk, setRisk] = useState<SeverityFilter>("all");
-  const [countries, setCountries] = useState<CountriesFilter>("all");
+  const [countries, setCountries] = useState<string>("all");
   const [kyc, setKyc] = useState<KycFilter>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // ===== HOOKS =====
   const { data, loading, error } = useApi({
     fetcher: fetchClients,
   });
@@ -48,14 +48,13 @@ export function ClientsPage() {
     loading: isImporting,
   } = useImportClientsCsv();
 
+  const { countries: countryList, loading: countriesLoading, error: countriesError } = useCountries();
 
-  // ===== PROCESSAR CLIENTES =====
   const clients = useMemo(() => {
     if (!data) return [];
     return data.items.map(mapClientToTableRow);
   }, [data]);
 
-  // ===== FILTRAR CLIENTES =====
   const filteredClients = useMemo(() => {
     return clients.filter((t) => {
       const searchMatch =
@@ -71,8 +70,7 @@ export function ClientsPage() {
     });
   }, [clients, search, risk, countries, kyc]);
 
-  // ===== HANDLERS =====
-  function handleCountryChange(value: CountriesFilter) {
+  function handleCountryChange(value: string) {
     setCountries(value);
   }
 
@@ -90,11 +88,11 @@ export function ClientsPage() {
     const result = await createNewClient(clientDto);
 
     if (result.success) {
-      alert("Cliente criado com sucesso!");
+      alert("Client created successfully!");
       setDialogOpen(false);
       window.location.reload();
     } else {
-      alert(result.error ?? "Erro ao criar cliente");
+      alert(result.error ?? "Error creating client");
     }
   }
 
@@ -104,14 +102,14 @@ export function ClientsPage() {
   if (!file) return;
 
   if (!file.name.toLowerCase().endsWith(".csv")) {
-    alert("Apenas arquivos CSV são permitidos!");
+    alert("Only CSV files are allowed!");
     event.target.value = ""; 
     return;
   }
 
   await importCsv(file);
 
-  alert("CSV importado com sucesso!");
+  alert("CSV imported successfully!");
   window.location.reload();
 
   event.target.value = "";
@@ -120,7 +118,6 @@ export function ClientsPage() {
 
   return (
     <div className="relative w-full max-w-full overflow-x-hidden">
-      {/* ===== FILTROS ===== */}
       <div className="mt-4 rounded-xl bg-white p-5 shadow">
         <div
           className="grid gap-4 items-end
@@ -166,15 +163,15 @@ export function ClientsPage() {
             <label className="text-xs font-medium text-slate-500">
               Countries
             </label>
-            <Select value={countries} onValueChange={handleCountryChange}>
+            <Select value={countries} onValueChange={(v) => setCountries(v)}>
               <SelectTrigger className="h-9 w-full">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
-                {COUNTRIES.map((country) => (
-                  <SelectItem key={country} value={country}>
-                    {country}
+                {countryList.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.code}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -218,7 +215,6 @@ export function ClientsPage() {
         </div>
       </div>
 
-      {/* ===== INPUT FILE HIDDEN ===== */}
       <input
         type="file"
         accept=".csv"
@@ -228,7 +224,6 @@ export function ClientsPage() {
         disabled={isImporting}
       />
 
-      {/* ===== BOTÕES DE AÇÃO ===== */}
       <div className="mt-4 rounded-xl bg-white p-4 shadow">
         <div className="flex flex-wrap items-center gap-3">
           <Button
@@ -236,7 +231,7 @@ export function ClientsPage() {
             onClick={() => setDialogOpen(true)}
             disabled={isCreating}
           >
-            {isCreating ? "Criando..." : "Criar Cliente"}
+            {isCreating ? "Creating..." : "Create Client"}
           </Button>
 
           <Button
@@ -245,12 +240,11 @@ export function ClientsPage() {
             onClick={() => fileInputRef.current?.click()}
             disabled={isImporting}
           >
-            {isImporting ? "Importando..." : "Importar CSV"}
+            {isImporting ? "Importing..." : "Import CSV"}
           </Button>
         </div>
       </div>
 
-      {/* ===== TABELA ===== */}
       <div className="mt-5 overflow-x-auto max-w-full">
         <ChartCard title="Clients">
           {loading && <p>Loading...</p>}
@@ -259,12 +253,13 @@ export function ClientsPage() {
         </ChartCard>
       </div>
 
-      {/* ===== DIALOG ===== */}
-      <ClientFormDialog
+      <CreateClientDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onSubmit={handleCreateClient}
-        isLoading={isCreating}
+        onSuccess={() => {
+          alert("Client created successfully!");
+          setDialogOpen(false);
+          }}
       />
     </div>
   );
