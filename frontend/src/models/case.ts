@@ -1,15 +1,17 @@
 // models/case.models.ts
-import type { CaseStatus, CaseDecision, CaseSeverity } from "@/types/Cases/cases";
+import type { CaseDecision} from "@/types/Cases/cases";
+import type { Severity } from "@/types/alert";
+import type { Status } from "@/types/status";
 
 export interface CaseTableRow {
   id: string;
   transactionId: string;
   clientName: string;
   accountIdentifier: string;
-  status: CaseStatus;
+  status: Status;
   decision: CaseDecision;
   analystName: string;
-  severity: CaseSeverity;
+  severity: Severity;
   findingsCount: number;
   openedAt: string;
   resolvedAt?: string | null;

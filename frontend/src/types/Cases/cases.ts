@@ -1,5 +1,3 @@
-// types/cases.ts
-
 export const CaseStatus = {
   New: 0,
   UnderReview: 1,
@@ -42,7 +40,7 @@ export interface CaseResponseDto {
   resolvedAt?: Date | null;
 }
 
-// Paged response DTO para frontend
+
 export interface PagedCasesResponseDto {
   items: CaseResponseDto[];
   page: number;
