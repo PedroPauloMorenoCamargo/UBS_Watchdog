@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Variant = "high" | "medium" | "low";
+type Variant = "destructive"| "high" | "medium" | "low";
 
 interface StatCardProps {
   title: string;
@@ -23,10 +23,16 @@ const variantConfig: Record<
     Icon: ReactNode;
   }
 > = {
-  high: {
+  destructive: {
     bg: "bg-red-400/20",
     iconBg: "bg-red-500/40",
     iconColor: "text-red-700",
+    Icon: <AlertTriangle className="h-6 w-6" />,
+  },
+  high: {
+    bg: "bg-orange-400/20",
+    iconBg: "bg-orange-500/40",
+    iconColor: "text-orange-700",
     Icon: <AlertTriangle className="h-6 w-6" />,
   },
   medium: {

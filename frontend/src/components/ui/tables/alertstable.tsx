@@ -9,12 +9,13 @@ import {
 import { SeverityBadge } from "../severitybadge";
 import { StatusBadge } from "../statusbadge";
 
-
-import { alertsMock } from "@/mocks/mocks";
+import { Button } from "../button";
+import { Eye } from "lucide-react";
+import type { CaseTableRow } from "@/models/case";
 
 
 interface AlertsTableProps {
-  alerts: typeof alertsMock;
+  alerts: CaseTableRow[];
 }
 
 export function AlertsTable({ alerts }: AlertsTableProps){
@@ -27,10 +28,10 @@ export function AlertsTable({ alerts }: AlertsTableProps){
             <TableHead className="px-4 py-3">Alert ID</TableHead>
             <TableHead className="px-4 py-3">Client</TableHead>
             <TableHead className="px-4 py-3">Severity</TableHead>
-            <TableHead className="px-4 py-3 text-left">Rule Triggered</TableHead>
-            <TableHead className="px-4 py-3 text-left">Amount</TableHead>
             <TableHead className="px-4 py-3">Time</TableHead>
             <TableHead className="px-4 py-3">Status</TableHead>
+            <TableHead className="px-4 py-3 text-center">Actions</TableHead>
+
           </TableRow>
         </TableHeader>
 
@@ -54,33 +55,31 @@ export function AlertsTable({ alerts }: AlertsTableProps){
                       </TableCell>
 
                       <TableCell className="px-4 py-3 text-sm">
-                        {alert.client}
+                        {alert.clientName}
                       </TableCell>
 
                       <TableCell className="px-4 py-3 text-sm">
                         <SeverityBadge severity={alert.severity} />
                       </TableCell>
 
-                      <TableCell className="px-4 py-3 text-sm">
-                        {alert.rule}
-                      </TableCell>
-
                       <TableCell className="px-4 py-3 text-sm text-left font-medium">
-                        <span
-                          className="block max-w-[100px] truncate"
-                          title={String(alert.amount)}
-                        >
-                          {alert.amount}
-                        </span>
-                      </TableCell>
-
-                      <TableCell className="px-4 py-3 text-sm text-muted-foreground">
-                        {alert.time}
+                          {alert.openedAt}
                       </TableCell>
 
                       <TableCell className="px-4 py-3 text-sm text-muted-foreground">
                         <StatusBadge status={alert.status} />
                       </TableCell>
+
+                      <TableCell className="px-4 py-3 text-sm text-left text-slate-600">
+                      <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[#e60028] hover:text-[#b8001f] hover:bg-red-50"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                    </TableCell>
                     </TableRow>
                   )
                 }
