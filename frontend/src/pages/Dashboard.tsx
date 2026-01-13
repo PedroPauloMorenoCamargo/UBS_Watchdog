@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { GeographicDistributionChart } from "@/components/ui/charts/geographicdistributionchart";
 import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
 import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
-import { transactionsByCountry} from "@/mocks/mocks";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
 import { TransactionsTable } from "@/components/ui/tables/transactionstable";
@@ -13,7 +12,7 @@ import { useApi } from "@/hooks/useApi";
 import { useTransactions } from "@/hooks/useTransactions";
 import { fetchTransactions } from "@/services/transaction.service";
 import type { PagedTransactionsResponseDto } from "@/types/Transactions/transaction";
-import type { PagedClientsResponseDto } from "@/types/Clients/client";
+import type { PagedClientsResponseDto } from "@/types/clients/client";
 import { fetchClients } from "@/services/clients.service";
 import { useClients } from "@/hooks/useClients";
 

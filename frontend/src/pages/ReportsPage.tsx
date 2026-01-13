@@ -7,7 +7,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useClients } from "@/hooks/useClients";
 import { fetchTransactions } from "@/services/transaction.service";
 import { fetchClients } from "@/services/clients.service";
-import type { PagedClientsResponseDto } from "@/types/Clients/client";
+import type { PagedClientsResponseDto } from "@/types/clients/client";
 import type { PagedTransactionsResponseDto } from "@/types/Transactions/transaction";
 import { UsersByRiskLevelChart } from "@/components/ui/charts/userrisklevelchart";
 
