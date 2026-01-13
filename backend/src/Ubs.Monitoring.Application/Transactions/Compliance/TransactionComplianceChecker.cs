@@ -1,5 +1,7 @@
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using Ubs.Monitoring.Application.Cases;
 using Ubs.Monitoring.Application.ComplianceRules;
 using Ubs.Monitoring.Application.Transactions.Repositories;
@@ -192,60 +194,73 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
         List<ComplianceViolation> violations,
         CancellationToken ct)
     {
-        // Calculate aggregate severity (maximum severity from all violations)
-        var maxSeverity = violations.Max(v => v.Severity);
-
-        // Create the case
-        var caseEntity = new Case(
-            transactionId: tx.Id,
-            clientId: tx.ClientId,
-            accountId: tx.AccountId,
-            initialSeverity: maxSeverity,
-            analystId: null // No analyst assigned initially (status will be New)
-        );
-
-        _cases.Add(caseEntity);
-
-        // Create a finding for each violation
-        foreach (var violation in violations)
+        try
         {
-            var evidence = JsonDocument.Parse(JsonSerializer.Serialize(new
-            {
-                ruleCode = violation.RuleCode,
-                message = violation.Message,
-                transactionId = tx.Id,
-                transactionType = tx.Type.ToString(),
-                amount = tx.Amount,
-                currencyCode = tx.CurrencyCode,
-                baseAmount = tx.BaseAmount,
-                occurredAtUtc = tx.OccurredAtUtc,
-                counterpartyCountry = tx.CpCountryCode,
-                counterpartyName = tx.CpName,
-                counterpartyIdentifier = tx.CpIdentifier,
-                evaluatedAtUtc = DateTimeOffset.UtcNow
-            }));
+            // Calculate aggregate severity (maximum severity from all violations)
+            var maxSeverity = violations.Max(v => v.Severity);
 
-            var finding = new CaseFinding(
-                caseId: caseEntity.Id,
-                ruleId: violation.RuleId,
-                ruleType: violation.RuleType,
-                severity: violation.Severity,
-                evidenceJson: evidence
+            // Create the case
+            var caseEntity = new Case(
+                transactionId: tx.Id,
+                clientId: tx.ClientId,
+                accountId: tx.AccountId,
+                initialSeverity: maxSeverity,
+                analystId: null // No analyst assigned initially (status will be New)
             );
 
-            _cases.AddFinding(finding);
+            _cases.Add(caseEntity);
+
+            // Create a finding for each violation
+            foreach (var violation in violations)
+            {
+                var evidence = JsonDocument.Parse(JsonSerializer.Serialize(new
+                {
+                    ruleCode = violation.RuleCode,
+                    message = violation.Message,
+                    transactionId = tx.Id,
+                    transactionType = tx.Type.ToString(),
+                    amount = tx.Amount,
+                    currencyCode = tx.CurrencyCode,
+                    baseAmount = tx.BaseAmount,
+                    occurredAtUtc = tx.OccurredAtUtc,
+                    counterpartyCountry = tx.CpCountryCode,
+                    counterpartyName = tx.CpName,
+                    counterpartyIdentifier = tx.CpIdentifier,
+                    evaluatedAtUtc = DateTimeOffset.UtcNow
+                }));
+
+                var finding = new CaseFinding(
+                    caseId: caseEntity.Id,
+                    ruleId: violation.RuleId,
+                    ruleType: violation.RuleType,
+                    severity: violation.Severity,
+                    evidenceJson: evidence
+                );
+
+                _cases.AddFinding(finding);
+            }
+
+            await _cases.SaveChangesAsync(ct);
+
+            _logger.LogWarning(
+                "CASE_CREATED | CaseId={CaseId} | Tx={TransactionId} | Client={ClientId} | Severity={Severity} | ViolationCount={ViolationCount}",
+                caseEntity.Id,
+                tx.Id,
+                tx.ClientId,
+                maxSeverity,
+                violations.Count
+            );
         }
-
-        await _cases.SaveChangesAsync(ct);
-
-        _logger.LogWarning(
-            "CASE_CREATED | CaseId={CaseId} | Tx={TransactionId} | Client={ClientId} | Severity={Severity} | ViolationCount={ViolationCount}",
-            caseEntity.Id,
-            tx.Id,
-            tx.ClientId,
-            maxSeverity,
-            violations.Count
-        );
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == "23505")
+        {
+            // 23505 = unique_violation (PostgreSQL error code)
+            // This means another concurrent request already created a case for this transaction
+            _logger.LogInformation(
+                "Case already created by concurrent request for transaction {TransactionId}. Skipping duplicate creation.",
+                tx.Id
+            );
+            // Gracefully ignore - the case was already created by another thread/request
+        }
     }
 
     // -----------------------
