@@ -12,6 +12,8 @@ using Ubs.Monitoring.Application.Countries;
 using Ubs.Monitoring.Application.FxRates;
 using Ubs.Monitoring.Application.Cases;
 using Ubs.Monitoring.Application.Transactions;
+using Ubs.Monitoring.Application.Reports;
+using Ubs.Monitoring.Infrastructure.Reports;
 using Ubs.Monitoring.Application.Transactions.Repositories;
 using Ubs.Monitoring.Infrastructure.Auth;
 using Ubs.Monitoring.Infrastructure.ExternalServices;
@@ -100,6 +102,8 @@ public static class DependencyInjection
         // Cases
         services.AddScoped<ICaseRepository, CaseRepository>();
         services.AddScoped<ICaseService, CaseService>();
+        // Reports
+        services.AddScoped<IReportService, ReportService>();
 
         return services;
     }
