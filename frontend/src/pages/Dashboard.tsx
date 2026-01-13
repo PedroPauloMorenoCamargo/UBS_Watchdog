@@ -12,7 +12,7 @@ import { useApi } from "@/hooks/useApi";
 import { useTransactions } from "@/hooks/useTransactions";
 import { fetchTransactions } from "@/services/transaction.service";
 import type { PagedTransactionsResponseDto } from "@/types/Transactions/transaction";
-import type { PagedClientsResponseDto } from "@/types/clients/client";
+import type { PagedClientsResponseDto } from "@/types/Clients/client";
 import { fetchClients } from "@/services/clients.service";
 import { useClients } from "@/hooks/useClients";
 

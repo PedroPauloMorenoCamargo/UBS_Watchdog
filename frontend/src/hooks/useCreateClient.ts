@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createClient } from "@/services/clients.service";
-import type { CreateClientDto } from "@/types/clients/client";
+import type { CreateClientDto } from "@/types/Clients/client";
 
 interface CreateClientResult {
   success: boolean;

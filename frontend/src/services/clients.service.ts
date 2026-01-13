@@ -3,7 +3,7 @@ import type {
   PagedClientsResponseDto,
   CreateClientDto,
   ImportCsvResponseDto,
-} from "@/types/clients/client";
+} from "@/types/Clients/client";
 
 export function fetchClients() {
   return api

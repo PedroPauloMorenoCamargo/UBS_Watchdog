@@ -1,6 +1,6 @@
 // hooks/useClients.ts
 import { useMemo } from "react";
-import type { ClientResponseDto } from "@/types/clients/client";
+import type { ClientResponseDto } from "@/types/Clients/client";
 
 type Trend = "up" | "down" | "neutral";
 

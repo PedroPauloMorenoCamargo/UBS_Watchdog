@@ -22,7 +22,7 @@ import { ClientFormDialog } from "@/components/ui/clients/ClientFormDialog";
 import { useCreateClient } from "@/hooks/useCreateClient";
 import { useImportClientsCsv } from "@/hooks/useImportCsv";
 import type { CreateClientFormData } from "@/components/ui/clients/ClientForm";
-import type { CreateClientDto } from "@/types/clients/client";
+import type { CreateClientDto } from "@/types/Clients/client";
 
 export function ClientsPage() {
   const [search, setSearch] = useState("");
