@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Ubs.Monitoring.Application.Clients;
+using Ubs.Monitoring.Application.Common.FileExport;
 using Ubs.Monitoring.Application.Reports;
 using Ubs.Monitoring.Domain.Enums;
 using Ubs.Monitoring.Infrastructure.Persistence;
@@ -306,74 +307,81 @@ public sealed class ReportService : IReportService
         if (report is null)
             return null;
 
-        var csv = new StringBuilder();
+        var rows = new List<List<string>>();
 
-        // Header
-        csv.AppendLine("CLIENT REPORT");
-        csv.AppendLine($"Client,{report.ClientName}");
-        csv.AppendLine($"Client ID,{report.ClientId}");
-        csv.AppendLine($"Country,{report.CountryCode}");
-        csv.AppendLine($"Risk Level,{report.RiskLevel}");
-        csv.AppendLine($"Period,{report.PeriodStart} to {report.PeriodEnd}");
-        csv.AppendLine();
+        // Header section
+        rows.Add(new List<string> { "CLIENT REPORT", "" });
+        rows.Add(new List<string> { "Client", report.ClientName });
+        rows.Add(new List<string> { "Client ID", report.ClientId.ToString() });
+        rows.Add(new List<string> { "Country", report.CountryCode });
+        rows.Add(new List<string> { "Risk Level", report.RiskLevel.ToString() });
+        rows.Add(new List<string> { "Period", $"{report.PeriodStart} to {report.PeriodEnd}" });
+        rows.Add(new List<string> { "", "" });
 
-        // Transaction Metrics
-        csv.AppendLine("TRANSACTION METRICS");
-        csv.AppendLine($"Total Transactions,{report.TransactionMetrics.TotalTransactions}");
-        csv.AppendLine($"Total Volume (USD),{report.TransactionMetrics.TotalVolumeUSD:N2}");
-        csv.AppendLine($"Average Transaction (USD),{report.TransactionMetrics.AverageTransactionUSD:N2}");
-        csv.AppendLine($"Deposits,{report.TransactionMetrics.DepositCount}");
-        csv.AppendLine($"Withdrawals,{report.TransactionMetrics.WithdrawalCount}");
-        csv.AppendLine($"Transfers,{report.TransactionMetrics.TransferCount}");
-        csv.AppendLine();
+        // Transaction Metrics section
+        rows.Add(new List<string> { "TRANSACTION METRICS", "" });
+        rows.Add(new List<string> { "Total Transactions", report.TransactionMetrics.TotalTransactions.ToString() });
+        rows.Add(new List<string> { "Total Volume (USD)", report.TransactionMetrics.TotalVolumeUSD.ToString("N2") });
+        rows.Add(new List<string> { "Average Transaction (USD)", report.TransactionMetrics.AverageTransactionUSD.ToString("N2") });
+        rows.Add(new List<string> { "Deposits", report.TransactionMetrics.DepositCount.ToString() });
+        rows.Add(new List<string> { "Withdrawals", report.TransactionMetrics.WithdrawalCount.ToString() });
+        rows.Add(new List<string> { "Transfers", report.TransactionMetrics.TransferCount.ToString() });
+        rows.Add(new List<string> { "", "" });
 
-        // Case Metrics
-        csv.AppendLine("CASE METRICS");
-        csv.AppendLine($"Total Cases,{report.CaseMetrics.TotalCases}");
-        csv.AppendLine($"New,{report.CaseMetrics.NewCases}");
-        csv.AppendLine($"Under Review,{report.CaseMetrics.UnderReviewCases}");
-        csv.AppendLine($"Resolved,{report.CaseMetrics.ResolvedCases}");
-        csv.AppendLine($"Fraudulent,{report.CaseMetrics.FraudulentCases}");
-        csv.AppendLine($"Not Fraudulent,{report.CaseMetrics.NotFraudulentCases}");
-        csv.AppendLine($"Inconclusive,{report.CaseMetrics.InconclusiveCases}");
-        csv.AppendLine();
+        // Case Metrics section
+        rows.Add(new List<string> { "CASE METRICS", "" });
+        rows.Add(new List<string> { "Total Cases", report.CaseMetrics.TotalCases.ToString() });
+        rows.Add(new List<string> { "New", report.CaseMetrics.NewCases.ToString() });
+        rows.Add(new List<string> { "Under Review", report.CaseMetrics.UnderReviewCases.ToString() });
+        rows.Add(new List<string> { "Resolved", report.CaseMetrics.ResolvedCases.ToString() });
+        rows.Add(new List<string> { "Fraudulent", report.CaseMetrics.FraudulentCases.ToString() });
+        rows.Add(new List<string> { "Not Fraudulent", report.CaseMetrics.NotFraudulentCases.ToString() });
+        rows.Add(new List<string> { "Inconclusive", report.CaseMetrics.InconclusiveCases.ToString() });
+        rows.Add(new List<string> { "", "" });
 
-        // Cases by Severity
-        csv.AppendLine("CASES BY SEVERITY");
-        csv.AppendLine("Severity,Count");
+        // Cases by Severity section
+        rows.Add(new List<string> { "CASES BY SEVERITY", "" });
+        rows.Add(new List<string> { "Severity", "Count" });
         foreach (var item in report.CasesBySeverity)
         {
-            csv.AppendLine($"{item.Severity},{item.Count}");
+            rows.Add(new List<string> { item.Severity.ToString(), item.Count.ToString() });
         }
-        csv.AppendLine();
+        rows.Add(new List<string> { "", "" });
 
-        // Transactions by Type
-        csv.AppendLine("TRANSACTIONS BY TYPE");
-        csv.AppendLine("Type,Count,Volume (USD)");
+        // Transactions by Type section
+        rows.Add(new List<string> { "TRANSACTIONS BY TYPE", "", "" });
+        rows.Add(new List<string> { "Type", "Count", "Volume (USD)" });
         foreach (var item in report.TransactionsByType)
         {
-            csv.AppendLine($"{item.Type},{item.Count},{item.VolumeUSD:N2}");
+            rows.Add(new List<string> { item.Type.ToString(), item.Count.ToString(), item.VolumeUSD.ToString("N2") });
         }
-        csv.AppendLine();
+        rows.Add(new List<string> { "", "", "" });
 
-        // Transaction Trend
-        csv.AppendLine("TRANSACTION TREND");
-        csv.AppendLine("Date,Count,Volume (USD)");
+        // Transaction Trend section
+        rows.Add(new List<string> { "TRANSACTION TREND", "", "" });
+        rows.Add(new List<string> { "Date", "Count", "Volume (USD)" });
         foreach (var item in report.TransactionTrend)
         {
-            csv.AppendLine($"{item.Date},{item.Count},{item.VolumeUSD:N2}");
+            rows.Add(new List<string> { item.Date.ToString(), item.Count.ToString(), item.VolumeUSD.ToString("N2") });
         }
-        csv.AppendLine();
+        rows.Add(new List<string> { "", "", "" });
 
-        // Top Accounts
-        csv.AppendLine("TOP ACCOUNTS BY VOLUME");
-        csv.AppendLine("Account Identifier,Transactions,Total Volume (USD)");
+        // Top Accounts section
+        rows.Add(new List<string> { "TOP ACCOUNTS BY VOLUME", "", "" });
+        rows.Add(new List<string> { "Account Identifier", "Transactions", "Total Volume (USD)" });
         foreach (var item in report.TopAccounts)
         {
-            csv.AppendLine($"{item.AccountIdentifier},{item.TransactionCount},{item.TotalVolumeUSD:N2}");
+            rows.Add(new List<string> { item.AccountIdentifier, item.TransactionCount.ToString(), item.TotalVolumeUSD.ToString("N2") });
         }
 
-        return csv.ToString();
+        // Export using CsvExportHelper
+        // Note: Report has variable columns, normalized to 3 columns max
+        var csvBytes = CsvExportHelper.ExportToCsvRaw(
+            headers: new List<string>(), // No consistent header for multi-section report
+            rows: rows
+        );
+
+        return Encoding.UTF8.GetString(csvBytes);
     }
 
     public async Task<string> GenerateSystemReportCsvAsync(
@@ -383,81 +391,88 @@ public sealed class ReportService : IReportService
     {
         var report = await GetSystemReportAsync(startDate, endDate, ct);
 
-        var csv = new StringBuilder();
+        var rows = new List<List<string>>();
 
-        // Header
-        csv.AppendLine("SYSTEM REPORT");
-        csv.AppendLine($"Period,{report.PeriodStart} to {report.PeriodEnd}");
-        csv.AppendLine($"Total Clients,{report.TotalClients}");
-        csv.AppendLine($"Active Clients,{report.ActiveClients}");
-        csv.AppendLine();
+        // Header section
+        rows.Add(new List<string> { "SYSTEM REPORT", "", "", "" });
+        rows.Add(new List<string> { "Period", $"{report.PeriodStart} to {report.PeriodEnd}", "", "" });
+        rows.Add(new List<string> { "Total Clients", report.TotalClients.ToString(), "", "" });
+        rows.Add(new List<string> { "Active Clients", report.ActiveClients.ToString(), "", "" });
+        rows.Add(new List<string> { "", "", "", "" });
 
-        // Transaction Metrics
-        csv.AppendLine("TRANSACTION METRICS");
-        csv.AppendLine($"Total Transactions,{report.TransactionMetrics.TotalTransactions}");
-        csv.AppendLine($"Total Volume (USD),{report.TransactionMetrics.TotalVolumeUSD:N2}");
-        csv.AppendLine($"Average Transaction (USD),{report.TransactionMetrics.AverageTransactionUSD:N2}");
-        csv.AppendLine($"Deposits,{report.TransactionMetrics.DepositCount}");
-        csv.AppendLine($"Withdrawals,{report.TransactionMetrics.WithdrawalCount}");
-        csv.AppendLine($"Transfers,{report.TransactionMetrics.TransferCount}");
-        csv.AppendLine();
+        // Transaction Metrics section
+        rows.Add(new List<string> { "TRANSACTION METRICS", "", "", "" });
+        rows.Add(new List<string> { "Total Transactions", report.TransactionMetrics.TotalTransactions.ToString(), "", "" });
+        rows.Add(new List<string> { "Total Volume (USD)", report.TransactionMetrics.TotalVolumeUSD.ToString("N2"), "", "" });
+        rows.Add(new List<string> { "Average Transaction (USD)", report.TransactionMetrics.AverageTransactionUSD.ToString("N2"), "", "" });
+        rows.Add(new List<string> { "Deposits", report.TransactionMetrics.DepositCount.ToString(), "", "" });
+        rows.Add(new List<string> { "Withdrawals", report.TransactionMetrics.WithdrawalCount.ToString(), "", "" });
+        rows.Add(new List<string> { "Transfers", report.TransactionMetrics.TransferCount.ToString(), "", "" });
+        rows.Add(new List<string> { "", "", "", "" });
 
-        // Case Metrics
-        csv.AppendLine("CASE METRICS");
-        csv.AppendLine($"Total Cases,{report.CaseMetrics.TotalCases}");
-        csv.AppendLine($"New,{report.CaseMetrics.NewCases}");
-        csv.AppendLine($"Under Review,{report.CaseMetrics.UnderReviewCases}");
-        csv.AppendLine($"Resolved,{report.CaseMetrics.ResolvedCases}");
-        csv.AppendLine($"Fraudulent,{report.CaseMetrics.FraudulentCases}");
-        csv.AppendLine($"Not Fraudulent,{report.CaseMetrics.NotFraudulentCases}");
-        csv.AppendLine($"Inconclusive,{report.CaseMetrics.InconclusiveCases}");
-        csv.AppendLine();
+        // Case Metrics section
+        rows.Add(new List<string> { "CASE METRICS", "", "", "" });
+        rows.Add(new List<string> { "Total Cases", report.CaseMetrics.TotalCases.ToString(), "", "" });
+        rows.Add(new List<string> { "New", report.CaseMetrics.NewCases.ToString(), "", "" });
+        rows.Add(new List<string> { "Under Review", report.CaseMetrics.UnderReviewCases.ToString(), "", "" });
+        rows.Add(new List<string> { "Resolved", report.CaseMetrics.ResolvedCases.ToString(), "", "" });
+        rows.Add(new List<string> { "Fraudulent", report.CaseMetrics.FraudulentCases.ToString(), "", "" });
+        rows.Add(new List<string> { "Not Fraudulent", report.CaseMetrics.NotFraudulentCases.ToString(), "", "" });
+        rows.Add(new List<string> { "Inconclusive", report.CaseMetrics.InconclusiveCases.ToString(), "", "" });
+        rows.Add(new List<string> { "", "", "", "" });
 
-        // Cases by Severity
-        csv.AppendLine("CASES BY SEVERITY");
-        csv.AppendLine("Severity,Count");
+        // Cases by Severity section
+        rows.Add(new List<string> { "CASES BY SEVERITY", "", "", "" });
+        rows.Add(new List<string> { "Severity", "Count", "", "" });
         foreach (var item in report.CasesBySeverity)
         {
-            csv.AppendLine($"{item.Severity},{item.Count}");
+            rows.Add(new List<string> { item.Severity.ToString(), item.Count.ToString(), "", "" });
         }
-        csv.AppendLine();
+        rows.Add(new List<string> { "", "", "", "" });
 
-        // Transactions by Type
-        csv.AppendLine("TRANSACTIONS BY TYPE");
-        csv.AppendLine("Type,Count,Volume (USD)");
+        // Transactions by Type section
+        rows.Add(new List<string> { "TRANSACTIONS BY TYPE", "", "", "" });
+        rows.Add(new List<string> { "Type", "Count", "Volume (USD)", "" });
         foreach (var item in report.TransactionsByType)
         {
-            csv.AppendLine($"{item.Type},{item.Count},{item.VolumeUSD:N2}");
+            rows.Add(new List<string> { item.Type.ToString(), item.Count.ToString(), item.VolumeUSD.ToString("N2"), "" });
         }
-        csv.AppendLine();
+        rows.Add(new List<string> { "", "", "", "" });
 
-        // Transaction Trend
-        csv.AppendLine("TRANSACTION TREND");
-        csv.AppendLine("Date,Count,Volume (USD)");
+        // Transaction Trend section
+        rows.Add(new List<string> { "TRANSACTION TREND", "", "", "" });
+        rows.Add(new List<string> { "Date", "Count", "Volume (USD)", "" });
         foreach (var item in report.TransactionTrend)
         {
-            csv.AppendLine($"{item.Date},{item.Count},{item.VolumeUSD:N2}");
+            rows.Add(new List<string> { item.Date.ToString(), item.Count.ToString(), item.VolumeUSD.ToString("N2"), "" });
         }
-        csv.AppendLine();
+        rows.Add(new List<string> { "", "", "", "" });
 
-        // Top Clients by Volume
-        csv.AppendLine("TOP CLIENTS BY VOLUME");
-        csv.AppendLine("Client Name,Transactions,Volume (USD),Cases");
+        // Top Clients by Volume section
+        rows.Add(new List<string> { "TOP CLIENTS BY VOLUME", "", "", "" });
+        rows.Add(new List<string> { "Client Name", "Transactions", "Volume (USD)", "Cases" });
         foreach (var item in report.TopClientsByVolume)
         {
-            csv.AppendLine($"{item.ClientName},{item.TransactionCount},{item.TotalVolumeUSD:N2},{item.CaseCount}");
+            rows.Add(new List<string> { item.ClientName, item.TransactionCount.ToString(), item.TotalVolumeUSD.ToString("N2"), item.CaseCount.ToString() });
         }
-        csv.AppendLine();
+        rows.Add(new List<string> { "", "", "", "" });
 
-        // Top Clients by Cases
-        csv.AppendLine("TOP CLIENTS BY CASE COUNT");
-        csv.AppendLine("Client Name,Cases,Transactions,Volume (USD)");
+        // Top Clients by Cases section
+        rows.Add(new List<string> { "TOP CLIENTS BY CASE COUNT", "", "", "" });
+        rows.Add(new List<string> { "Client Name", "Cases", "Transactions", "Volume (USD)" });
         foreach (var item in report.TopClientsByCases)
         {
-            csv.AppendLine($"{item.ClientName},{item.CaseCount},{item.TransactionCount},{item.TotalVolumeUSD:N2}");
+            rows.Add(new List<string> { item.ClientName, item.CaseCount.ToString(), item.TransactionCount.ToString(), item.TotalVolumeUSD.ToString("N2") });
         }
 
-        return csv.ToString();
+        // Export using CsvExportHelper
+        // Note: Report has variable columns, normalized to 4 columns max
+        var csvBytes = CsvExportHelper.ExportToCsvRaw(
+            headers: new List<string>(), // No consistent header for multi-section report
+            rows: rows
+        );
+
+        return Encoding.UTF8.GetString(csvBytes);
     }
 
     #region Private Helpers
