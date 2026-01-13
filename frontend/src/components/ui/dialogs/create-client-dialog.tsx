@@ -7,24 +7,25 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // shadcn/ui
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 import { useState } from "react";
 import { useCreateClient } from "@/hooks/useCreateClient";
+import { useCountries } from "@/hooks/useCountries";
 
 import type { LegalTypeApi } from "@/types/legaltypeapi";
 import type { RiskLevelApi } from "@/types/alert";
 import type { KycStatusApi } from "@/types/kycstatus";
 
-// Labels para exibição no Select (map API value => label)
+// Options
 const LEGAL_TYPE_OPTIONS: { value: LegalTypeApi; label: string }[] = [
   { value: "individual", label: "Individual" },
-  { value: "company", label: "Empresa" },
+  { value: "company", label: "Company" },
 ];
 
 const RISK_LEVEL_OPTIONS: { value: RiskLevelApi; label: string }[] = [
-  { value: 0, label: "Baixo" },
-  { value: 1, label: "Médio" },
-  { value: 2, label: "Alto" },
+  { value: 0, label: "Low" },
+  { value: 1, label: "Medium" },
+  { value: 2, label: "High" },
 ];
 
 const KYC_STATUS_OPTIONS: { value: KycStatusApi; label: string }[] = [
@@ -47,23 +48,34 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
   const [legalType, setLegalType] = useState<LegalTypeApi | "">("");
   const [riskLevel, setRiskLevel] = useState<RiskLevelApi | "">("");
   const [kycStatus, setKycStatus] = useState<KycStatusApi | "">("");
+  const [countryCode, setCountryCode] = useState<string>("");
+  const [telephone, setTelephone] = useState("");
+  const [address, setAddress] = useState("");
 
-  const [contactNumber, setContactNumber] = useState("");
-  const [countryCode, setCountryCode] = useState("");
+  const { countries: countryList, loading: countriesLoading, error: countriesError } = useCountries();
 
   async function handleSubmit() {
-    if (!name || legalType === "" || riskLevel === "" || kycStatus === "" || !contactNumber || !countryCode) {
-      alert("Preencha todos os campos obrigatórios");
+    if (
+      !name ||
+      legalType === "" ||
+      riskLevel === "" ||
+      kycStatus === "" ||
+      !countryCode ||
+      !telephone ||
+      !address
+    ) {
+      alert("Please fill in all required fields.");
       return;
     }
 
     await submit({
       name,
       legalType,
-      contactNumber,
       countryCode,
       riskLevel,
       kycStatus,
+      contactNumber: telephone,
+      addressJson: address,
     });
 
     onOpenChange(false);
@@ -72,90 +84,138 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Criar Cliente</DialogTitle>
+          <DialogTitle>Create New Client</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3">
-          <Input
-            placeholder="Nome"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+        <div className="space-y-4">
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-slate-700">Full Name *</label>
+            <Input
+              placeholder="Ex: John Doe or Company LLC"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
 
-          {/* Legal Type */}
-          <Select
-            value={legalType}
-            onValueChange={(value) => setLegalType(value as LegalTypeApi)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Tipo Legal" />
-            </SelectTrigger>
-            <SelectContent>
-              {LEGAL_TYPE_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {/* Risk Level */}
-          <Select
-            value={riskLevel !== "" ? riskLevel.toString() : ""}
-            onValueChange={(value) => setRiskLevel(Number(value) as RiskLevelApi)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Nível de Risco" />
-            </SelectTrigger>
-            <SelectContent>
-              {RISK_LEVEL_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value.toString()}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-slate-700">Type *</label>
+            <Select
+              value={legalType}
+              onValueChange={(value) => setLegalType(value as LegalTypeApi)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {LEGAL_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          {/* KYC Status */}
-          <Select
-            value={kycStatus !== "" ? kycStatus.toString() : ""}
-            onValueChange={(value) => setKycStatus(Number(value) as KycStatusApi)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Status KYC" />
-            </SelectTrigger>
-            <SelectContent>
-              {KYC_STATUS_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value.toString()}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-slate-700">Risk Level *</label>
+              <Select
+                value={riskLevel !== "" ? riskLevel.toString() : ""}
+                onValueChange={(value) => setRiskLevel(Number(value) as RiskLevelApi)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select risk" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RISK_LEVEL_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value.toString()}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-slate-700">KYC Status *</label>
+              <Select
+                value={kycStatus !== "" ? kycStatus.toString() : ""}
+                onValueChange={(value) => setKycStatus(Number(value) as KycStatusApi)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {KYC_STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value.toString()}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-          <Input
-            placeholder="Telefone"
-            value={contactNumber}
-            onChange={(e) => setContactNumber(e.target.value)}
-          />
-          <Input
-            placeholder="País"
-            value={countryCode}
-            onChange={(e) => setCountryCode(e.target.value)}
-          />
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-slate-700">Country *</label>
+            <Select
+              value={countryCode}
+              onValueChange={(value) => setCountryCode(value)}
+              disabled={countriesLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {countryList.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {countriesError && <p className="text-red-500 text-xs">{countriesError}</p>}
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-slate-700">Telephone *</label>
+            <Input
+              placeholder="+1 123-456-7890"
+              value={telephone}
+              onChange={(e) => setTelephone(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-slate-700">Address *</label>
+            <Input
+              placeholder="Street, City, State, ZIP"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+          </div>
+
+          <div className="p-3 border rounded bg-blue-50 text-sm text-blue-700">
+            <p>• Data will be validated by the compliance system</p>
+            <p>• High-risk clients require additional approval</p>
+            <p>• KYC status can be updated later</p>
+          </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            Cancel
+          </Button>
           <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Criando..." : "Criar"}
+            {loading ? "Creating..." : "Create Client"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
