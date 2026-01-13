@@ -297,7 +297,7 @@ public sealed class ReportService : IReportService
         );
     }
 
-    public async Task<string?> GenerateClientReportCsvAsync(
+    public async Task<byte[]?> GenerateClientReportCsvAsync(
         Guid clientId,
         DateOnly? startDate,
         DateOnly? endDate,
@@ -374,17 +374,14 @@ public sealed class ReportService : IReportService
             rows.Add(new List<string> { item.AccountIdentifier, item.TransactionCount.ToString(), item.TotalVolumeUSD.ToString("N2") });
         }
 
-        // Export using CsvExportHelper
-        // Note: Report has variable columns, normalized to 3 columns max
-        var csvBytes = CsvExportHelper.ExportToCsvRaw(
-            headers: new List<string>(), // No consistent header for multi-section report
+        // Export using CsvExportHelper - returns byte[] directly for efficient streaming
+        return CsvExportHelper.ExportToCsvRaw(
+            headers: new List<string>(),
             rows: rows
         );
-
-        return Encoding.UTF8.GetString(csvBytes);
     }
 
-    public async Task<string> GenerateSystemReportCsvAsync(
+    public async Task<byte[]> GenerateSystemReportCsvAsync(
         DateOnly? startDate,
         DateOnly? endDate,
         CancellationToken ct)
@@ -465,14 +462,11 @@ public sealed class ReportService : IReportService
             rows.Add(new List<string> { item.ClientName, item.CaseCount.ToString(), item.TransactionCount.ToString(), item.TotalVolumeUSD.ToString("N2") });
         }
 
-        // Export using CsvExportHelper
-        // Note: Report has variable columns, normalized to 4 columns max
-        var csvBytes = CsvExportHelper.ExportToCsvRaw(
-            headers: new List<string>(), // No consistent header for multi-section report
+        // Export using CsvExportHelper - returns byte[] directly for efficient streaming
+        return CsvExportHelper.ExportToCsvRaw(
+            headers: new List<string>(),
             rows: rows
         );
-
-        return Encoding.UTF8.GetString(csvBytes);
     }
 
     #region Private Helpers

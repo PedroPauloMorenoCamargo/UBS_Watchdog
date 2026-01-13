@@ -1,4 +1,3 @@
-using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ubs.Monitoring.Application.Reports;
@@ -83,6 +82,7 @@ public sealed class ReportsController : ControllerBase
 
     /// <summary>
     /// Exports a client report as CSV file.
+    /// Uses efficient byte streaming without intermediate string conversion.
     /// </summary>
     /// <param name="clientId">The unique identifier of the client.</param>
     /// <param name="startDate">Start date of the report period (inclusive). Defaults to 30 days ago if not provided.</param>
@@ -103,9 +103,9 @@ public sealed class ReportsController : ControllerBase
     {
         _logger.LogInformation("Exporting client report CSV for {ClientId}", clientId);
 
-        var csv = await _reportService.GenerateClientReportCsvAsync(clientId, startDate, endDate, ct);
+        var csvBytes = await _reportService.GenerateClientReportCsvAsync(clientId, startDate, endDate, ct);
 
-        if (csv is null)
+        if (csvBytes is null)
         {
             return Problem(
                 title: "Client not found",
@@ -115,13 +115,14 @@ public sealed class ReportsController : ControllerBase
         }
 
         var fileName = $"client_report_{clientId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
-        var bytes = Encoding.UTF8.GetBytes(csv);
 
-        return File(bytes, "text/csv", fileName);
+        // File() method streams the byte array directly to the response without additional buffering
+        return File(csvBytes, "text/csv", fileName);
     }
 
     /// <summary>
     /// Exports a system report as CSV file.
+    /// Uses efficient byte streaming without intermediate string conversion.
     /// </summary>
     /// <param name="startDate">Start date of the report period (inclusive). Defaults to 30 days ago if not provided.</param>
     /// <param name="endDate">End date of the report period (inclusive). Defaults to today if not provided.</param>
@@ -138,11 +139,11 @@ public sealed class ReportsController : ControllerBase
     {
         _logger.LogInformation("Exporting system report CSV");
 
-        var csv = await _reportService.GenerateSystemReportCsvAsync(startDate, endDate, ct);
+        var csvBytes = await _reportService.GenerateSystemReportCsvAsync(startDate, endDate, ct);
 
         var fileName = $"system_report_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
-        var bytes = Encoding.UTF8.GetBytes(csv);
 
-        return File(bytes, "text/csv", fileName);
+        // File() method streams the byte array directly to the response without additional buffering
+        return File(csvBytes, "text/csv", fileName);
     }
 }

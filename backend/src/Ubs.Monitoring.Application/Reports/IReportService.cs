@@ -33,13 +33,14 @@ public interface IReportService
 
     /// <summary>
     /// Generates CSV export for client report.
+    /// Returns byte array for efficient streaming without intermediate string allocation.
     /// </summary>
     /// <param name="clientId">The unique identifier of the client.</param>
     /// <param name="startDate">Start date of the report period (inclusive).</param>
     /// <param name="endDate">End date of the report period (inclusive).</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>CSV string if client exists; otherwise, null.</returns>
-    Task<string?> GenerateClientReportCsvAsync(
+    /// <returns>CSV content as byte array if client exists; otherwise, null.</returns>
+    Task<byte[]?> GenerateClientReportCsvAsync(
         Guid clientId,
         DateOnly? startDate,
         DateOnly? endDate,
@@ -47,12 +48,13 @@ public interface IReportService
 
     /// <summary>
     /// Generates CSV export for system report.
+    /// Returns byte array for efficient streaming without intermediate string allocation.
     /// </summary>
     /// <param name="startDate">Start date of the report period (inclusive).</param>
     /// <param name="endDate">End date of the report period (inclusive).</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>CSV string.</returns>
-    Task<string> GenerateSystemReportCsvAsync(
+    /// <returns>CSV content as byte array.</returns>
+    Task<byte[]> GenerateSystemReportCsvAsync(
         DateOnly? startDate,
         DateOnly? endDate,
         CancellationToken ct);
