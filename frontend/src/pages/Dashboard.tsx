@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { GeographicDistributionChart } from "@/components/ui/charts/geographicdistributionchart";
 import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
 import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
-import { transactionsByCountry} from "@/mocks/mocks";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
 import { TransactionsTable } from "@/components/ui/tables/transactionstable";
