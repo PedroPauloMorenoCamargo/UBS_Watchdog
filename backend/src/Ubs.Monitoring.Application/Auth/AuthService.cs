@@ -16,22 +16,7 @@ public sealed class AuthService : IAuthService
         _tokens = tokens;
     }
 
-    /// <summary>
-    /// Authenticates an analyst using email and password credentials.
-    /// </summary>
-    /// <param name="email">
-    /// The analyst’s corporate email address.
-    /// </param>
-    /// <param name="password">
-    /// The plaintext password provided by the analyst.
-    /// </param>
-    /// <param name="ct">
-    /// Cancellation token used to cancel the operation.
-    /// </param>
-    /// <returns>
-    /// A <see cref="LoginResultDto"/> containing the authentication token and
-    /// analyst profile if authentication succeeds; otherwise, <c>null</c>.
-    /// </returns>
+
     public async Task<LoginResultDto?> LoginAsync( string email, string password, CancellationToken ct)
     {
         var normalizedEmail = (email ?? string.Empty).Trim().ToLowerInvariant();
@@ -62,35 +47,12 @@ public sealed class AuthService : IAuthService
         );
     }
 
-    /// <summary>
-    /// Retrieves the profile of the authenticated analyst.
-    /// </summary>
-    /// <param name="analystId">
-    /// The unique identifier of the analyst.
-    /// </param>
-    /// <param name="ct">
-    /// Cancellation token used to cancel the operation.
-    /// </param>
-    /// <returns>
-    /// An <see cref="AnalystProfileDto"/> if the analyst exists; otherwise,
-    /// <c>null</c>.
-    /// </returns>
     public async Task<AnalystProfileDto?> GetMeAsync(Guid analystId, CancellationToken ct)
     {
         var analyst = await _analysts.GetByIdAsync(analystId, ct);
         return analyst is null ? null : MapProfile(analyst);
     }
 
-    /// <summary>
-    /// Maps a domain <see cref="Analyst"/> entity to an
-    /// <see cref="AnalystProfileDto"/>.
-    /// </summary>
-    /// <param name="a">
-    /// The analyst domain entity.
-    /// </param>
-    /// <returns>
-    /// A data transfer object representing the analyst profile.
-    /// </returns>
     private static AnalystProfileDto MapProfile(Analyst a) =>
         new(
             a.Id,

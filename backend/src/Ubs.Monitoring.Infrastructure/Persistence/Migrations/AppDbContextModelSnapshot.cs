@@ -435,6 +435,348 @@ namespace Ubs.Monitoring.Infrastructure.Persistence.Migrations
                     b.ToTable("compliance_rules", (string)null);
                 });
 
+            modelBuilder.Entity("Ubs.Monitoring.Domain.Entities.Country", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasColumnType("varchar(2)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("RiskLevel")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("risk_level");
+
+                    b.HasKey("Code");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("IX_countries_name");
+
+                    b.HasIndex("RiskLevel")
+                        .HasDatabaseName("IX_countries_risk_level");
+
+                    b.ToTable("countries", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Code = "AR",
+                            Name = "Argentina",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "BR",
+                            Name = "Brazil",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "CA",
+                            Name = "Canada",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "CL",
+                            Name = "Chile",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "CO",
+                            Name = "Colombia",
+                            RiskLevel = 1
+                        },
+                        new
+                        {
+                            Code = "MX",
+                            Name = "Mexico",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "US",
+                            Name = "United States",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "UY",
+                            Name = "Uruguay",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "VE",
+                            Name = "Venezuela",
+                            RiskLevel = 2
+                        },
+                        new
+                        {
+                            Code = "PE",
+                            Name = "Peru",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "EC",
+                            Name = "Ecuador",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "BO",
+                            Name = "Bolivia",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "AT",
+                            Name = "Austria",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "BE",
+                            Name = "Belgium",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "CH",
+                            Name = "Switzerland",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "DE",
+                            Name = "Germany",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "DK",
+                            Name = "Denmark",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "ES",
+                            Name = "Spain",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "FI",
+                            Name = "Finland",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "FR",
+                            Name = "France",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "GB",
+                            Name = "United Kingdom",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "GR",
+                            Name = "Greece",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "IE",
+                            Name = "Ireland",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "IT",
+                            Name = "Italy",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "NL",
+                            Name = "Netherlands",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "NO",
+                            Name = "Norway",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "PL",
+                            Name = "Poland",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "PT",
+                            Name = "Portugal",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "RU",
+                            Name = "Russia",
+                            RiskLevel = 2
+                        },
+                        new
+                        {
+                            Code = "SE",
+                            Name = "Sweden",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "CN",
+                            Name = "China",
+                            RiskLevel = 1
+                        },
+                        new
+                        {
+                            Code = "IN",
+                            Name = "India",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "ID",
+                            Name = "Indonesia",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "JP",
+                            Name = "Japan",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "KR",
+                            Name = "South Korea",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "MY",
+                            Name = "Malaysia",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "PH",
+                            Name = "Philippines",
+                            RiskLevel = 1
+                        },
+                        new
+                        {
+                            Code = "SG",
+                            Name = "Singapore",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "TH",
+                            Name = "Thailand",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "VN",
+                            Name = "Vietnam",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "KP",
+                            Name = "North Korea",
+                            RiskLevel = 2
+                        },
+                        new
+                        {
+                            Code = "IR",
+                            Name = "Iran",
+                            RiskLevel = 2
+                        },
+                        new
+                        {
+                            Code = "AE",
+                            Name = "United Arab Emirates",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "IL",
+                            Name = "Israel",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "SA",
+                            Name = "Saudi Arabia",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "SY",
+                            Name = "Syria",
+                            RiskLevel = 2
+                        },
+                        new
+                        {
+                            Code = "EG",
+                            Name = "Egypt",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "ZA",
+                            Name = "South Africa",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "NG",
+                            Name = "Nigeria",
+                            RiskLevel = 1
+                        },
+                        new
+                        {
+                            Code = "KE",
+                            Name = "Kenya",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "AU",
+                            Name = "Australia",
+                            RiskLevel = 0
+                        },
+                        new
+                        {
+                            Code = "NZ",
+                            Name = "New Zealand",
+                            RiskLevel = 0
+                        });
+                });
+
             modelBuilder.Entity("Ubs.Monitoring.Domain.Entities.FxRate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -540,13 +882,34 @@ namespace Ubs.Monitoring.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("IX_Transactions_AccountId");
+
+                    b.HasIndex("ClientId")
+                        .HasDatabaseName("IX_Transactions_ClientId");
+
+                    b.HasIndex("CpCountryCode")
+                        .HasDatabaseName("IX_Transactions_CpCountryCode");
+
+                    b.HasIndex("CurrencyCode")
+                        .HasDatabaseName("IX_Transactions_CurrencyCode");
+
                     b.HasIndex("FxRateId");
 
-                    b.HasIndex("OccurredAtUtc");
+                    b.HasIndex("OccurredAtUtc")
+                        .HasDatabaseName("IX_Transactions_OccurredAtUtc");
 
-                    b.HasIndex("AccountId", "OccurredAtUtc");
+                    b.HasIndex("TransferMethod")
+                        .HasDatabaseName("IX_Transactions_TransferMethod");
 
-                    b.HasIndex("ClientId", "OccurredAtUtc");
+                    b.HasIndex("Type")
+                        .HasDatabaseName("IX_Transactions_Type");
+
+                    b.HasIndex("AccountId", "OccurredAtUtc")
+                        .HasDatabaseName("IX_Transactions_AccountId_OccurredAtUtc");
+
+                    b.HasIndex("ClientId", "OccurredAtUtc")
+                        .HasDatabaseName("IX_Transactions_ClientId_OccurredAtUtc");
 
                     b.ToTable("transactions", null, t =>
                         {
@@ -638,6 +1001,15 @@ namespace Ubs.Monitoring.Infrastructure.Persistence.Migrations
                     b.Navigation("Case");
 
                     b.Navigation("Rule");
+                });
+
+            modelBuilder.Entity("Ubs.Monitoring.Domain.Entities.Client", b =>
+                {
+                    b.HasOne("Ubs.Monitoring.Domain.Entities.Country", null)
+                        .WithMany()
+                        .HasForeignKey("CountryCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Ubs.Monitoring.Domain.Entities.Transaction", b =>

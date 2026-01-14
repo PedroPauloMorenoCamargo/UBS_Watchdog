@@ -19,14 +19,26 @@ export function RuleCard({
   onConfigure,
   onDelete,
 }: RuleCardProps) {
+  const getThresholdDisplay = () => {
+    if (rule.threshold > 0) {
+      return `Threshold: ${rule.threshold.toLocaleString()}`;
+    }
+    if (rule.parameters.countries && Array.isArray(rule.parameters.countries)) {
+      return `Countries: ${(rule.parameters.countries as string[]).length}`;
+    }
+    if (rule.parameters.identifiers && Array.isArray(rule.parameters.identifiers)) {
+      return `Accounts: ${(rule.parameters.identifiers as string[]).length}`;
+    }
+    return "Threshold: 0";
+  };
+
   return (
     <Card className="p-5 border-gray-200">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h4 className="font-medium text-gray-900">{rule.name}</h4>
-            <SeverityBadge severity={rule.severity}
-/>
+            <SeverityBadge severity={rule.severity} />
           </div>
 
           <p className="text-sm text-gray-600 mb-2">
@@ -34,7 +46,7 @@ export function RuleCard({
           </p>
 
           <div className="flex items-center gap-4 text-sm text-gray-700">
-            <span>Threshold: {rule.threshold}</span>
+            <span>{getThresholdDisplay()}</span>
             <span>|</span>
             <span>Triggered: {rule.triggeredCount}x</span>
           </div>

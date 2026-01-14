@@ -71,7 +71,6 @@ public sealed class ComplianceRule
 
     public void SetActive(bool active)
     {
-        // Best practice: idempotent
         if (IsActive == active) return;
         IsActive = active;
         Touch();

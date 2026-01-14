@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Ubs.Monitoring.Domain.Entities;
 using Ubs.Monitoring.Domain.Enums;
+using Ubs.Monitoring.Infrastructure.Persistence.Seed;
 
 namespace Ubs.Monitoring.Infrastructure.Persistence;
 
@@ -10,6 +11,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Analyst> Analysts => Set<Analyst>();
     public DbSet<Client> Clients => Set<Client>();
+    public DbSet<Country> Countries => Set<Country>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<AccountIdentifier> AccountIdentifiers => Set<AccountIdentifier>();
     public DbSet<FxRate> FxRates => Set<FxRate>();
@@ -18,6 +20,8 @@ public class AppDbContext : DbContext
     public DbSet<Case> Cases => Set<Case>();
     public DbSet<CaseFinding> CaseFindings => Set<CaseFinding>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,7 +71,13 @@ public class AppDbContext : DbContext
             b.Property(x => x.CreatedAtUtc).HasDefaultValueSql("now()").IsRequired();
             b.Property(x => x.UpdatedAtUtc).HasDefaultValueSql("now()").IsRequired();
 
-          
+            // Foreign key to countries
+            b.HasOne<Country>()
+                .WithMany()
+                .HasForeignKey(x => x.CountryCode)
+                .HasPrincipalKey(c => c.Code)
+                .OnDelete(DeleteBehavior.Restrict);
+
             b.HasIndex(x => x.CountryCode).HasDatabaseName("ix_clients_country");
             b.HasIndex(x => x.KycStatus).HasDatabaseName("ix_clients_kyc_status");
             b.HasIndex(x => x.RiskLevel).HasDatabaseName("ix_clients_risk_level");
@@ -90,6 +100,17 @@ public class AppDbContext : DbContext
                 .WithMany(c => c.Accounts)
                 .HasForeignKey(x => x.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure backing field for Identifiers collection
+            b.HasMany(x => x.Identifiers)
+                .WithOne(i => i.Account)
+                .HasForeignKey(i => i.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Explicitly specify backing field so EF Core can properly track changes
+            var identifiersNavigation = b.Metadata.FindNavigation(nameof(Account.Identifiers))!;
+            identifiersNavigation.SetPropertyAccessMode(PropertyAccessMode.Field);
+            identifiersNavigation.SetField("_identifiers");
         });
 
         // account_identifiers
@@ -101,11 +122,6 @@ public class AppDbContext : DbContext
             b.Property(x => x.IdentifierValue).HasMaxLength(200).IsRequired();
             b.Property(x => x.IssuedCountryCode).HasColumnType("char(2)");
             b.Property(x => x.CreatedAtUtc).HasDefaultValueSql("now()").IsRequired();
-
-            b.HasOne(x => x.Account)
-                .WithMany(a => a.Identifiers)
-                .HasForeignKey(x => x.AccountId)
-                .OnDelete(DeleteBehavior.Restrict);
 
             // PIX + IBAN unique globally (partial unique)
             b.HasIndex(x => new { x.IdentifierType, x.IdentifierValue })
@@ -174,9 +190,26 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.FxRateId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            b.HasIndex(x => new { x.ClientId, x.OccurredAtUtc });
-            b.HasIndex(x => new { x.AccountId, x.OccurredAtUtc });
-            b.HasIndex(x => x.OccurredAtUtc);
+            b.HasIndex(x => new { x.ClientId, x.OccurredAtUtc })
+                .HasDatabaseName("IX_Transactions_ClientId_OccurredAtUtc");
+            b.HasIndex(x => new { x.AccountId, x.OccurredAtUtc })
+                .HasDatabaseName("IX_Transactions_AccountId_OccurredAtUtc");
+            b.HasIndex(x => x.OccurredAtUtc)
+                .HasDatabaseName("IX_Transactions_OccurredAtUtc");
+
+            // Additional performance indexes for frequently filtered columns
+            b.HasIndex(x => x.ClientId)
+                .HasDatabaseName("IX_Transactions_ClientId");
+            b.HasIndex(x => x.AccountId)
+                .HasDatabaseName("IX_Transactions_AccountId");
+            b.HasIndex(x => x.Type)
+                .HasDatabaseName("IX_Transactions_Type");
+            b.HasIndex(x => x.TransferMethod)
+                .HasDatabaseName("IX_Transactions_TransferMethod");
+            b.HasIndex(x => x.CurrencyCode)
+                .HasDatabaseName("IX_Transactions_CurrencyCode");
+            b.HasIndex(x => x.CpCountryCode)
+                .HasDatabaseName("IX_Transactions_CpCountryCode");
 
             b.ToTable(t =>
             {
@@ -299,6 +332,12 @@ public class AppDbContext : DbContext
             b.HasIndex(x => x.PerformedAtUtc).HasDatabaseName("ix_audit_performed_at");
             b.HasIndex(x => new { x.PerformedByAnalystId, x.PerformedAtUtc }).HasDatabaseName("ix_audit_by_analyst_time");
         });
+
+        // Apply all IEntityTypeConfiguration from this assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // Seed data
+        modelBuilder.SeedCountries();
 
         base.OnModelCreating(modelBuilder);
     }

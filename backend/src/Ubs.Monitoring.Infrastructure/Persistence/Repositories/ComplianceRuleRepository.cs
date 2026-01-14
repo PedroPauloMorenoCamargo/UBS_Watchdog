@@ -33,6 +33,12 @@ public sealed class ComplianceRuleRepository : IComplianceRuleRepository
 
     public Task SaveChangesAsync(CancellationToken ct) => _db.SaveChangesAsync(ct);
 
+    public async Task<IReadOnlyList<ComplianceRule>> GetActiveAsync(CancellationToken ct) => await _db.ComplianceRules
+        .AsNoTracking()
+        .Where(x => x.IsActive)
+        .ToListAsync(ct);
+
+
     private static IQueryable<ComplianceRule> ApplySort(IQueryable<ComplianceRule> query, string? sortBy, string? sortDir)
     {
         var sb = (sortBy ?? "UpdatedAtUtc").Trim();
