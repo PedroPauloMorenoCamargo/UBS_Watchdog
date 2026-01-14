@@ -40,6 +40,16 @@ export function Dashboard() {
   });
 
   const countries = countriesData ?? [];
+  const fetchTransactionsForMetrics = useCallback(
+    () => fetchTransactions({ page: 1, pageSize: 2000 }), 
+    []
+  );
+
+  const { data: metricsData } = useApi<PagedTransactionsResponseDto>({
+    fetcher: fetchTransactionsForMetrics,
+  });
+
+  const allTransactions = metricsData?.items ?? [];
 
   const { data: transactionsData } = useApi<PagedTransactionsResponseDto>({
     fetcher: fetchTransactionsWithPagination,
@@ -47,19 +57,21 @@ export function Dashboard() {
   });
 
   const transactions = transactionsData?.items ?? [];
+  
   const transactionRows = useMemo(() => {
-  return transactions.map(mapTransactionToRow);
-}, [transactions]);
+    return transactions.map(mapTransactionToRow);
+  }, [transactions]);
 
-const { data: casesData} =
-  useApi<PagedCasesResponseDto>({
-    fetcher: fetchCases,
-  });
+  const { data: casesData} =
+    useApi<PagedCasesResponseDto>({
+      fetcher: fetchCases,
+    });
   const cases = casesData?.items ?? [];
   
   const casesRows = useMemo(() => {
-  return cases.map(mapCaseDtoToTableRow);
-}, [cases]);
+    return cases.map(mapCaseDtoToTableRow);
+  }, [cases]);
+
   const { 
     activeAlertsCount,
     criticalAlertsCount,
@@ -75,7 +87,7 @@ const { data: casesData} =
     transactionsByType,
     weeklyActivity,
     transactionsCountry
-  } = useTransactions(transactions, cases, countries);
+  } = useTransactions(allTransactions, cases, countries);
 
   const { data : clientsData} = 
     useApi<PagedClientsResponseDto>({
