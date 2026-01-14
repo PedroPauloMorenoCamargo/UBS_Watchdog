@@ -28,7 +28,6 @@ using Npgsql;
 namespace Ubs.Monitoring.Infrastructure;
 
 
-
 public static class DependencyInjection
 {   
     /// <summary>
@@ -36,10 +35,13 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-        var connectionString =
-            config.GetConnectionString("Default")
-            ?? config["DATABASE_URL"]
-            ?? throw new InvalidOperationException("Database connection string is missing.");
+        var raw = config.GetConnectionString("Default")
+              ?? config["DATABASE_URL"]
+              ?? throw new InvalidOperationException("Database connection string is missing.");
+
+        var connectionString = raw.StartsWith("postgres", StringComparison.OrdinalIgnoreCase)
+            ? new NpgsqlConnectionStringBuilder(raw).ConnectionString
+            : raw;
 
         services.AddScoped<AuditSaveChangesInterceptor>();
 
