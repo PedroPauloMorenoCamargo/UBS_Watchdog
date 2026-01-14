@@ -16,7 +16,15 @@ public static class DatabaseInitializationExtensions
         await ApplyMigrationsWithRetryAsync(app);
         await SeedWithRetryAsync(app);
     }
-
+    /// <summary>
+    /// Applies pending Entity Framework Core migrations using retry logic.
+    /// </summary>
+    /// <param name="app">
+    /// The running <see cref="WebApplication"/> instance.
+    /// </param>
+    /// <returns>
+    /// A task that completes when migrations are successfully applied.
+    /// </returns>
     private static async Task ApplyMigrationsWithRetryAsync(WebApplication app)
     {
         await RetryHelper.ExecuteAsync(async ct =>
@@ -26,7 +34,15 @@ public static class DatabaseInitializationExtensions
             await db.Database.MigrateAsync(ct);
         });
     }
-
+    /// <summary>
+    /// Executes database seeding logic using retry semantics.
+    /// </summary>
+    /// <param name="app">
+    /// The running <see cref="WebApplication"/> instance.
+    /// </param>
+    /// <returns>
+    /// A task that completes when database seeding finishes successfully.
+    /// </returns>
     private static async Task SeedWithRetryAsync(WebApplication app)
     {
         await RetryHelper.ExecuteAsync(async ct =>

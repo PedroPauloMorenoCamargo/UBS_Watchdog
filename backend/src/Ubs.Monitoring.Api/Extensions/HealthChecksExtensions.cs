@@ -8,17 +8,32 @@ namespace Ubs.Monitoring.Api.Extensions;
 
 public static class HealthChecksExtensions
 {
+    /// <summary>
+    /// Registers health check services used by the API to report liveness and readiness status.
+    /// </summary>
+    /// <param name="services">
+    /// The dependency injection container used to register health check implementations.
+    /// </param>
+    /// <returns>
+    /// The same <see cref="IServiceCollection"/> instance, allowing fluent  chaining of service registrations.
+    /// </returns>
     public static IServiceCollection AddApiHealthChecks(this IServiceCollection services)
     {
         services.AddHealthChecks()
-            // Liveness: always healthy
             .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "live" })
-            // Readiness: DB connectivity
             .AddDbContextCheck<AppDbContext>("db", tags: new[] { "ready" });
 
         return services;
     }
-
+    /// <summary>
+    /// Maps HTTP endpoints that expose health check information for the API.
+    /// </summary>
+    /// <param name="app">
+    /// The <see cref="WebApplication"/> instance used to configure endpoint routing.
+    /// </param>
+    /// <returns>
+    /// The same <see cref="WebApplication"/> instance, enabling fluent chaining of endpoint mappings.
+    /// </returns>
    public static WebApplication MapApiHealthChecks(this WebApplication app)
     {
         app.MapGet("/api/health", async (HealthCheckService hc, CancellationToken ct) =>
@@ -35,8 +50,6 @@ public static class HealthChecksExtensions
                     description = e.Value.Description
                 })
             };
-
-            // Liveness: usually always 200
             return Results.Json(payload, statusCode: StatusCodes.Status200OK);
         })
         .WithTags("Health")
@@ -58,10 +71,7 @@ public static class HealthChecksExtensions
                 })
             };
 
-            // Readiness: 200 if healthy, 503 otherwise
-            var code = report.Status == HealthStatus.Healthy
-                ? StatusCodes.Status200OK
-                : StatusCodes.Status503ServiceUnavailable;
+            var code = report.Status == HealthStatus.Healthy ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable;
 
             return Results.Json(payload, statusCode: code);
         })

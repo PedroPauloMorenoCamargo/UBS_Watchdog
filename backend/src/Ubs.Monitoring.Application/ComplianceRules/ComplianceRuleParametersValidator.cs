@@ -14,9 +14,21 @@ public sealed class ComplianceRuleParametersValidator : IComplianceRuleParameter
     }
 
     /// <summary>
-    /// Performs structural validation (format, types, required fields) without database checks.
-    /// This is a private helper method used internally by ValidateAsync.
+    /// Performs rule-type–specific structural validation of the provided parameters.
     /// </summary>
+    /// <remarks>
+    /// This method validates JSON structure, required fields, and value types  without performing any database access. It is intended to be executed
+    /// before more expensive data-level validation.
+    /// </remarks>
+    /// <param name="ruleType">
+    /// The type of compliance rule being validated.
+    /// </param>
+    /// <param name="parameters">
+    /// The JSON object containing rule-specific parameters.
+    /// </param>
+    /// <returns>
+    /// A read-only list of validation error messages. An empty list indicates that structural validation succeeded.
+    /// </returns>
     private IReadOnlyList<string> ValidateStructure(RuleType ruleType, JsonElement parameters)
     {
         var errors = new List<string>();
@@ -67,18 +79,44 @@ public sealed class ComplianceRuleParametersValidator : IComplianceRuleParameter
 
         return errors;
     }
-
+    /// <summary>
+    /// Validates compliance rule parameters using both structural and  data-level validation rules.
+    /// </summary>
+    /// <remarks>
+    /// Validation is executed in two phases:
+    /// <list type="number">
+    /// <item>
+    /// <description>
+    /// Structural validation (synchronous) to ensure correct JSON format, required fields, and value types.
+    /// </description>
+    /// </item>
+    /// <item>
+    /// <description>
+    /// Data validation (asynchronous) to verify parameter values against persisted data when applicable.
+    /// </description>
+    /// </item>
+    /// </list>
+    /// Data-level validation is skipped if structural validation fails.
+    /// </remarks>
+    /// <param name="ruleType">
+    /// The type of compliance rule being validated.
+    /// </param>
+    /// <param name="parameters">
+    /// The JSON object containing rule-specific parameters.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// A read-only list of validation error messages. An empty list indicates that validation succeeded.
+    /// </returns>
     public async Task<IReadOnlyList<string>> ValidateAsync(RuleType ruleType, JsonElement parameters, CancellationToken ct = default)
     {
-        // First: structural validation (fast, synchronous - format, types, required fields)
         var errors = ValidateStructure(ruleType, parameters).ToList();
 
-        // Early return if structural validation failed - no point checking database with invalid format
         if (errors.Count > 0)
             return errors;
 
-        // Second: data validation (slow, asynchronous - database checks)
-        // Only runs if structural validation passed
         if (ruleType == RuleType.BannedCountries)
         {
             if (parameters.TryGetProperty("countries", out var countries) && countries.ValueKind == JsonValueKind.Array)
@@ -99,7 +137,6 @@ public sealed class ComplianceRuleParametersValidator : IComplianceRuleParameter
                 {
                     var existingCodes = await _countries.GetExistingCodesAsync(countryCodesList, ct);
 
-                    // Check which codes don't exist
                     foreach (var code in countryCodesList)
                     {
                         if (!existingCodes.Contains(code))

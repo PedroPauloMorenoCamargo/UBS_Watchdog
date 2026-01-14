@@ -12,7 +12,18 @@ public sealed class AuditLogRepository : IAuditLogRepository
     private readonly AppDbContext _db;
 
     public AuditLogRepository(AppDbContext db) => _db = db;
-
+    /// <summary>
+    /// Searches audit log entries using pagination, filtering, and sorting criteria.
+    /// </summary>
+    /// <param name="q">
+    /// The audit log query containing filter conditions, pagination, and sort options.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// A <see cref="PagedResult{T}"/> containing audit log entries that match the specified query criteria.
+    /// </returns>
     public async Task<PagedResult<AuditLog>> SearchAsync(AuditLogQuery q, CancellationToken ct)
     {
         IQueryable<AuditLog> query = _db.AuditLogs.AsNoTracking();
@@ -43,10 +54,37 @@ public sealed class AuditLogRepository : IAuditLogRepository
 
         return await query.ToPagedResultAsync(q.Page, ct);
     }
-
-    public Task<AuditLog?> GetByIdAsync(Guid id, CancellationToken ct)
-        => _db.AuditLogs.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
-
+    /// <summary>
+    /// Retrieves a single audit log entry by its unique identifier.
+    /// </summary>
+    /// <param name="id">
+    /// The unique identifier of the audit log entry.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// The <see cref="AuditLog"/> entity if found; otherwise, <c>null</c>.
+    /// </returns>
+    public Task<AuditLog?> GetByIdAsync(Guid id, CancellationToken ct) => _db.AuditLogs.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+    /// <summary>
+    /// Applies dynamic sorting to the audit log query.
+    /// </summary>
+    /// <remarks>
+    /// Sorting is always stabilized by appending an <c>Id</c> ordering clause  to ensure deterministic pagination results.
+    /// </remarks>
+    /// <param name="query">
+    /// The base audit log query.
+    /// </param>
+    /// <param name="sortBy">
+    /// The field name used for sorting.
+    /// </param>
+    /// <param name="sortDir">
+    /// The sort direction (<c>asc</c> or <c>desc</c>).
+    /// </param>
+    /// <returns>
+    /// The query with ordering applied.
+    /// </returns>
     private static IQueryable<AuditLog> ApplySort(IQueryable<AuditLog> query, string? sortBy, string? sortDir)
     {
         var sb = (sortBy ?? "PerformedAtUtc").Trim();
