@@ -1,5 +1,5 @@
 // AlertsPage.tsx
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   Select,
   SelectTrigger,
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AlertsTable } from "@/components/ui/tables/alertstable";
 import { StatCard } from "@/components/ui/statcard";
+import { Pagination } from "@/components/ui/pagination";
 
 import type { SeverityFilter } from "@/types/alert";
 import type { StatusFilter } from "@/types/status";
@@ -20,22 +21,30 @@ import { useApi } from "@/hooks/useApi";
 import { fetchCases } from "@/services/case.service";
 import { mapCaseDtoToTableRow } from "@/mappers/case/case.mapper";
 
+const PAGE_SIZE = 20;
+
 export function AlertsPage() {
   const [severity, setSeverity] = useState<SeverityFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Buscar dados do backend
+  const fetchCasesWithPagination = useCallback(
+    () => fetchCases({ page: currentPage, pageSize: PAGE_SIZE }),
+    [currentPage]
+  );
+
   const { data, loading, error } = useApi({
-    fetcher: fetchCases,
+    fetcher: fetchCasesWithPagination,
+    deps: [currentPage],
   });
 
-  // Mapear dados do backend para formato da tabela
+
   const cases = useMemo(() => {
     if (!data) return [];
     return data.items.map(mapCaseDtoToTableRow);
   }, [data]);
 
-  // Contagem por severidade
+
   const severityCounts = useMemo(() => {
     const counts = {
       all: 0,
@@ -54,7 +63,6 @@ export function AlertsPage() {
     return counts;
   }, [cases]);
 
-  // Filtrar casos por severidade e status
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
       const severityMatch = severity === "all" || c.severity === severity;
@@ -65,7 +73,6 @@ export function AlertsPage() {
 
   return (
     <div className="relative bg-cover bg-center">
-      {/* Cards de contagem */}
       <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
         <StatCard title="Critical Severity" value={severityCounts.critical} variant="destructive" />
         <StatCard title="High Severity" value={severityCounts.high} variant="high" />
@@ -73,7 +80,6 @@ export function AlertsPage() {
         <StatCard title="Low Severity" value={severityCounts.low} variant="low" />
       </div>
 
-      {/* Filtros */}
       <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl bg-white p-4 shadow">
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium text-slate-500">Status:</label>
@@ -133,12 +139,21 @@ export function AlertsPage() {
         </Button>
       </div>
 
-      {/* Tabela de Alerts */}
       <div className="mt-5">
         <ChartCard title="Recent High-Priority Alerts">
           {loading && <p>Loading...</p>}
           {error && <p className="text-red-500">{error}</p>}
           {!loading && !error && <AlertsTable alerts={filteredCases} />}
+          
+          {!loading && !error && data && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={data.totalPages}
+              totalItems={data.total}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </ChartCard>
       </div>
     </div>

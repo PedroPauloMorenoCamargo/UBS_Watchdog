@@ -8,6 +8,7 @@ import { AlertsPage } from "@/pages/AlertsPage";
 import { TransactionsPage } from "@/pages/TransactionsPage";
 import { ClientsPage } from "@/pages/ClientsPage";
 import { ReportsPage } from "@/pages/ReportsPage";
+import { ClientReportPage } from "@/pages/ClientReportPage";
 import { AdminPage } from "@/pages/AdminPage";
 import TestTransactionPage from "@/pages/testTransaction";
 
@@ -56,6 +57,13 @@ export const router = createBrowserRouter([
         element: <ReportsPage />,
         handle: {
           title: "Compliance Reports",
+        },
+      },
+      {
+        path: "/reports/client/:clientId",
+        element: <ClientReportPage />,
+        handle: {
+          title: "Client Report",
         },
       },
       {

@@ -32,11 +32,14 @@
 import { useMemo } from "react";
 import type { TransactionResponseDto } from "@/types/Transactions/transaction";
 import { mapTransactionType } from "@/mappers/transaction/transactionType.mapper";
-import { mapCountryCode } from "@/constants/countries";
 
 import { TRANSACTION_TYPES } from "@/constants/transactionTypes";
 import { MONTHS } from "@/constants/months";
-import { COUNTRY_MAP } from "@/constants/countries";
+import type { CaseDecision, CaseResponseDto } from "@/types/Cases/cases";
+
+import { WEEK_DAYS } from "@/constants/weekdays";
+import type { CountriesResponseDto } from "@/types/Countries/countries";
+import { useCountriesList } from "./useCountriesList";
 type Trend = "up" | "down" | "neutral";
 
 interface TransactionsByType {
@@ -72,8 +75,9 @@ interface UseTransactionsResult {
   transactionsCountry: TransactionCountry[];
 }
 
-export function useTransactions(transactions: TransactionResponseDto[]): UseTransactionsResult {
-  const now = new Date();
+export function useTransactions(transactions: TransactionResponseDto[], cases: CaseResponseDto[], countries: CountriesResponseDto[]): UseTransactionsResult {
+   const now = new Date();
+
 
   const totalTransactionsAmount = useMemo(() => {
     return transactions
@@ -138,49 +142,37 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
   }, [transactions]);
 
   const weeklyActivity = useMemo<WeeklyActivity[]>(() => {
-  const map = new Map<string, WeeklyActivity>();
-
-
-  const start = new Date();
-  start.setUTCHours(0, 0, 0, 0);
-  start.setUTCDate(start.getUTCDate() - 6);
-
-  const end = new Date(); 
-
   
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setUTCDate(start.getUTCDate() + i);
-
-    const label = d.toLocaleDateString("en-US", {
-      weekday: "short",
-    });
-
-    map.set(label, {
-      day: label,
+    const data: WeeklyActivity[] = WEEK_DAYS.map(day => ({
+      day,
       transactions: 0,
-      alerts: 0, 
+      alerts: 0,
+    }));
+
+    const alertsByTxAndDay = new Set<string>();
+
+    cases.forEach(c => {
+      const d = new Date(c.openedAtUtc);
+      const dayIndex = d.getUTCDay(); 
+      alertsByTxAndDay.add(`${c.transactionId}_${dayIndex}`);
     });
-  }
 
-  
-  transactions.forEach((t) => {
-    const txDate = new Date(t.occurredAtUtc);
+    transactions.forEach(t => {
+      const d = new Date(t.occurredAtUtc);
+      const dayIndex = d.getUTCDay();
 
-    if (txDate >= start && txDate <= end) {
-      const label = txDate.toLocaleDateString("en-US", {
-        weekday: "short",
-      });
+      data[dayIndex].transactions += 1;
 
-      const entry = map.get(label);
-      if (entry) {
-        entry.transactions += 1;
+      if (alertsByTxAndDay.has(`${t.id}_${dayIndex}`)) {
+        data[dayIndex].alerts += 1;
       }
-    }
-  });
+    });
 
-  return Array.from(map.values());
-}, [transactions]);
+    return data;
+  }, [transactions, cases]);
+
+
+
 
   const monthlyVolume = useMemo(() => {
   const volumeByMonth = new Map<number, number>();
@@ -208,21 +200,29 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
   }));
 }, [transactions]);
 
+
+const countriesList = useCountriesList();
+
 const transactionsCountry = useMemo<TransactionCountry[]>(() => {
+  if (!countriesList) return [];
+
   const map = new Map<string, { totalAmount: number; count: number }>();
 
-
-  Object.values(COUNTRY_MAP).forEach(code => {
-    map.set(code, { totalAmount: 0, count: 0 });
-  });
-  map.set("Others", { totalAmount: 0, count: 0 });
-
   transactions.forEach(t => {
-    const country = mapCountryCode(t.cpCountryCode);
-    const entry = map.get(country)!;
+    if (!t.cpCountryCode) return;
+
+const countryName =
+  countriesList.countries.find(c => c.code === t.cpCountryCode)?.name ?? "Others";
+
+    const entry = map.get(countryName) ?? {
+      totalAmount: 0,
+      count: 0,
+    };
+
     entry.totalAmount += Math.max(t.baseAmount ?? 0, 0);
     entry.count += 1;
-    map.set(country, entry);
+
+    map.set(countryName, entry);
   });
 
   return Array.from(map.entries()).map(([country, values]) => ({
@@ -230,8 +230,7 @@ const transactionsCountry = useMemo<TransactionCountry[]>(() => {
     totalAmount: values.totalAmount,
     count: values.count,
   }));
-}, [transactions]);
-
+}, [transactions, countriesList]);
 
   return {
     totalTransactionsAmount,

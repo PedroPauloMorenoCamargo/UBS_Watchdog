@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { useEffect, useRef } from "react";
 import type { TransactionRow } from "@/models/transaction";
+import { formatCurrencyCompact } from "@/lib/utils";
 
 interface TransactionsTableProps {
   transactions: TransactionRow[];
@@ -44,6 +45,7 @@ export function TransactionsTable({
       ref={tableRef}
       className="rounded-lg border bg-white max-h-[420px] overflow-y-auto"
     >
+      
       <Table>
         <TableHeader className="sticky top-0 z-10 bg-white">
           <TableRow>
@@ -70,7 +72,7 @@ export function TransactionsTable({
           ) : (
             transactions.map((transaction, index) => {
               const selected = transaction.id === selectedId;
-
+              
               return (
                 <TableRow
                   key={`${transaction.id}-${index}`}
@@ -92,12 +94,7 @@ export function TransactionsTable({
                   </TableCell>
 
                   <TableCell className="px-4 py-3 text-left font-medium">
-                    <span
-                      className="block max-w-[120px] truncate"
-                      title={transaction.amount}
-                    >
-                      {transaction.amount}
-                    </span>
+                      {formatCurrencyCompact(transaction.rawAmount)} {transaction.currencyCode}
                   </TableCell>
 
                   <TableCell className="px-4 py-3 text-slate-700">
@@ -111,7 +108,7 @@ export function TransactionsTable({
                       </span>
                       <span className="text-slate-500">to </span>
                       <span className="text-slate-500 font-medium">
-                        {transaction.counterPartyName}
+                        {transaction.counterIdentifier}
                       </span>
                     </div>
                   </TableCell>
@@ -126,6 +123,8 @@ export function TransactionsTable({
           )}
         </TableBody>
       </Table>
+      
     </div>
+    
   );
 }

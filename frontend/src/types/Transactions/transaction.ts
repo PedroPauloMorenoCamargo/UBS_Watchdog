@@ -38,7 +38,6 @@ export type TransactionResponseDto = {
 
 export interface PagedTransactionsResponseDto {
   items: TransactionResponseDto[];
-  page: number;
   pageNumber: number;
   pageSize: number;
   totalPages: number;
@@ -64,4 +63,5 @@ export interface ImportTransactionsCsvResponseDto {
   imported: number;
   failed: number;
   errors?: string[];
+  totalCount: number;
 }

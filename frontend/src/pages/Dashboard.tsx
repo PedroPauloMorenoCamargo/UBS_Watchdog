@@ -1,26 +1,49 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { GeographicDistributionChart } from "@/components/ui/charts/geographicdistributionchart";
 import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
-import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
+import { AdaptiveAreaChart } from "@/components/ui/charts/adaptiveareachart";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
+import { mapCaseDtoToTableRow } from "@/mappers/case/case.mapper";
 import { TransactionsTable } from "@/components/ui/tables/transactionstable";
+import { Pagination } from "@/components/ui/pagination";
 import { DollarSign, ArrowUpRight, ArrowDownRight, 
-  ShieldAlert, Minus, Users, TrendingUp, TrendingDown } from "lucide-react";
+  ShieldAlert, Minus, Users, TrendingUp, TrendingDown, 
+  AlertTriangle} from "lucide-react";
 
 import { useApi } from "@/hooks/useApi";
 import { useTransactions } from "@/hooks/useTransactions";
 import { fetchTransactions } from "@/services/transaction.service";
 import type { PagedTransactionsResponseDto } from "@/types/Transactions/transaction";
 import type { PagedClientsResponseDto } from "@/types/Clients/client";
+import type { PagedCasesResponseDto } from "@/types/Cases/cases";
 import { fetchClients } from "@/services/clients.service";
 import { useClients } from "@/hooks/useClients";
+import { useCases } from "@/hooks/useCases";
+import { fetchCases } from "@/services/case.service";
+import { formatCurrencyCompact } from "@/lib/utils";
+import { fetchCountries } from "@/services/countries.service";
+import type { CountriesResponseDto } from "@/types/Countries/countries";
+
+const PAGE_SIZE = 20;
 
 export function Dashboard() {
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: transactionsData} =
-  useApi<PagedTransactionsResponseDto>({
-    fetcher: fetchTransactions,
+  const fetchTransactionsWithPagination = useCallback(
+    () => fetchTransactions({ page: currentPage, pageSize: PAGE_SIZE }),
+    [currentPage]
+  );
+
+  const { data: countriesData } = useApi<CountriesResponseDto[]>({
+  fetcher: fetchCountries,
+  });
+
+  const countries = countriesData ?? [];
+
+  const { data: transactionsData } = useApi<PagedTransactionsResponseDto>({
+    fetcher: fetchTransactionsWithPagination,
+    deps: [currentPage],
   });
 
   const transactions = transactionsData?.items ?? [];
@@ -28,6 +51,21 @@ export function Dashboard() {
   return transactions.map(mapTransactionToRow);
 }, [transactions]);
 
+const { data: casesData} =
+  useApi<PagedCasesResponseDto>({
+    fetcher: fetchCases,
+  });
+  const cases = casesData?.items ?? [];
+  
+  const casesRows = useMemo(() => {
+  return cases.map(mapCaseDtoToTableRow);
+}, [cases]);
+  const { 
+    activeAlertsCount,
+    criticalAlertsCount,
+    activeAlertsTrend,
+    activeAlertsPercentageChange
+   } = useCases(casesRows);
 
   const {
     totalTransactionsAmount,
@@ -37,7 +75,7 @@ export function Dashboard() {
     transactionsByType,
     weeklyActivity,
     transactionsCountry
-  } = useTransactions(transactions);
+  } = useTransactions(transactions, cases, countries);
 
   const { data : clientsData} = 
     useApi<PagedClientsResponseDto>({
@@ -59,8 +97,6 @@ export function Dashboard() {
 
   } = useClients(clients)
 
-  
-
 
   return (
     <div className="relative bg-cover bg-center">
@@ -73,11 +109,8 @@ export function Dashboard() {
                     Total Transactions Volume
                   </h3>
 
-                  <p className="mt-2 text-3xl font-sm text-gray-900">
-                    {totalTransactionsAmount.toLocaleString("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                    })}
+                  <p className="mt-2 text-xl font-sm text-gray-900">
+                    ${formatCurrencyCompact(totalTransactionsAmount)}
                   </p>
 
                   <p className="mt-1 text-xs text-gray-500">
@@ -132,17 +165,54 @@ export function Dashboard() {
             </div>
 
             <div className="rounded-xl bg-white/90 p-6 shadow-lg">
-              <h3 className="mb-2 text-lg font-semibold">Active Alerts</h3>
-              <p className="text-3xl font-bold text-red-600">87</p> {/*TODO: NECESSITA LOGICA DE ALERTS VINDO DO BACKEND*/} 
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="text-sm font-small text-black-600">Active Alerts</h3>
+                  <p className="mt-2 text-xl font-sm text-gray-900">{activeAlertsCount}</p> 
+                  <p className="mt-1 text-xs text-gray-500">{criticalAlertsCount} critical alerts</p>
+                </div>
+                <div className="rounded-lg bg-red-100 p-3">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+            </div>
+              
+                <div className="flex items-center gap-1 text-xs">
+                  {activeAlertsTrend === "up" && (
+                    <TrendingUp className="h-4 w-4 text-red-600" />
+                  )}
+                  {activeAlertsTrend === "down" && (
+                    <TrendingDown className="h-4 w-4 text-green-600" />
+                  )}
+                  {activeAlertsTrend === "neutral" && (
+                    <Minus className="h-4 w-4 text-gray-400" />
+                  )}
+
+                  {activeAlertsPercentageChange !== null && (
+                    <span
+                      className={`font-medium ${
+                        activeAlertsTrend === "up"
+                          ? "text-red-600"
+                          : activeAlertsTrend === "down"
+                          ? "text-green-600"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {activeAlertsPercentageChange > 0 ? "+" : ""}
+                      {activeAlertsPercentageChange.toFixed(1)}%
+                    </span>
+                  )}
+
+                  <span className="text-gray-500">vs last period</span>
+                </div>
             </div>
 
             <div className="rounded-xl bg-white/90 p-6 shadow-lg">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-600">
+                  <h3 className="text-sm font-small text-black-600">
                     High Risk Clients
                   </h3>
-                  <p className="text-3xl font-bold text-black-600">
+                  <p className="mt-2 text-xl font-sm text-gray-900">
                     {highRiskCount}
                   </p>
                   <p className="text-xs text-gray-500">
@@ -184,8 +254,8 @@ export function Dashboard() {
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">
             <div className="flex items-start justify-between mb-3">
               <div>
-                <p className="text-sm text-black-600 mb-1">Total Clients</p>
-                <p className="text-2xl font-sm">{totalUsersCount}</p>
+                <h3 className="text-sm font-small text-black-600">Total Clients</h3>
+                <p className="mt-2 text-xl font-sm text-gray-900">{totalUsersCount}</p>
                 <p className="text-xs text-gray-500">{newClientsCurrentPeriod} new this week</p>
               </div>
 
@@ -239,8 +309,12 @@ export function Dashboard() {
         </div>
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <ChartCard title="Geographic Distribution">
-            <GeographicDistributionChart
-              data={transactionsCountry} />
+            {countries.length > 0 && (
+  <GeographicDistributionChart
+    data={transactionsCountry}
+  />
+)}
+
           </ChartCard>
 
           <ChartCard title="Transactions Type Distribution">
@@ -253,10 +327,10 @@ export function Dashboard() {
           <ChartCard
             title="Weekly Alerts x Transactions"
           >
-            <AdaptiveLineChart
+            <AdaptiveAreaChart
               data={weeklyActivity}
               xKey="day"
-              lines={[
+              areas={[
                 { key: "alerts", label: "Alerts", color: "#dc2626" },
                 { key: "transactions", label: "Transactions", color: "#2563eb" },
               ]}
@@ -267,6 +341,17 @@ export function Dashboard() {
         <div className="mt-5">
           <ChartCard title="Recent Transactions">      
             <TransactionsTable transactions={transactionRows} />
+            
+            {/* Pagination */}
+            {transactionsData && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={transactionsData.totalPages}
+                totalItems={transactionsData.totalCount}
+                pageSize={PAGE_SIZE}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </ChartCard>
         </div>
       </div>

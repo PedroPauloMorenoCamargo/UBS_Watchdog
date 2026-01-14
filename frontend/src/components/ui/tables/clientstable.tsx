@@ -17,10 +17,12 @@ import { formatDateTime } from "@/lib/utils";
 
 interface ClientsTableProps {
   clients: ClientTableRow[];
+  onViewClient?: (clientId: string) => void;
 }
 
 export function ClientsTable({
   clients,
+  onViewClient,
 }: ClientsTableProps) {
   const tableRef = useRef<HTMLDivElement | null>(null);
 
@@ -98,6 +100,7 @@ export function ClientsTable({
                           variant="ghost"
                           size="sm"
                           className="text-[#e60028] hover:text-[#b8001f] hover:bg-red-50"
+                          onClick={() => onViewClient?.(client.id)}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           View

@@ -1,13 +1,7 @@
 import { api } from "@/lib/api";
-
-export interface CountryDto {
-  code: string;
-  name: string;
-  riskLevel: number;
+import type { CountriesResponseDto } from "@/types/Countries/countries";
+export function fetchCountries() {
+  return api
+    .get<CountriesResponseDto[]>("api/countries")
+    .then((res) => res.data);
 }
-
-export async function fetchCountries(): Promise<CountryDto[]> {
-  const response = await api.get("api/countries");
-  return response.data;
-}
-
