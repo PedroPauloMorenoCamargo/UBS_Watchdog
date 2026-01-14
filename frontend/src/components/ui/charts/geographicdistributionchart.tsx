@@ -1,3 +1,4 @@
+import { formatCurrencyCompact } from "@/lib/utils";
 import type { TransactionCountry } from "@/mocks/mocks";
 
 interface GeoDistributionChartProps {
@@ -11,12 +12,6 @@ export function GeographicDistributionChart({
     (sum, item) => sum + item.totalAmount,
     0
   );
-  const formatAmount = (value: number): string => {
-  if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1)}M`; // 380000000 -> 380.0M
-  }
-  return value.toString(); // valores menores ficam normais
-};
 
   return (
     <div className="space-y-5">
@@ -34,7 +29,7 @@ export function GeographicDistributionChart({
               </span>
 
               <span className="text-sm text-gray-900">
-                ${formatAmount(item.totalAmount)}
+                ${formatCurrencyCompact(item.totalAmount)}
                 <span className="ml-2 text-xs text-gray-500">
                   ({item.count} txns)
                 </span>
