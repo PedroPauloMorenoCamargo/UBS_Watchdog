@@ -4,7 +4,7 @@ WORKDIR /src
 # 1. Copia a solution
 COPY Ubs.Monitoring.sln ./
 
-# 2. Copia TODOS os csproj (isso é CRÍTICO)
+# 2. Copia TODOS os csproj 
 COPY src/Ubs.Monitoring.Domain/Ubs.Monitoring.Domain.csproj src/Ubs.Monitoring.Domain/
 COPY src/Ubs.Monitoring.Application/Ubs.Monitoring.Application.csproj src/Ubs.Monitoring.Application/
 COPY src/Ubs.Monitoring.Infrastructure/Ubs.Monitoring.Infrastructure.csproj src/Ubs.Monitoring.Infrastructure/
@@ -16,7 +16,7 @@ RUN dotnet restore
 # 4. Copia o restante do código
 COPY . .
 
-# 5. Publish SEM --no-restore (mais seguro)
+# 5. Publish SEM --no-restore 
 RUN dotnet publish src/Ubs.Monitoring.Api/Ubs.Monitoring.Api.csproj \
     -c Release \
     -o /app/publish

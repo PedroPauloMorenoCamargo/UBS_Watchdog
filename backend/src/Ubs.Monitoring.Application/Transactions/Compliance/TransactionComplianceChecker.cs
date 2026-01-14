@@ -1,0 +1,363 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Npgsql;
+using Ubs.Monitoring.Application.Cases;
+using Ubs.Monitoring.Application.ComplianceRules;
+using Ubs.Monitoring.Application.Transactions.Repositories;
+using Ubs.Monitoring.Domain.Entities;
+using Ubs.Monitoring.Domain.Enums;
+using Ubs.Monitoring.Application.Cases.Notifications;
+
+
+namespace Ubs.Monitoring.Application.Transactions.Compliance;
+
+public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
+{
+    private readonly IComplianceRuleRepository _rules;
+    private readonly ITransactionRepository _transactions;
+    private readonly ICaseRepository _cases;
+    private readonly ILogger<TransactionComplianceChecker> _logger;
+    private readonly ICaseNotificationPublisher _caseNotifications;
+
+
+    public TransactionComplianceChecker(
+        IComplianceRuleRepository rules,
+        ITransactionRepository transactions,
+        ICaseRepository cases,
+        ILogger<TransactionComplianceChecker> logger,
+        ICaseNotificationPublisher caseNotifications)
+    {
+        _rules = rules;
+        _transactions = transactions;
+        _cases = cases;
+        _logger = logger;
+        _caseNotifications = caseNotifications;
+    }
+    /// <summary>
+    /// Evaluates a transaction against all active compliance rules and creates a case if one or more violations are detected.
+    /// </summary>
+    /// <param name="tx">
+    /// The transaction to be evaluated.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    public async Task CheckAndCreateCaseIfNeededAsync(Transaction tx, CancellationToken ct)
+    {
+        try
+        {
+            var existingCase = await _cases.GetByTransactionIdAsync(tx.Id, ct);
+            if (existingCase is not null)
+            {
+                _logger.LogDebug("Case already exists for transaction {TransactionId}, skipping compliance check", tx.Id);
+                return;
+            }
+
+            var rules = await _rules.SearchAsync(
+                new ComplianceRuleQuery
+                {
+                    IsActive = true,
+                    Page = new() { Page = 1, PageSize = 100 }
+                },
+                ct
+            );
+
+            var violations = new List<ComplianceViolation>();
+
+            foreach (var rule in rules.Items)
+            {
+                var violation = await EvaluateRuleAsync(rule, tx, ct);
+                if (violation is null)
+                    continue;
+
+                violations.Add(violation);
+                LogViolation(tx, violation);
+            }
+
+            // If violations found, create case with findings
+            if (violations.Count > 0)
+            {
+                await CreateCaseWithFindingsAsync(tx, violations, ct);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Compliance evaluation failed for transaction {TransactionId}",
+                tx.Id
+            );
+        }
+    }
+    /// <summary>
+    /// Evaluates a single compliance rule against a transaction.
+    /// </summary>
+    /// <param name="rule">
+    /// The compliance rule to evaluate.
+    /// </param>
+    /// <param name="tx">
+    /// The transaction being evaluated.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// A <see cref="ComplianceViolation"/> if the rule is violated; otherwise, <c>null</c>.
+    /// </returns>
+    private async Task<ComplianceViolation?> EvaluateRuleAsync( ComplianceRule rule, Transaction tx, CancellationToken ct)
+    {
+        using var doc = JsonDocument.Parse(rule.ParametersJson);
+
+        return rule.RuleType switch
+        {
+            RuleType.DailyLimit =>
+                await CheckDailyLimit(rule, doc.RootElement, tx, ct),
+
+            RuleType.BannedCountries =>
+                CheckBannedCountries(rule, doc.RootElement, tx),
+
+            RuleType.Structuring =>
+                await CheckStructuring(rule, doc.RootElement, tx, ct),
+
+            _ => null
+        };
+    }
+    /// <summary>
+    /// Evaluates a daily limit compliance rule against the given transaction.
+    /// </summary>
+    /// <remarks>
+    /// A daily limit violation occurs when the aggregate transaction amount for a given day exceeds the configured base amount threshold.
+    /// The aggregation scope may be per account or per client, depending on the rule configuration.
+    /// </remarks>
+    /// <param name="rule">
+    /// The daily limit compliance rule being evaluated.
+    /// </param>
+    /// <param name="parameters">
+    /// The JSON parameters containing the daily limit configuration(<c>limitBaseAmount</c>).
+    /// </param>
+    /// <param name="tx">
+    /// The transaction being evaluated.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// A <see cref="ComplianceViolation"/> if the daily limit is exceeded; otherwise, <c>null</c>.
+    /// </returns>
+    private async Task<ComplianceViolation?> CheckDailyLimit( ComplianceRule rule, JsonElement parameters, Transaction tx, CancellationToken ct)
+    {
+        var limit = parameters.GetProperty("limitBaseAmount").GetDecimal();
+        var date = DateOnly.FromDateTime(tx.OccurredAtUtc.UtcDateTime);
+
+        var total = rule.Scope == "PerAccount"
+            ? await _transactions.GetDailyTotalByAccountAsync(tx.AccountId, date, ct)
+            : await _transactions.GetDailyTotalByClientAsync(tx.ClientId, date, ct);
+
+        if (total <= limit)
+            return null;
+
+        return new ComplianceViolation(
+            rule.Id,
+            rule.Code,
+            rule.RuleType,
+            rule.Severity,
+            $"Daily limit exceeded: {total} > {limit}"
+        );
+    }
+    /// <summary>
+    /// Evaluates a banned countries compliance rule against the given transaction.
+    /// </summary>
+    /// <remarks>
+    /// A violation is detected when the transaction counterparty country code  matches one of the banned country codes defined in the rule parameters.
+    /// </remarks>
+    /// <param name="rule">
+    /// The banned countries compliance rule being evaluated.
+    /// </param>
+    /// <param name="parameters">
+    /// The JSON parameters containing the list of banned country codes.
+    /// </param>
+    /// <param name="tx">
+    /// The transaction being evaluated.
+    /// </param>
+    /// <returns>
+    /// A <see cref="ComplianceViolation"/> if the transaction involves a banned country; otherwise, <c>null</c>.
+    /// </returns>
+    private ComplianceViolation? CheckBannedCountries(ComplianceRule rule,JsonElement parameters,Transaction tx)
+    {
+
+        foreach (var c in parameters.GetProperty("countries").EnumerateArray())
+        {
+            if (string.Equals(c.GetString(), tx.CpCountryCode, StringComparison.OrdinalIgnoreCase))
+            {
+                return new ComplianceViolation(
+                    rule.Id,
+                    rule.Code,
+                    rule.RuleType,
+                    rule.Severity,
+                    $"Transaction involves banned country {tx.CpCountryCode}"
+                );
+            }
+        }
+
+        return null;
+    }
+    /// <summary>
+    /// Evaluates a structuring compliance rule against the given transaction.
+    /// </summary>
+    /// <remarks>
+    /// A structuring violation occurs when a threshold number of transactions  below a specified base amount are detected within a single day.
+    /// The evaluation scope may be per account or per client, depending on the rule configuration.
+    /// </remarks>
+    /// <param name="rule">
+    /// The structuring compliance rule being evaluated.
+    /// </param>
+    /// <param name="parameters">
+    /// The JSON parameters defining the structuring thresholds (<c>n</c> and <c>xBaseAmount</c>).
+    /// </param>
+    /// <param name="tx">
+    /// The transaction being evaluated.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// A <see cref="ComplianceViolation"/> if structuring behavior is detected; otherwise, <c>null</c>.
+    /// </returns>
+    private async Task<ComplianceViolation?> CheckStructuring(ComplianceRule rule,JsonElement parameters,Transaction tx,CancellationToken ct)
+    {
+        var n = parameters.GetProperty("n").GetInt32();
+        var max = parameters.GetProperty("xBaseAmount").GetDecimal();
+        var date = DateOnly.FromDateTime(tx.OccurredAtUtc.UtcDateTime);
+
+        var count = rule.Scope == "PerAccount"
+            ? await _transactions.CountDailyTransfersUnderBaseAmountByAccountAsync(tx.AccountId, date, max, ct)
+            : await _transactions.CountDailyTransfersUnderBaseAmountByClientAsync(tx.ClientId, date, max, ct);
+
+        if (count < n)
+            return null;
+
+        return new ComplianceViolation(
+            rule.Id,
+            rule.Code,
+            rule.RuleType,
+            rule.Severity,
+            $"Structuring detected: {count} transfers under {max} in one day"
+        );
+    }
+    /// <summary>
+    /// Creates a compliance case and associated findings for the detected violation and notify all analysts of the new case as well.
+    /// </summary>
+    /// <remarks>
+    /// This method aggregates all detected violations into a single case.
+    /// The case severity is derived from the maximum severity among all violations.
+    /// Each violation results in a separate case finding with serialized evidence.
+    /// </remarks>
+    /// <param name="tx">
+    /// The transaction that triggered the compliance violations.
+    /// </param>
+    /// <param name="violations">
+    /// The list of detected compliance violations.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <exception cref="DbUpdateException">
+    /// Thrown when a database update fails. Duplicate case creation caused by concurrent requests is handled explicitly.
+    /// </exception>
+    private async Task CreateCaseWithFindingsAsync(
+        Transaction tx,
+        List<ComplianceViolation> violations,
+        CancellationToken ct)
+    {
+        try
+        {
+            var maxSeverity = violations.Max(v => v.Severity);
+
+            var caseEntity = new Case(
+                transactionId: tx.Id,
+                clientId: tx.ClientId,
+                accountId: tx.AccountId,
+                initialSeverity: maxSeverity,
+                analystId: null 
+            );
+
+            _cases.Add(caseEntity);
+
+            foreach (var violation in violations)
+            {
+                var evidence = JsonDocument.Parse(JsonSerializer.Serialize(new
+                {
+                    ruleCode = violation.RuleCode,
+                    message = violation.Message,
+                    transactionId = tx.Id,
+                    transactionType = tx.Type.ToString(),
+                    amount = tx.Amount,
+                    currencyCode = tx.CurrencyCode,
+                    baseAmount = tx.BaseAmount,
+                    occurredAtUtc = tx.OccurredAtUtc,
+                    counterpartyCountry = tx.CpCountryCode,
+                    counterpartyName = tx.CpName,
+                    counterpartyIdentifier = tx.CpIdentifier,
+                    evaluatedAtUtc = DateTimeOffset.UtcNow
+                }));
+
+                var finding = new CaseFinding(
+                    caseId: caseEntity.Id,
+                    ruleId: violation.RuleId,
+                    ruleType: violation.RuleType,
+                    severity: violation.Severity,
+                    evidenceJson: evidence
+                );
+
+                _cases.AddFinding(finding);
+            }
+
+            await _cases.SaveChangesAsync(ct);
+            try
+            {
+                var notification = new CaseOpenedNotification(
+                    CaseId: caseEntity.Id,
+                    ClientId: tx.ClientId,
+                    AccountId: tx.AccountId,
+                    Severity: (int)maxSeverity,
+                    OpenedAtUtc: caseEntity.OpenedAtUtc
+                );
+
+                await _caseNotifications.PublishCaseOpenedAsync(notification, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to publish caseOpened notification for CaseId={CaseId}", caseEntity.Id);
+            }
+            _logger.LogWarning(
+                "CASE_CREATED | CaseId={CaseId} | Tx={TransactionId} | Client={ClientId} | Severity={Severity} | ViolationCount={ViolationCount}",
+                caseEntity.Id,
+                tx.Id,
+                tx.ClientId,
+                maxSeverity,
+                violations.Count
+            );
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == "23505")
+        {
+            _logger.LogInformation(
+                "Case already created by concurrent request for transaction {TransactionId}. Skipping duplicate creation.",
+                tx.Id
+            );
+        }
+    }
+
+    private void LogViolation(Transaction tx, ComplianceViolation v)
+    {
+        _logger.LogWarning(
+            "COMPLIANCE_VIOLATION | Tx={TransactionId} | Rule={RuleCode} | Severity={Severity} | Client={ClientId} | Account={AccountId} | {Message}",
+            tx.Id,
+            v.RuleCode,
+            v.Severity,
+            tx.ClientId,
+            tx.AccountId,
+            v.Message
+        );
+    }
+}

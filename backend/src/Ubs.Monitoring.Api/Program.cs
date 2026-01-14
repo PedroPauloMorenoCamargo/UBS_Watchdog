@@ -1,54 +1,64 @@
 using Serilog;
+using Ubs.Monitoring.Api.Extensions;
+using Ubs.Monitoring.Api.Hubs;
+using Ubs.Monitoring.Api.Notifications;
+using Ubs.Monitoring.Application.Cases.Notifications;
 using Ubs.Monitoring.Infrastructure;
-using Ubs.Monitoring.Infrastructure.Persistence;
+using Ubs.Monitoring.Api.Startup;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog
-builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
+// Structured logging with Serilog
+builder.Host.AddSerilogLogging(builder.Configuration);
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// SignalR services for real-time communication
+builder.Services.AddSignalR();
 
-// RFC7807 / problem+json
-builder.Services.AddProblemDetails();
+// HTTP context accessor to allow access to request context in services
+builder.Services.AddHttpContextAccessor();
 
+// Infrastructure and application-layer dependencies
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApiHealthChecks();
 
-// CORS (dev)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("frontend", policy =>
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod());
-});
+// Authentication and authorization using JWT
+builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddAuthorization();
+
+// API-layer services, Swagger, and CORS configuration
+builder.Services.AddApiServices();
+builder.Services.AddSwaggerServices();
+builder.Services.AddFrontendCors(builder.Configuration);
+
+// Case notification publisher 
+builder.Services.AddScoped<ICaseNotificationPublisher, SignalRCaseNotificationPublisher>();
 
 var app = builder.Build();
 
+// HTTP request pipeline
+app.UseRouting();
 app.UseSerilogRequestLogging();
+app.UseApiErrorHandling();
 
-app.UseExceptionHandler();   
-app.UseStatusCodePages();   
-
+// Enable Swagger only in development environments
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerPipeline();
 }
 
-app.UseCors("frontend");
+// Apply database migrations and initialization logic at startup
+await app.InitializeDatabaseAsync();
 
+// Enable CORS, authentication, and authorization middleware
+app.UseFrontendCors();
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Map health check endpoints and API controllers
+app.MapApiHealthChecks();
 app.MapControllers();
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
-app.MapGet("/health/db", async (AppDbContext db) =>
-{
-    var canConnect = await db.Database.CanConnectAsync();
-    return canConnect
-        ? Results.Ok(new { db = "up" })
-        : Results.Problem("Cannot connect to database");
-});
 
+// Map the SignalR hub endpoint used for case notifications
+app.MapHub<CaseNotificationsHub>("/hubs/cases");
 
 app.Run();
