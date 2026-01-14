@@ -45,6 +45,7 @@ export function TransactionsTable({
       ref={tableRef}
       className="rounded-lg border bg-white max-h-[420px] overflow-y-auto"
     >
+      
       <Table>
         <TableHeader className="sticky top-0 z-10 bg-white">
           <TableRow>
@@ -71,7 +72,7 @@ export function TransactionsTable({
           ) : (
             transactions.map((transaction, index) => {
               const selected = transaction.id === selectedId;
-
+              
               return (
                 <TableRow
                   key={`${transaction.id}-${index}`}
@@ -122,6 +123,8 @@ export function TransactionsTable({
           )}
         </TableBody>
       </Table>
+      
     </div>
+    
   );
 }
