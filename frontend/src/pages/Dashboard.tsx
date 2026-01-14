@@ -41,9 +41,9 @@ export function Dashboard() {
 
   const countries = countriesData ?? [];
 
-  const { data: transactionsData} =
-  useApi<PagedTransactionsResponseDto>({
-    fetcher: fetchTransactions,
+  const { data: transactionsData } = useApi<PagedTransactionsResponseDto>({
+    fetcher: fetchTransactionsWithPagination,
+    deps: [currentPage],
   });
 
   const transactions = transactionsData?.items ?? [];

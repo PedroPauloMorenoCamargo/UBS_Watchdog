@@ -16,6 +16,7 @@ export function mapTransactionToRow(
     clientId: dto.clientId,
     counterIdentifier: dto.cpIdentifier ?? "-",
     country: dto.cpCountryCode ?? "-",
+    cpName: dto.cpName ?? "-",
     currencyCode: dto.currencyCode
   };
 }

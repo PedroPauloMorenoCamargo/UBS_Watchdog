@@ -12,7 +12,7 @@ import {
 import { useState } from "react";
 import { createAccountIdentifier } from "@/services/accountIdentifiers.service";
 import { IdentifierType, identifierTypeMap } from "@/types/AccountIdentifiers/accountIdentifier";
-import { useCountries } from "@/hooks/useCountries";
+import { useCountriesList } from "@/hooks/useCountriesList";
 import { Loader2 } from "lucide-react";
 
 interface CreateIdentifierDialogProps {
@@ -34,7 +34,7 @@ export function CreateIdentifierDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { countries: countryList, loading: countriesLoading } = useCountries();
+  const { countries: countryList, loading: countriesLoading } = useCountriesList();
 
   const resetForm = () => {
     setIdentifierType("");

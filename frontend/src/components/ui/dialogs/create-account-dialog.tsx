@@ -13,7 +13,7 @@ import { useState } from "react";
 import { createClientAccount } from "@/services/accounts.service";
 import { AccountType, accountTypeMap } from "@/types/Accounts/account";
 import { Loader2 } from "lucide-react";
-import { useCountries } from "@/hooks/useCountries";
+import { useCountriesList } from "@/hooks/useCountriesList";
 
 interface CreateAccountDialogProps {
   open: boolean;
@@ -47,7 +47,7 @@ export function CreateAccountDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const { countries: countryList, loading: countriesLoading, error: countriesError } = useCountries();
+  const { countries: countryList, loading: countriesLoading, error: countriesError } = useCountriesList();
 
   const resetForm = () => {
     setAccountIdentifier("");
@@ -150,7 +150,7 @@ export function CreateAccountDialog({
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
               <SelectContent position="popper" className="max-h-[200px] overflow-y-auto">
-                {countryList.map((c) => (
+                {countryList.map((c: { code: string; name: string }) => (
                   <SelectItem key={c.code} value={c.code}>
                     {c.name}
                   </SelectItem>
