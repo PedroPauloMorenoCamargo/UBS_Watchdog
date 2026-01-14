@@ -21,9 +21,16 @@ import { useClients } from "@/hooks/useClients";
 import { useCases } from "@/hooks/useCases";
 import { fetchCases } from "@/services/case.service";
 import { formatCurrencyCompact } from "@/lib/utils";
-
+import { fetchCountries } from "@/services/countries.service";
+import type { CountriesResponseDto } from "@/types/Countries/countries";
 
 export function Dashboard() {
+
+  const { data: countriesData } = useApi<CountriesResponseDto[]>({
+  fetcher: fetchCountries,
+  });
+
+  const countries = countriesData ?? [];
 
   const { data: transactionsData} =
   useApi<PagedTransactionsResponseDto>({
@@ -59,7 +66,7 @@ const { data: casesData} =
     transactionsByType,
     weeklyActivity,
     transactionsCountry
-  } = useTransactions(transactions, cases);
+  } = useTransactions(transactions, cases, countries);
 
   const { data : clientsData} = 
     useApi<PagedClientsResponseDto>({
@@ -80,9 +87,6 @@ const { data: casesData} =
     highRiskCurrentPeriod,
 
   } = useClients(clients)
-
-  
-
 
 
   return (
@@ -296,8 +300,12 @@ const { data: casesData} =
         </div>
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <ChartCard title="Geographic Distribution">
-            <GeographicDistributionChart
-              data={transactionsCountry} />
+            {countries.length > 0 && (
+  <GeographicDistributionChart
+    data={transactionsCountry}
+  />
+)}
+
           </ChartCard>
 
           <ChartCard title="Transactions Type Distribution">
