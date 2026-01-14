@@ -28,7 +28,7 @@ export function AlertsTable({ alerts }: AlertsTableProps){
             <TableHead className="px-4 py-3">Alert ID</TableHead>
             <TableHead className="px-4 py-3">Client</TableHead>
             <TableHead className="px-4 py-3">Severity</TableHead>
-            <TableHead className="px-4 py-3">Time</TableHead>
+            <TableHead className="px-4 py-3 text-center">Time</TableHead>
             <TableHead className="px-4 py-3">Status</TableHead>
             <TableHead className="px-4 py-3 text-center">Actions</TableHead>
 
@@ -62,8 +62,8 @@ export function AlertsTable({ alerts }: AlertsTableProps){
                         <SeverityBadge severity={alert.severity} />
                       </TableCell>
 
-                      <TableCell className="px-4 py-3 text-sm text-left font-medium">
-                          {alert.openedAt}
+                      <TableCell className="px-4 py-3 text-sm text-center font-medium">
+                          {alert.openedAtUtc}
                       </TableCell>
 
                       <TableCell className="px-4 py-3 text-sm text-muted-foreground">
