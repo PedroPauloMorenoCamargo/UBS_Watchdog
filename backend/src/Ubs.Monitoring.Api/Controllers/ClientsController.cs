@@ -20,6 +20,7 @@ public sealed class ClientsController : ControllerBase
         _clientService = clientService;
     }
 
+
     /// <summary>
     /// Creates a new client.
     /// </summary>
@@ -169,7 +170,7 @@ public sealed class ClientsController : ControllerBase
     /// For larger datasets, consider splitting the file into multiple imports.
     /// </remarks>
     [HttpPost("import")]
-    [RequestSizeLimit(50 * 1024 * 1024)] // 50 MB limit
+    [RequestSizeLimit(50 * 1024 * 1024)]
     [ProducesResponseType(typeof(ImportResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -199,3 +200,4 @@ public sealed class ClientsController : ControllerBase
         return Ok(result);
     }
 }
+

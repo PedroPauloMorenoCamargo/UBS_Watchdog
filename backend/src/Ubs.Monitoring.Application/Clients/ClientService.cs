@@ -1,43 +1,27 @@
 using Microsoft.Extensions.Logging;
+using Ubs.Monitoring.Application.Common.FileImport;
 using Ubs.Monitoring.Application.Common.Pagination;
 using Ubs.Monitoring.Domain.Entities;
 using Ubs.Monitoring.Domain.Enums;
 
 namespace Ubs.Monitoring.Application.Clients;
 
-/// <summary>
-/// Service implementation for client business operations.
-/// </summary>
 public sealed class ClientService : IClientService
 {
     private readonly IClientRepository _clients;
-    private readonly IClientFileImportService _fileImport;
+    private readonly IFileParser<ClientImportRow> _fileParser;
     private readonly ILogger<ClientService> _logger;
 
     public ClientService(
         IClientRepository clients,
-        IClientFileImportService fileImport,
+        IFileParser<ClientImportRow> fileParser,
         ILogger<ClientService> logger)
     {
         _clients = clients;
-        _fileImport = fileImport;
+        _fileParser = fileParser;
         _logger = logger;
     }
 
-    /// <summary>
-    /// Creates a new client with validation.
-    /// </summary>
-    /// <param name="request">
-    /// The client creation request data.
-    /// </param>
-    /// <param name="ct">
-    /// Cancellation token used to cancel the operation.
-    /// </param>
-    /// <returns>
-    /// A tuple containing the created client data and error message.
-    /// If successful, Result contains the client data and ErrorMessage is null.
-    /// If failed, Result is null and ErrorMessage contains the validation error from the domain.
-    /// </returns>
     public async Task<(ClientResponseDto? Result, string? ErrorMessage)> CreateClientAsync(CreateClientRequest request, CancellationToken ct)
     {
         _logger.LogInformation("Creating new client: {Name}, LegalType: {LegalType}", request.Name, request.LegalType);
@@ -58,19 +42,11 @@ public sealed class ClientService : IClientService
         }
         catch (ArgumentException ex)
         {
-            // Domain validation failed - return specific error message
-            // (includes ArgumentNullException which inherits from ArgumentException)
             _logger.LogWarning("Client creation failed for {Name}: {ErrorMessage}", request.Name, ex.Message);
             return (null, ex.Message);
         }
     }
 
-    /// <summary>
-    /// Retrieves a paginated list of clients with optional filters and sorting.
-    /// </summary>
-    /// <param name="query">Query object containing pagination, sorting, and filter parameters.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>Paginated result containing client DTOs and metadata.</returns>
     public async Task<PagedResult<ClientResponseDto>> GetPagedClientsAsync(ClientQuery query, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -83,39 +59,12 @@ public sealed class ClientService : IClientService
         return pagedClients.Map(MapToResponseDto);
     }
 
-    /// <summary>
-    /// Retrieves detailed information about a specific client.
-    /// </summary>
-    /// <param name="clientId">
-    /// The unique identifier of the client.
-    /// </param>
-    /// <param name="ct">
-    /// Cancellation token used to cancel the operation.
-    /// </param>
-    /// <returns>
-    /// The client details if found; otherwise, <c>null</c>.
-    /// </returns>
     public async Task<ClientDetailDto?> GetClientByIdAsync(Guid clientId, CancellationToken ct)
     {
         var client = await _clients.GetByIdWithDetailsAsync(clientId, ct);
         return client is null ? null : MapToDetailDto(client);
     }
 
-    /// <summary>
-    /// Imports multiple clients from a CSV or Excel file with error handling.
-    /// </summary>
-    /// <param name="fileStream">
-    /// The file stream containing client data.
-    /// </param>
-    /// <param name="fileName">
-    /// The file name (used to determine format: .csv or .xlsx/.xls).
-    /// </param>
-    /// <param name="ct">
-    /// Cancellation token used to cancel the operation.
-    /// </param>
-    /// <returns>
-    /// Import result with success count and errors.
-    /// </returns>
     public async Task<ImportResultDto> ImportClientsFromFileAsync(Stream fileStream, string fileName, CancellationToken ct)
     {
         _logger.LogInformation("Starting import from file: {FileName}", fileName);
@@ -123,7 +72,7 @@ public sealed class ClientService : IClientService
         try
         {
             // Parse file (CSV or Excel)
-            var rows = _fileImport.ParseFile(fileStream, fileName);
+            var rows = _fileParser.ParseFile(fileStream, fileName);
             _logger.LogInformation("Parsed {RowCount} rows from file: {FileName}", rows.Count, fileName);
 
             // Process all rows
@@ -144,12 +93,8 @@ public sealed class ClientService : IClientService
     }
 
     /// <summary>
-    /// Processes all import rows and creates clients.
-    /// Uses batch processing to optimize memory usage for large imports.
+    /// Processes import rows in batches to optimize memory for large imports.
     /// </summary>
-    /// <param name="rows">List of rows to process.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>A tuple containing success count and list of errors.</returns>
     private async Task<(int SuccessCount, List<ImportErrorDto> Errors)> ProcessImportRowsAsync(
         List<ClientImportRow> rows,
         CancellationToken ct)
@@ -200,13 +145,6 @@ public sealed class ClientService : IClientService
         return (successCount, errors);
     }
 
-    /// <summary>
-    /// Processes a single import row and creates a client.
-    /// </summary>
-    /// <param name="row">The row to process.</param>
-    /// <param name="lineNumber">The line number for error reporting.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>Processing result indicating success or error.</returns>
     private async Task<(bool IsSuccess, ImportErrorDto? Error)> ProcessSingleRowAsync(
         ClientImportRow row,
         int lineNumber,
@@ -214,31 +152,18 @@ public sealed class ClientService : IClientService
     {
         try
         {
-            // Convert row to request
             var request = row.ToRequest();
-
-            // Create client (Domain validates invariants)
             var client = CreateClientFromRequest(request);
-
-            // Add to repository (will be saved later in batch)
             _clients.Add(client);
 
             return (true, null);
         }
         catch (ArgumentException ex)
         {
-            // Domain validation failed
-            // (includes ArgumentNullException which inherits from ArgumentException)
             return (false, new ImportErrorDto(lineNumber, row.Name ?? "Unknown", ex.Message));
         }
     }
 
-    /// <summary>
-    /// Creates a client domain entity from a request.
-    /// Normalizes countryCode to uppercase for consistency with repository filters.
-    /// </summary>
-    /// <param name="request">The client creation request.</param>
-    /// <returns>A new client domain entity.</returns>
     private static Client CreateClientFromRequest(CreateClientRequest request) =>
         new(
             legalType: request.LegalType,
@@ -249,13 +174,6 @@ public sealed class ClientService : IClientService
             initialRiskLevel: request.InitialRiskLevel
         );
 
-    /// <summary>
-    /// Builds the import result DTO.
-    /// </summary>
-    /// <param name="totalProcessed">Total number of rows processed.</param>
-    /// <param name="successCount">Number of successful imports.</param>
-    /// <param name="errors">List of errors encountered.</param>
-    /// <returns>Import result DTO.</returns>
     private static ImportResultDto BuildImportResult(
         int totalProcessed,
         int successCount,
@@ -267,11 +185,6 @@ public sealed class ClientService : IClientService
             Errors: errors
         );
 
-    /// <summary>
-    /// Builds an import result for file parsing errors.
-    /// </summary>
-    /// <param name="errorMessage">The error message from the parsing exception.</param>
-    /// <returns>Import result DTO with parsing error.</returns>
     private static ImportResultDto BuildFileParsingErrorResult(string errorMessage) =>
         new(
             TotalProcessed: 0,
@@ -283,15 +196,6 @@ public sealed class ClientService : IClientService
             }
         );
 
-    /// <summary>
-    /// Maps a domain <see cref="Client"/> entity to a <see cref="ClientResponseDto"/>.
-    /// </summary>
-    /// <param name="client">
-    /// The client domain entity.
-    /// </param>
-    /// <returns>
-    /// A data transfer object representing basic client information.
-    /// </returns>
     private static ClientResponseDto MapToResponseDto(Client client) =>
         new(
             Id: client.Id,
@@ -306,15 +210,6 @@ public sealed class ClientService : IClientService
             UpdatedAtUtc: client.UpdatedAtUtc
         );
 
-    /// <summary>
-    /// Maps a domain <see cref="Client"/> entity with related data to a <see cref="ClientDetailDto"/>.
-    /// </summary>
-    /// <param name="client">
-    /// The client domain entity with related entities loaded.
-    /// </param>
-    /// <returns>
-    /// A data transfer object representing detailed client information.
-    /// </returns>
     private static ClientDetailDto MapToDetailDto(Client client) =>
         new(
             Id: client.Id,

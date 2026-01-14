@@ -9,11 +9,8 @@ namespace Ubs.Monitoring.Api.Extensions;
 public static class AuthenticationExtensions
 {
     /// <summary>
-    /// Registers JWT Bearer authentication and configures token validation parameters using the <c>Jwt</c> configuration section.
+    /// Registers JWT Bearer authentication using the Jwt configuration section.
     /// </summary>
-    /// <param name="services">The service collection to register authentication services into.</param>
-    /// <param name="configuration">The application configuration source.</param>
-    /// <returns>The same <see cref="IServiceCollection"/> instance for  registration.</returns>
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var jwtSection = configuration.GetSection("Jwt");

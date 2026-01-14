@@ -53,7 +53,7 @@ public class Account
     public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
     public ICollection<Case> Cases { get; set; } = new List<Case>();
 
-    public void AddIdentifier(IdentifierType type, string value, string? issuedCountryCode = null)
+    public AccountIdentifier AddIdentifier(IdentifierType type, string value, string? issuedCountryCode = null)
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Identifier value is required", nameof(value));
@@ -63,6 +63,7 @@ public class Account
         var identifier = new AccountIdentifier(Id, type, value, issuedCountryCode);
         _identifiers.Add(identifier);
         UpdatedAtUtc = DateTimeOffset.UtcNow;
+        return identifier;
     }
 
     public void Block()
