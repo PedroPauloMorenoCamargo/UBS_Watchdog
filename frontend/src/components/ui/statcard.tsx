@@ -3,10 +3,11 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Variant = "destructive"| "high" | "medium" | "low";
+type Variant = "destructive"| "high" | "medium" | "low" | "default";
 
 interface StatCardProps {
   title: string;
@@ -47,6 +48,12 @@ const variantConfig: Record<
     iconColor: "text-green-700",
     Icon: <CheckCircle className="h-6 w-6" />,
   },
+  default :{
+     bg: "bg-gray-400/20",
+    iconBg: "bg-gray-500/40",
+    iconColor: "text-gray-700",
+    Icon: <HelpCircle className="h-6 w-6" />,
+  }
 };
 
 export function StatCard({ title, value, variant }: StatCardProps) {

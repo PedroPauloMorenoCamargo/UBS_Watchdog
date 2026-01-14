@@ -87,7 +87,7 @@ export function Dashboard() {
     transactionsByType,
     weeklyActivity,
     transactionsCountry
-  } = useTransactions(allTransactions, cases, countries);
+  } = useTransactions(transactions, cases);
 
   const { data : clientsData} = 
     useApi<PagedClientsResponseDto>({

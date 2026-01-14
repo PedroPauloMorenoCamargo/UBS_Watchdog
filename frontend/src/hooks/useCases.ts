@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { CaseTableRow } from "@/models/case";
-
+import { CaseSeverity } from "@/types/Cases/cases";
 type Trend = "up" | "down" | "neutral";
 
 function getTrend(current: number, previous: number): Trend {
@@ -74,6 +74,53 @@ export function useCases(cases: CaseTableRow[]) {
     }).length;
   }, [cases, currentPeriodStart]);
 
+  const decisionsCount = useMemo(() => {
+    const fraudulent = cases.filter(c => c.decision === 0).length;
+    const notFraudulent = cases.filter(c => c.decision === 1).length;
+    const inconclusive = cases.filter(c => c.decision === 2).length;
+    return { fraudulent, notFraudulent, inconclusive };
+  }, [cases]);
+
+  // =====================
+  // ALERTS BY SEVERITY (ULTIMOS 7 DIAS)
+  // =====================
+ const weeklyAlertsBySeverity = useMemo(() => {
+  const result = [];
+  const now = new Date();
+
+  // domingo da semana atual
+  const startDate = new Date(now);
+  startDate.setUTCDate(now.getUTCDate() - now.getUTCDay()); // Sunday
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startDate);
+    date.setUTCDate(startDate.getUTCDate() + i);
+
+    const dayCases = cases.filter(c => {
+      const opened = new Date(c.openedAtUtc);
+      return (
+        opened.getUTCDate() === date.getUTCDate() &&
+        opened.getUTCMonth() === date.getUTCMonth() &&
+        opened.getUTCFullYear() === date.getUTCFullYear()
+      );
+    });
+
+    result.push({
+      day: date.toLocaleDateString("en-US", { weekday: "short" }),
+      low: dayCases.filter(c => c.severity === "low").length,
+      medium: dayCases.filter(c => c.severity === "medium").length,
+      high: dayCases.filter(c => c.severity === "high").length,
+      critical: dayCases.filter(c => c.severity === "critical").length,
+    });
+  }
+
+  return result;
+}, [cases]);
+
+
+
+
+
   return {
     activeAlertsCount,
     criticalAlertsCount,
@@ -84,6 +131,9 @@ export function useCases(cases: CaseTableRow[]) {
     activeAlertsPercentageChange,
 
     resolvedCurrentPeriod,
+
+    decisionsCount,
+    weeklyAlertsBySeverity
   };
 }
 

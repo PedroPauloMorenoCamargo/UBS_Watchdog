@@ -148,6 +148,12 @@ export function AlertsTable({ alerts, onRefresh }: AlertsTableProps){
                         <SeverityBadge severity={alert.severity} />
                       </TableCell>
 
+                      <TableCell className="px-4 py-3 text-sm text-left font-medium">
+                          {alert.openedAtUtc instanceof Date
+                          ? alert.openedAtUtc.toLocaleString()
+                          : alert.openedAtUtc}
+                      </TableCell>
+
                       <TableCell className="px-4 py-3 text-sm text-muted-foreground">
                         <StatusBadge status={alert.status} />
                       </TableCell>
