@@ -35,10 +35,9 @@ import { mapTransactionType } from "@/mappers/transaction/transactionType.mapper
 
 import { TRANSACTION_TYPES } from "@/constants/transactionTypes";
 import { MONTHS } from "@/constants/months";
-import type { CaseDecision, CaseResponseDto } from "@/types/Cases/cases";
+import type { CaseResponseDto } from "@/types/Cases/cases";
 
 import { WEEK_DAYS } from "@/constants/weekdays";
-import type { CountriesResponseDto } from "@/types/Countries/countries";
 import { useCountriesList } from "./useCountriesList";
 type Trend = "up" | "down" | "neutral";
 
@@ -75,7 +74,7 @@ interface UseTransactionsResult {
   transactionsCountry: TransactionCountry[];
 }
 
-export function useTransactions(transactions: TransactionResponseDto[], cases: CaseResponseDto[], countries: CountriesResponseDto[]): UseTransactionsResult {
+export function useTransactions(transactions: TransactionResponseDto[], cases: CaseResponseDto[]): UseTransactionsResult {
    const now = new Date();
 
 
@@ -175,30 +174,31 @@ export function useTransactions(transactions: TransactionResponseDto[], cases: C
 
 
   const monthlyVolume = useMemo(() => {
-  const volumeByMonth = new Map<number, number>();
+    const volumeByMonth = new Map<number, number>();
 
-  for (let i = 0; i < 12; i++) {
-    volumeByMonth.set(i, 0);
-  }
+    for (let i = 0; i < 12; i++) {
+      volumeByMonth.set(i, 0);
+    }
 
-  transactions.forEach(t => {
-    if (!t.occurredAtUtc) return;
+    transactions.forEach(t => {
+      if (!t.occurredAtUtc) return;
 
-    const date = new Date(t.occurredAtUtc);
-    const monthIndex = date.getUTCMonth(); 
+      const date = new Date(t.occurredAtUtc);
+      const monthIndex = date.getUTCMonth(); 
 
-    const current = volumeByMonth.get(monthIndex) ?? 0;
-    volumeByMonth.set(
-      monthIndex,
-      current + Math.max(t.baseAmount ?? 0, 0)
-    );
-  });
+      const current = volumeByMonth.get(monthIndex) ?? 0;
+      volumeByMonth.set(
+        monthIndex,
+        current + Math.max(t.baseAmount ?? 0, 0),
+        
+      );
+    });
 
-  return MONTHS.map((month, index) => ({
-    month,
-    volume: volumeByMonth.get(index) ?? 0,
-  }));
-}, [transactions]);
+    return MONTHS.map((month, index) => ({
+      month,
+      volume: volumeByMonth.get(index) ?? 0,
+    }));
+  }, [transactions]);
 
 
 const countriesList = useCountriesList();

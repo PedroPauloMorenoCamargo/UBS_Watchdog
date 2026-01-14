@@ -14,7 +14,7 @@ export function mapCaseDtoToTableRow(dto: CaseResponseDto): CaseTableRow {
     analystName: dto.analystName,
     severity: mapRiskLevel(dto.severity),
     findingsCount: dto.findingsCount,
-    openedAtUtc: new Date(dto.openedAtUtc).toLocaleString(),
+    openedAtUtc: new Date(dto.openedAtUtc),
     resolvedAt: dto.resolvedAtUtc ? new Date(dto.resolvedAtUtc).toLocaleString() : null,
   };
 }

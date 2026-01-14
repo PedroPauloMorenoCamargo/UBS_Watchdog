@@ -18,25 +18,20 @@ export function formatDateTime(
 }
 
 export function formatCurrencyCompact(
-  value: number,
-  currency: string = "USD",
-  decimals: number = 1
+  value: number | null | undefined,
+  decimals: number = 2
 ): string {
+  if (value == null || isNaN(value)) return "0";
+
   const abs = Math.abs(value);
 
-  if (abs >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(decimals)}B`;
-  }
+  if (abs >= 1_000_000_000) return (value / 1_000_000_000).toFixed(decimals).replace(/\.0+$/, "") + "B";
+  if (abs >= 1_000_000) return (value / 1_000_000).toFixed(decimals).replace(/\.0+$/, "") + "M";
+  if (abs >= 1_000) return (value / 1_000).toFixed(decimals).replace(/\.0+$/, "") + "K";
 
-  if (abs >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(decimals)}M`;
-  }
-
-  // fallback normal
-  return value.toLocaleString("en-US", {
-    // style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  return value.toFixed(decimals).replace(/\.0+$/, "");
 }
+
+
+
+

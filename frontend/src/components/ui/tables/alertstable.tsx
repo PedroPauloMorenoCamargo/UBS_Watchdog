@@ -63,7 +63,9 @@ export function AlertsTable({ alerts }: AlertsTableProps){
                       </TableCell>
 
                       <TableCell className="px-4 py-3 text-sm text-left font-medium">
-                          {alert.openedAtUtc}
+                          {alert.openedAtUtc instanceof Date
+                          ? alert.openedAtUtc.toLocaleString()
+                          : alert.openedAtUtc}
                       </TableCell>
 
                       <TableCell className="px-4 py-3 text-sm text-muted-foreground">

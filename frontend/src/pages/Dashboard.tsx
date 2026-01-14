@@ -75,7 +75,7 @@ const { data: casesData} =
     transactionsByType,
     weeklyActivity,
     transactionsCountry
-  } = useTransactions(transactions, cases, countries);
+  } = useTransactions(transactions, cases);
 
   const { data : clientsData} = 
     useApi<PagedClientsResponseDto>({

@@ -13,6 +13,6 @@ export interface CaseTableRow {
   analystName: string;
   severity: Severity;
   findingsCount: number;
-  openedAtUtc: string;
+  openedAtUtc: Date | string;
   resolvedAt?: string | null;
 }
