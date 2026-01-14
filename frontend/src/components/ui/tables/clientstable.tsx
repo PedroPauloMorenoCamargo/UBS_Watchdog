@@ -39,8 +39,6 @@ export function ClientsTable({
             <TableHead className="px-4 py-3">Country</TableHead>
             <TableHead className="px-4 py-3 text-center">Risk Level</TableHead>
             <TableHead className="px-4 py-3 text-center">KYC Status</TableHead>
-            <TableHead className="px-4 py-3 text-center">Alerts</TableHead>
-            <TableHead className="px-4 py-3 text-left">Balance</TableHead>
             <TableHead className="px-4 py-3 text-left">Last Activity</TableHead>
             <TableHead className="px-4 py-3 text-center">Actions</TableHead>
           </TableRow>
@@ -79,18 +77,7 @@ export function ClientsTable({
                     <TableCell className="px-4 py-3 text-sm text-center">
                       <KYCStatusBadge kyc={client.kyc} />
                     </TableCell>
-
-                    <TableCell className="px-4 py-3 text-sm text-center">{client.alerts}</TableCell>
-
-                    <TableCell className="px-4 py-3 text-sm text-left font-medium">
-                      <span
-                        className="inline-flex truncate"
-                        title={String(client.balance)}
-                      >
-                        {client.balance}
-                      </span>
-                    </TableCell>
-                    
+            
                     <TableCell className="px-4 py-3 text-sm text-left text-slate-600">
                       {formatDateTime(client.lastActivity)}
                     </TableCell>

@@ -15,7 +15,6 @@ export function useClientsWithAccountsSimple() {
     setLoading(true);
     api.get("/api/clients", { params: { "Page.Page": 1, "Page.PageSize": 100 } })
       .then((res) => {
-        // Filtra apenas clientes que possuem contas (depois, no dialog, filtra ao buscar contas)
         setClients(res.data.items);
       })
       .catch((err) => setError(err.message))

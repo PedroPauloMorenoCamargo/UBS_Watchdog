@@ -27,7 +27,6 @@ export function FindingDetailsDialog({
 
   const { evidenceJson } = finding;
 
-  // severity string helper (duplication from table, could be util but keeping simple)
   const getSeverityString = (severity: number) => {
     switch (severity) {
       case 0: return "Low";

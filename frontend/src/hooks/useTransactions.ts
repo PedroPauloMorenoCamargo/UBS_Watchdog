@@ -1,34 +1,3 @@
-// import { useState, useEffect } from "react";
-// import { api } from "@/lib/api";
-// import type { CreateTransactionDto } from "@/types/Transactions/transaction";
-
-// export function useTransactions() {
-//   const [transactions, setTransactions] = useState<CreateTransactionDto[]>([]);
-//   const [loading, setLoading] = useState(false);
-
-//   const fetchTransactions = async () => {
-//     setLoading(true);
-//     try {
-//       const res = await api.get<CreateTransactionDto[]>("/api/transactions");
-//       setTransactions(res.data);
-//     } catch (err) {
-//       console.error("Failed to fetch transactions", err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchTransactions();
-//   }, []);
-
-//   return {
-//     transactions,
-//     loading,
-//     refetch: fetchTransactions,
-//   };
-// }
-
 import { useMemo } from "react";
 import type { TransactionResponseDto } from "@/types/Transactions/transaction";
 import { mapTransactionType } from "@/mappers/transaction/transactionType.mapper";

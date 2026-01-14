@@ -59,6 +59,11 @@ const kycStatusMap: Record<string, KycStatusApi> = {
   expired: 2,
 };
 
+const legalType: Record<string, LegalTypeApi> = {
+  individual: 0,
+  company: 1,
+};
+
 export function ClientForm({
   onSubmit,
   onCancel,
@@ -74,7 +79,7 @@ export function ClientForm({
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
-      legalType: defaultValues?.legalType || "individual",
+      legalType: defaultValues?.legalType ?? "individual",
       name: defaultValues?.name || "",
       contactNumber: defaultValues?.contactNumber || "",
       countryCode: defaultValues?.countryCode || "",
@@ -104,8 +109,6 @@ export function ClientForm({
         })}
         className="space-y-6"
       >
-
-      {/* ===== TIPO LEGAL ===== */}
       <div className="space-y-2">
         <Label htmlFor="legalType">
           Tipo <span className="text-red-500">*</span>
@@ -116,11 +119,11 @@ export function ClientForm({
           disabled={isLoading}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o tipo" />
+            <SelectValue placeholder="Select type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="individual">Pessoa Física</SelectItem>
-            <SelectItem value="company">Pessoa Jurídica</SelectItem>
+            <SelectItem value="individual">Individual</SelectItem>
+            <SelectItem value="company">Company</SelectItem>
           </SelectContent>
         </Select>
         {errors.legalType && (
@@ -128,10 +131,9 @@ export function ClientForm({
         )}
       </div>
 
-      {/* ===== NOME ===== */}
       <div className="space-y-2">
         <Label htmlFor="name">
-          Nome Completo <span className="text-red-500">*</span>
+          Name <span className="text-red-500">*</span>
         </Label>
         <Input
           id="name"
@@ -143,8 +145,6 @@ export function ClientForm({
           <p className="text-sm text-red-500">{errors.name.message}</p>
         )}
       </div>
-
-      {/* ===== TELEFONE ===== */}
       <div className="space-y-2">
         <Label htmlFor="contactNumber">Telefone</Label>
         <Input
@@ -155,10 +155,9 @@ export function ClientForm({
         />
       </div>
 
-      {/* ===== PAÍS ===== */}
       <div className="space-y-2">
         <Label htmlFor="countryCode">
-          País <span className="text-red-500">*</span>
+          Country Code <span className="text-red-500">*</span>
         </Label>
         <Select
           value={countryCode}
@@ -166,7 +165,7 @@ export function ClientForm({
           disabled={isLoading}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o país" />
+            <SelectValue placeholder="Select country" />
           </SelectTrigger>
           <SelectContent>
             {COUNTRIES.map((c) => (
@@ -181,12 +180,10 @@ export function ClientForm({
         )}
       </div>
 
-      {/* ===== GRID: RISCO + KYC ===== */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {/* NÍVEL DE RISCO */}
         <div className="space-y-2">
           <Label htmlFor="riskLevel">
-            Nível de Risco <span className="text-red-500">*</span>
+            Risk Level <span className="text-red-500">*</span>
           </Label>
           <Select
             value={String(riskLevel)}
@@ -194,25 +191,25 @@ export function ClientForm({
             disabled={isLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecione o nível de risco" />
+              <SelectValue placeholder="Select risk level" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="0">
                 <span className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-green-500" />
-                  Baixo (Low)
+                  Low
                 </span>
               </SelectItem>
               <SelectItem value="1">
                 <span className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-yellow-500" />
-                  Médio (Medium)
+                  Medium
                 </span>
               </SelectItem>
               <SelectItem value="2">
                 <span className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-red-500" />
-                  Alto (High)
+                 High
                 </span>
               </SelectItem>
             </SelectContent>
@@ -222,7 +219,6 @@ export function ClientForm({
           )}
         </div>
 
-        {/* KYC STATUS */}
         <div className="space-y-2">
           <Label htmlFor="kycStatus">
             Status KYC <span className="text-red-500">*</span>
@@ -239,19 +235,19 @@ export function ClientForm({
               <SelectItem value="0">
                 <span className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-yellow-500" />
-                  Pendente (Pending)
+                  Pending
                 </span>
               </SelectItem>
               <SelectItem value="1">
                 <span className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-green-500" />
-                  Verificado (Verified)
+                  Verified
                 </span>
               </SelectItem>
               <SelectItem value="2">
                 <span className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-red-500" />
-                  Expirado (Expired)
+                  Expired
                 </span>
               </SelectItem>
             </SelectContent>
@@ -262,17 +258,14 @@ export function ClientForm({
         </div>
       </div>
 
-      {/* ===== INFORMAÇÃO ===== */}
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <p className="text-sm font-medium text-slate-700">ℹ️ Informação</p>
+        <p className="text-sm font-medium text-slate-700">Information</p>
         <ul className="mt-2 space-y-1 text-xs text-slate-600">
-          <li>• Os dados serão validados pelo sistema de compliance</li>
-          <li>• Clientes de alto risco requerem aprovação adicional</li>
-          <li>• O status KYC pode ser atualizado posteriormente</li>
+          <li>• The data will be validated by the compliance system</li>
+          <li>• High-risk clients require additional approval</li>
+          <li>• The KYC status can be updated later</li>
         </ul>
       </div>
-
-      {/* ===== BOTÕES DE AÇÃO ===== */}
       <div className="flex justify-end gap-3 border-t pt-4">
         <Button
           type="button"
@@ -280,16 +273,16 @@ export function ClientForm({
           onClick={onCancel}
           disabled={isLoading}
         >
-          Cancelar
+          Cancel
         </Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Salvando...
+              Saving...
             </>
           ) : (
-            "Criar Cliente"
+            "Create client"
           )}
         </Button>
       </div>

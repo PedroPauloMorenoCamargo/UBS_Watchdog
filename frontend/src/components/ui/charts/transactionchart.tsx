@@ -14,7 +14,7 @@ interface Props {
 
 export function TransactionsByTypeChart({data}: Props) {
   return (
-    <div className="h-64">
+    <div className="h-80">
 
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
@@ -22,8 +22,8 @@ export function TransactionsByTypeChart({data}: Props) {
           data={data}
           dataKey="value"
           nameKey="name"
-          innerRadius={60}
-          outerRadius={90}
+          innerRadius={80}
+          outerRadius={120}
           paddingAngle={3}
         >
           {data.map((_, index) => (
@@ -32,7 +32,7 @@ export function TransactionsByTypeChart({data}: Props) {
         </Pie>
 
         <Tooltip />
-        <Legend verticalAlign="bottom" />
+        <Legend verticalAlign="bottom" height={36}/>
       </PieChart>
     </ResponsiveContainer>
     </div>

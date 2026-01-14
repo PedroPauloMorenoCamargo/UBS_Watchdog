@@ -64,15 +64,12 @@ export function ClientReportPage() {
     loadClientData();
   }, [clientId, navigate]);
 
-  // Transform transaction trend data for bar chart (12 months)
   const transactionVolumeData = (() => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    // Create a map with all 12 months initialized to 0
     const monthlyData: Record<string, number> = {};
     months.forEach((m) => (monthlyData[m] = 0));
 
-    // Fill in actual data from API
     clientReport?.transactionTrend?.forEach((item) => {
       const monthName = new Date(item.date).toLocaleDateString("en-US", {
         month: "short",
@@ -82,14 +79,12 @@ export function ClientReportPage() {
       }
     });
 
-    // Convert to array format
     return months.map((month) => ({
       month,
       volume: monthlyData[month],
     }));
   })();
 
-  // Transform alerts by severity for pie chart
   const alertsByTypeData = clientReport
     ? [
       { name: "Low", value: clientReport.caseMetrics.lowSeverityCases },
@@ -125,7 +120,6 @@ export function ClientReportPage() {
     );
   }
 
-  // Export CSV handler
   const handleExportCsv = async () => {
     if (!clientId) return;
     try {
@@ -143,7 +137,6 @@ export function ClientReportPage() {
     }
   };
 
-  // Export PDF handler
   const handleExportPdf = async () => {
     const element = document.getElementById("client-report-content");
     if (!element) {
@@ -174,7 +167,6 @@ export function ClientReportPage() {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <button
@@ -203,9 +195,7 @@ export function ClientReportPage() {
         </div>
       </div>
 
-      {/* Conteúdo para exportação */}
       <div id="client-report-content">
-        {/* Client Information Section */}
         <div className="rounded-xl bg-white p-6 shadow-sm mb-6">
           <h2 className="text-lg font-semibold text-slate-700 mb-4">Client Information</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -256,8 +246,6 @@ export function ClientReportPage() {
             </div>
           </div>
         </div>
-
-        {/* KYC Status */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
           <div className="rounded-xl bg-white p-4 shadow-sm">
             <p className="text-xs text-slate-500 uppercase tracking-wide">KYC Status</p>
@@ -266,8 +254,6 @@ export function ClientReportPage() {
             </p>
           </div>
         </div>
-
-        {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <ChartCard title="Monthly Transaction Volume (12 Months)">
             {transactionVolumeData.some((d) => d.volume > 0) ? (
@@ -283,8 +269,6 @@ export function ClientReportPage() {
             <AlertsByTypePieChart data={alertsByTypeData} height={280} />
           </ChartCard>
         </div>
-
-        {/* Transaction Metrics Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-xl bg-white p-4 shadow-sm">
             <p className="text-xs text-slate-500 uppercase tracking-wide">Deposits</p>
@@ -310,7 +294,7 @@ export function ClientReportPage() {
               ${clientReport.transactionMetrics.averageTransactionUSD.toLocaleString()}
             </p>
           </div>
-        </div> {/* Fim do id="client-report-content" */}
+        </div> 
       </div>
     </div>
   );

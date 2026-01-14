@@ -56,15 +56,15 @@ export function AlertsPage() {
   }, [data]);
 
 
-  // 4. Transform Global Data for the Hook
+  //  Transform Global Data for the Hook
   const globalCasesForStats = useMemo(() => {
     if (!statsData) return [];
     return statsData.items.map(mapCaseDtoToTableRow);
   }, [statsData]);
 
-  // 5. Use the Hook to calculate stats
+  // Use the Hook to calculate stats
   const { 
-    activeAlertsCount, // "All" active
+    activeAlertsCount, 
     criticalAlertsCount, 
     highAlertsCount, 
     mediumAlertsCount, 

@@ -121,10 +121,6 @@ export function AlertDetailsDialog({
                     <div className="font-medium text-sm mt-1">{data.transactionId.split('-')[0]}...</div>
                  </div>
                  <div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Amount</div>
-                    <div className="font-medium text-sm mt-1">{formatCurrency(data.totalAmount || 0, data.currencyCode)}</div>
-                 </div>
-                 <div>
                     <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Severity</div>
                     <div className="mt-1"><SeverityBadge severity={getSeverityString(data.severity)} /></div>
                  </div>

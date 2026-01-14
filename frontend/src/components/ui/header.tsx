@@ -179,8 +179,8 @@ export function Header() {
   }
 
   return (
-    <header className="h-16 bg-white border-b flex items-center justify-between px-6 relative z-50">
-      <div className="font-semibold text-slate-700">
+    <header className="h-16 bg-background border-b border-border flex items-center justify-between px-6 relative z-50">
+      <div className="font-semibold text-foreground">
         Bem-vindo, {adminName}
       </div>
 
@@ -192,7 +192,7 @@ export function Header() {
               setOpenNotifications(!openNotifications);
               setOpenProfile(false);
             }}
-            className="p-2 rounded-full hover:bg-slate-200"
+            className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
           >
             <Bell size={20} />
           </button>
@@ -207,7 +207,7 @@ export function Header() {
               setOpenNotifications(false);
               if (next) refreshMe();
             }}
-            className="w-9 h-9 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center hover:bg-slate-200"
+            className="w-9 h-9 rounded-full bg-muted overflow-hidden flex items-center justify-center hover:bg-muted/80 ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {avatarSrc ? (
               <img
@@ -216,36 +216,36 @@ export function Header() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <User size={18} />
+              <User size={18} className="text-muted-foreground" />
             )}
           </button>
 
           {openProfile && (
-            <div className="absolute right-0 top-12 w-80 bg-white border rounded-lg shadow-lg p-4">
+            <div className="absolute right-0 top-12 w-80 bg-popover border border-border rounded-lg shadow-lg p-4 animate-in fade-in zoom-in-95 duration-200">
               <div className="flex gap-3">
-                <div className="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-muted overflow-hidden flex items-center justify-center">
                   {avatarSrc ? (
                     <img src={avatarSrc} className="w-full h-full object-cover" />
                   ) : (
-                    <User size={20} />
+                    <User size={20} className="text-muted-foreground" />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{adminName}</p>
-                  <p className="text-sm text-slate-500 truncate">{email}</p>
-                   <p className="text-sm text-slate-500 truncate">{phone}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="font-semibold truncate text-foreground">{adminName}</p>
+                  <p className="text-sm text-muted-foreground truncate">{email}</p>
+                   <p className="text-sm text-muted-foreground truncate">{phone}</p>
+                  <p className="text-xs text-muted-foreground/70">
                     {isRefreshingMe ? "Carregando..." : `Criado em: ${createdAt}`}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 border-t pt-3">
-                <p className="font-semibold text-sm mb-2">Foto do perfil</p>
+              <div className="mt-4 border-t border-border pt-3">
+                <p className="font-semibold text-sm mb-2 text-foreground">Foto do perfil</p>
 
                 <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 text-blue-600 cursor-pointer text-sm">
+                  <label className="flex items-center gap-2 text-primary cursor-pointer text-sm font-medium hover:text-primary/90">
                     <Upload className="h-4 w-4" />
                     {isUploadingPhoto ? "Enviando..." : "Alterar (PNG/JPG)"}
                     <input
@@ -264,7 +264,7 @@ export function Header() {
                   <button
                     onClick={handleClearPhoto}
                     disabled={isUploadingPhoto}
-                    className="flex items-center gap-1 text-sm text-slate-600"
+                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-destructive transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
                     Remover
@@ -272,15 +272,15 @@ export function Header() {
                 </div>
 
                 {photoError && (
-                  <p className="mt-2 text-xs text-red-600">{photoError}</p>
+                  <p className="mt-2 text-xs text-destructive">{photoError}</p>
                 )}
               </div>
 
-              <div className="mt-4 border-t pt-3">
+              <div className="mt-4 border-t border-border pt-3">
                 <button
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="text-red-600 flex items-center gap-2"
+                  className="text-destructive flex items-center gap-2 text-sm font-medium hover:text-destructive/80 transition-colors"
                 >
                   {isLoggingOut ? (
                     <>

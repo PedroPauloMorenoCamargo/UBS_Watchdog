@@ -88,7 +88,6 @@ export function ClientDetailsDialog({
 
     try {
       await deleteAccountIdentifier(identifierToDelete.id);
-      // Reload identifiers for this account
       await loadIdentifiers(identifierToDelete.accountId);
     } catch (err) {
       console.error("Failed to delete identifier:", err);
@@ -106,7 +105,6 @@ export function ClientDetailsDialog({
         newSet.delete(accountId);
       } else {
         newSet.add(accountId);
-        // Load identifiers when expanding
         if (!accountIdentifiers[accountId]) {
           loadIdentifiers(accountId);
         }
@@ -132,8 +130,6 @@ export function ClientDetailsDialog({
         .finally(() => {
           setLoading(false);
         });
-
-      // Load accounts when dialog opens
       loadAccounts();
     }
   }, [open, clientId]);
@@ -174,7 +170,6 @@ export function ClientDetailsDialog({
 
         {!loading && !error && client && (
           <div className="space-y-6">
-            {/* Client Information */}
             <div>
               <h3 className="text-sm font-semibold text-slate-700 mb-3">
                 Client Information
@@ -219,7 +214,6 @@ export function ClientDetailsDialog({
               </div>
             </div>
 
-            {/* Address */}
             {client.addressJson && (
               <div>
                 <h3 className="text-sm font-semibold text-slate-700 mb-3">
@@ -243,13 +237,11 @@ export function ClientDetailsDialog({
               </div>
             )}
 
-            {/* Account Information */}
             <div>
               <h3 className="text-sm font-semibold text-slate-700 mb-3">
                 Accounts
               </h3>
               
-              {/* Accounts Accordion */}
               <div className="border rounded-lg overflow-hidden">
                 <button
                   type="button"
@@ -332,7 +324,6 @@ export function ClientDetailsDialog({
                                 </span>
                               </div>
 
-                              {/* Identifiers Section */}
                               {isExpanded && (
                                 <div className="ml-5 mt-2 space-y-2">
                                   {isLoadingIds ? (
@@ -396,7 +387,6 @@ export function ClientDetailsDialog({
                       </div>
                     )}
                     
-                    {/* Create Account Button - Always visible when expanded */}
                     <div className="p-3 border-t bg-slate-50">
                       <Button
                         variant="outline"
@@ -413,7 +403,6 @@ export function ClientDetailsDialog({
               </div>
             </div>
 
-            {/* Risk & Compliance */}
             <div>
               <h3 className="text-sm font-semibold text-slate-700 mb-3">
                 Risk & Compliance
@@ -454,7 +443,6 @@ export function ClientDetailsDialog({
               </div>
             </div>
 
-            {/* Activity Summary */}
             <div>
               <h3 className="text-sm font-semibold text-slate-700 mb-3">
                 Activity Summary
@@ -475,7 +463,6 @@ export function ClientDetailsDialog({
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-3 pt-4 border-t">
               <Button
                 onClick={handleViewTransactions}
@@ -502,7 +489,6 @@ export function ClientDetailsDialog({
           </div>
         )}
 
-        {/* Create Account Dialog */}
         <CreateAccountDialog
           open={createAccountOpen}
           onOpenChange={setCreateAccountOpen}
@@ -511,20 +497,17 @@ export function ClientDetailsDialog({
           onSuccess={loadAccounts}
         />
 
-        {/* Create Identifier Dialog */}
         {selectedAccountId && (
           <CreateIdentifierDialog
             open={createIdentifierOpen}
             onOpenChange={setCreateIdentifierOpen}
             accountId={selectedAccountId}
             onSuccess={() => {
-              // Reload identifiers for this account
               loadIdentifiers(selectedAccountId);
             }}
           />
         )}
-
-        {/* Confirm Delete Dialog */}
+        
         <ConfirmDialog
           open={confirmDeleteOpen}
           onOpenChange={setConfirmDeleteOpen}

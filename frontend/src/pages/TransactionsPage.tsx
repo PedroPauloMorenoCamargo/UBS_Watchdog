@@ -7,7 +7,6 @@ import { TransactionsTable } from "@/components/ui/tables/transactionstable";
 import { useApi } from "@/hooks/useApi";
 import { fetchTransactions } from "@/services/transaction.service";
 import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
-// import { RegisterTransactionDialog } from "@/components/ui/dialogs/register-transaction-dialog";
 import { CreateTransactionDialog } from "@/components/ui/dialogs/create-transaction-dialog";
 import { ImportTransactionsCsvDialog } from "@/components/ui/dialogs/import-transactions-csv-dialog";
 import { Pagination } from "@/components/ui/pagination";
@@ -48,23 +47,19 @@ export function TransactionsPage() {
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {
 
-      // 🔹 Search (clientId ou cpName)
       const searchMatch =
         !search ||
         t.counterIdentifier?.toLowerCase().includes(search.toLowerCase()) ||
         t.clientId?.toLowerCase().includes(search.toLowerCase());
 
-      // 🔹 Type
       const typeMatch = type === "all" || t.type === type;
 
-      // 🔹 Amount
       const amount = t.rawAmount;
       const min = minAmount ? Number(minAmount) : null;
       const max = maxAmount ? Number(maxAmount) : null;
       const minMatch = min === null || amount >= min;
       const maxMatch = max === null || amount <= max;
 
-      // 🔹 Date
       const transactionDate = t.rawTimestamp;
 
       const startMatch =
@@ -74,7 +69,6 @@ export function TransactionsPage() {
       const endMatch =
         !endDate ||
         transactionDate <= new Date(endDate + "T23:59:59").getTime();
-      console.log(endDate)
 
       return searchMatch && typeMatch && minMatch && maxMatch && startMatch && endMatch;
     });
@@ -225,13 +219,17 @@ export function TransactionsPage() {
         onCreated={() => {
           setRegisterDialogOpen(false);
           refetch();
-          success("Transação criada com sucesso!");
+          success("Transaction created successfully!");
         }}
       />
 
       <ImportTransactionsCsvDialog
         isOpen={importOpen}
         onClose={() => setImportOpen(false)}
+        onImported={() => {
+          refetch();
+          success("Transactions imported successfully!");
+        }}
       />
     </div>)
 }
