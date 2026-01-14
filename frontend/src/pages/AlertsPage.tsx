@@ -1,5 +1,6 @@
 // AlertsPage.tsx
 import { useMemo, useState, useCallback } from "react";
+import { useCases } from "@/hooks/useCases";
 import {
   Select,
   SelectTrigger,
@@ -39,30 +40,36 @@ export function AlertsPage() {
   });
 
 
+  const fetchAllCasesForStats = useCallback(
+    () => fetchCases({ page: 1, pageSize: 2000 }),
+    []
+  );
+
+  const { data: statsData } = useApi({
+    fetcher: fetchAllCasesForStats,
+  });
+
+
   const cases = useMemo(() => {
     if (!data) return [];
     return data.items.map(mapCaseDtoToTableRow);
   }, [data]);
 
 
-  const severityCounts = useMemo(() => {
-    const counts = {
-      all: 0,
-      critical: 0,
-      high: 0,
-      medium: 0,
-      low: 0,
-      
-    };
+  // 4. Transform Global Data for the Hook
+  const globalCasesForStats = useMemo(() => {
+    if (!statsData) return [];
+    return statsData.items.map(mapCaseDtoToTableRow);
+  }, [statsData]);
 
-   cases.forEach((c) => {
-  const sev = c.severity; 
-  counts.all += 1;
-  counts[sev as keyof typeof counts] += 1; 
-});
-
-    return counts;
-  }, [cases]);
+  // 5. Use the Hook to calculate stats
+  const { 
+    activeAlertsCount, // "All" active
+    criticalAlertsCount, 
+    highAlertsCount, 
+    mediumAlertsCount, 
+    lowAlertsCount 
+  } = useCases(globalCasesForStats);
 
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
@@ -76,10 +83,10 @@ export function AlertsPage() {
   return (
     <div className="relative bg-cover bg-center">
       <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
-        <StatCard title="Critical Severity" value={severityCounts.critical} variant="destructive" />
-        <StatCard title="High Severity" value={severityCounts.high} variant="high" />
-        <StatCard title="Medium Severity" value={severityCounts.medium} variant="medium" />
-        <StatCard title="Low Severity" value={severityCounts.low} variant="low" />
+        <StatCard title="Critical Severity" value={criticalAlertsCount} variant="destructive" />
+        <StatCard title="High Severity" value={highAlertsCount} variant="high" />
+        <StatCard title="Medium Severity" value={mediumAlertsCount} variant="medium" />
+        <StatCard title="Low Severity" value={lowAlertsCount} variant="low" />
         
       </div>
 
@@ -107,7 +114,7 @@ export function AlertsPage() {
           size="sm"
           onClick={() => setSeverity("all")}
         >
-          All ({severityCounts.all})
+          All ({activeAlertsCount})
         </Button>
 
         <Button
@@ -115,7 +122,7 @@ export function AlertsPage() {
           size="sm"
           onClick={() => setSeverity("critical")}
         >
-          Critical ({severityCounts.critical})
+          Critical ({criticalAlertsCount})
         </Button>
 
         <Button
@@ -123,7 +130,7 @@ export function AlertsPage() {
           size="sm"
           onClick={() => setSeverity("high")}
         >
-          High ({severityCounts.high})
+          High ({highAlertsCount})
         </Button>
 
         <Button
@@ -131,7 +138,7 @@ export function AlertsPage() {
           size="sm"
           onClick={() => setSeverity("medium")}
         >
-          Medium ({severityCounts.medium})
+          Medium ({mediumAlertsCount})
         </Button>
 
         <Button
@@ -139,7 +146,7 @@ export function AlertsPage() {
           size="sm"
           onClick={() => setSeverity("low")}
         >
-          Low ({severityCounts.low})
+          Low ({lowAlertsCount})
         </Button>
       </div>
 

@@ -192,38 +192,28 @@ export function TransactionsPage() {
 
       <div className="mt-5">
         <ChartCard title="Recent Transactions">
-          {loading && <p>Loading transactions...</p>}
           {error && <p className="text-red-500">{error}</p>}
-          {!loading && !error && (
-            <div className="relative">
-              <TransactionsTable
-                transactions={filteredTransactions}
-                selectedId={selectedTransactionId}
-                onSelect={setSelectedTransactionId}
+          
+          {loading && !data && <p>Loading transactions...</p>}
+
+          {!error && data && (
+            <div className={loading ? "opacity-60 transition-opacity pointer-events-none" : ""}>
+              <div className="relative">
+                <TransactionsTable
+                  transactions={filteredTransactions}
+                  selectedId={selectedTransactionId}
+                  onSelect={setSelectedTransactionId}
+                />
+              </div>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={data.totalPages}
+                totalItems={data.totalCount}
+                pageSize={PAGE_SIZE}
+                onPageChange={setCurrentPage}
               />
-
-              {loading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
-                  <span>Loading...</span>
-                </div>
-              )}
-
-              {error && (
-                <p className="text-red-500 absolute top-2 left-2 z-20">
-                  {error}
-                </p>
-              )}
             </div>
-          )}
-
-          {data && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={data.totalPages}
-              totalItems={data.totalCount}
-              pageSize={PAGE_SIZE}
-              onPageChange={setCurrentPage}
-            />
           )}
         </ChartCard>
       </div>
