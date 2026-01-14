@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Ubs.Monitoring.Domain.Enums;
-using Ubs.Monitoring.Application.Common.Pagination;
 
 namespace Ubs.Monitoring.Api.Contracts;
 
@@ -26,8 +25,8 @@ public sealed record ComplianceRuleResponse(
 );
 
 public sealed record SearchComplianceRulesRequest(
-    int Page = PaginationDefaults.DefaultPage,
-    int PageSize = PaginationDefaults.DefaultPageSize,
+    int Page = 1,
+    int PageSize = 20,
     string? SortBy = null,
     string? SortDir = "desc",
     RuleType? RuleType = null,

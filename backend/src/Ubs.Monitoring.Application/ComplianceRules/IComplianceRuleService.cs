@@ -7,5 +7,5 @@ public interface IComplianceRuleService
     Task<PagedResult<ComplianceRuleDto>> SearchAsync(ComplianceRuleQuery query, CancellationToken ct);
     Task<ComplianceRuleDto?> GetByIdAsync(Guid id, CancellationToken ct);
 
-    Task<PatchComplianceRuleResult> PatchAsync(Guid id, PatchComplianceRuleData patch, CancellationToken ct);
+    Task<PatchComplianceRuleResult> PatchAsync(Guid id, PatchComplianceRuleDto patch, CancellationToken ct);
 }

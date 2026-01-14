@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ubs.Monitoring.Api.Contracts;
-using Ubs.Monitoring.Api.Mappers.Analysts;
+using Ubs.Monitoring.Api.Mappers;
 using Ubs.Monitoring.Application.Analysts;
 
 namespace Ubs.Monitoring.Api.Controllers;
