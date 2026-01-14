@@ -18,8 +18,8 @@ import type { KycStatusApi } from "@/types/kycstatus";
 
 // Options
 const LEGAL_TYPE_OPTIONS: { value: LegalTypeApi; label: string }[] = [
-  { value: "individual", label: "Individual" },
-  { value: "company", label: "Company" },
+  { value: 0, label: "Individual" },
+  { value: 1, label: "Company" },
 ];
 
 const RISK_LEVEL_OPTIONS: { value: RiskLevelApi; label: string }[] = [
@@ -55,27 +55,19 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
   const { countries: countryList, loading: countriesLoading, error: countriesError } = useCountries();
 
   async function handleSubmit() {
-    if (
-      !name ||
-      legalType === "" ||
-      riskLevel === "" ||
-      kycStatus === "" ||
-      !countryCode ||
-      !telephone ||
-      !address
-    ) {
+    if (!name || legalType === "" || riskLevel === "" || kycStatus === "" || !countryCode || !telephone || !address) {
       alert("Please fill in all required fields.");
       return;
     }
 
     await submit({
+      legalType: legalType as LegalTypeApi,           
       name,
-      legalType,
-      countryCode,
-      riskLevel,
-      kycStatus,
       contactNumber: telephone,
       addressJson: address,
+      countryCode,
+      initialRiskLevel: riskLevel as RiskLevelApi,   
+      kycStatus: kycStatus as KycStatusApi,          
     });
 
     onOpenChange(false);
@@ -102,21 +94,22 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
           <div className="flex flex-col">
             <label className="text-sm font-medium text-slate-700">Type *</label>
             <Select
-              value={legalType}
-              onValueChange={(value) => setLegalType(value as LegalTypeApi)}
+              value={legalType !== "" ? legalType.toString() : ""} 
+              onValueChange={(value) => setLegalType(Number(value) as LegalTypeApi)} 
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
                 {LEGAL_TYPE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem key={option.value} value={option.value.toString()}> 
                     {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col">
@@ -218,4 +211,3 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
     </Dialog>
   );
 }
-

@@ -28,9 +28,9 @@ export interface CreateClientDto {
   legalType: LegalTypeApi;
   name: string;
   contactNumber?: string;
-  addressJson?: unknown;
+  addressJson?: string;
   countryCode: string;
-  riskLevel: RiskLevelApi;
+  initialRiskLevel: RiskLevelApi;
   kycStatus: KycStatusApi;
 }
 

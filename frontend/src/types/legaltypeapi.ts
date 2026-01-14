@@ -1,1 +1,1 @@
-export type LegalTypeApi = "individual" | "company";
+export type LegalTypeApi = 0 | 1;
