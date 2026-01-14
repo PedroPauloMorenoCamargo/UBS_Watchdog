@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { GeographicDistributionChart } from "@/components/ui/charts/geographicdistributionchart";
 import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
 import { AdaptiveAreaChart } from "@/components/ui/charts/adaptiveareachart";
@@ -6,6 +6,7 @@ import { ChartCard } from "@/components/ui/charts/chartcard";
 import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
 import { mapCaseDtoToTableRow } from "@/mappers/case/case.mapper";
 import { TransactionsTable } from "@/components/ui/tables/transactionstable";
+import { Pagination } from "@/components/ui/pagination";
 import { DollarSign, ArrowUpRight, ArrowDownRight, 
   ShieldAlert, Minus, Users, TrendingUp, TrendingDown, 
   AlertTriangle} from "lucide-react";
@@ -24,7 +25,15 @@ import { formatCurrencyCompact } from "@/lib/utils";
 import { fetchCountries } from "@/services/countries.service";
 import type { CountriesResponseDto } from "@/types/Countries/countries";
 
+const PAGE_SIZE = 20;
+
 export function Dashboard() {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchTransactionsWithPagination = useCallback(
+    () => fetchTransactions({ page: currentPage, pageSize: PAGE_SIZE }),
+    [currentPage]
+  );
 
   const { data: countriesData } = useApi<CountriesResponseDto[]>({
   fetcher: fetchCountries,
@@ -332,6 +341,17 @@ const { data: casesData} =
         <div className="mt-5">
           <ChartCard title="Recent Transactions">      
             <TransactionsTable transactions={transactionRows} />
+            
+            {/* Pagination */}
+            {transactionsData && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={transactionsData.totalPages}
+                totalItems={transactionsData.totalCount}
+                pageSize={PAGE_SIZE}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </ChartCard>
         </div>
       </div>

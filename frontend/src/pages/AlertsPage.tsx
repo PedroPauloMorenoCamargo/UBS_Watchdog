@@ -1,5 +1,5 @@
 // AlertsPage.tsx
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   Select,
   SelectTrigger,
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AlertsTable } from "@/components/ui/tables/alertstable";
 import { StatCard } from "@/components/ui/statcard";
+import { Pagination } from "@/components/ui/pagination";
 
 import type { SeverityFilter } from "@/types/alert";
 import type { StatusFilter } from "@/types/status";
@@ -20,13 +21,22 @@ import { useApi } from "@/hooks/useApi";
 import { fetchCases } from "@/services/case.service";
 import { mapCaseDtoToTableRow } from "@/mappers/case/case.mapper";
 
+const PAGE_SIZE = 20;
+
 export function AlertsPage() {
   const [severity, setSeverity] = useState<SeverityFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchCasesWithPagination = useCallback(
+    () => fetchCases({ page: currentPage, pageSize: PAGE_SIZE }),
+    [currentPage]
+  );
 
   // Buscar dados do backend
   const { data, loading, error } = useApi({
-    fetcher: fetchCases,
+    fetcher: fetchCasesWithPagination,
+    deps: [currentPage],
   });
 
   // Mapear dados do backend para formato da tabela
@@ -139,6 +149,17 @@ export function AlertsPage() {
           {loading && <p>Loading...</p>}
           {error && <p className="text-red-500">{error}</p>}
           {!loading && !error && <AlertsTable alerts={filteredCases} />}
+          
+          {/* Pagination */}
+          {!loading && !error && data && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={data.totalPages}
+              totalItems={data.total}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </ChartCard>
       </div>
     </div>

@@ -1,7 +1,7 @@
 // Shadcn/ui
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMemo,useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import type { SeverityFilter } from "@/types/alert";
 import { transactionsMock } from "@/mocks/mocks";
 import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
@@ -18,6 +18,9 @@ import { ChartCard } from "@/components/ui/charts/chartcard";
 import { TransactionsTable } from "@/components/ui/tables/transactionstable";
 import { useApi } from "@/hooks/useApi";
 import { fetchTransactions } from "@/services/transaction.service";
+import { Pagination } from "@/components/ui/pagination";
+
+const PAGE_SIZE = 20;
 
 export function TransactionsPage() {
   const [type, setType] = useState<"all" | "Wire Transfer" | "Cash Deposit">("all");
@@ -28,9 +31,16 @@ export function TransactionsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchTransactionsWithPagination = useCallback(
+    () => fetchTransactions({ page: currentPage, pageSize: PAGE_SIZE }),
+    [currentPage]
+  );
 
   const { data, loading, error } = useApi({
-    fetcher: fetchTransactions,
+    fetcher: fetchTransactionsWithPagination,
+    deps: [currentPage],
   });
 
 const transactions = useMemo(() => {
@@ -238,6 +248,17 @@ const transactions = useMemo(() => {
               <TransactionsTable transactions={filteredTransactions} 
                 selectedId={selectedTransactionId}
                 onSelect={setSelectedTransactionId}/>
+          )}
+          
+          {/* Pagination */}
+          {!loading && !error && data && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={data.totalPages}
+              totalItems={data.totalCount}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
           )}
         </ChartCard>
       </div>
