@@ -23,15 +23,26 @@ public sealed class ComplianceRulesController : ControllerBase
     }
 
     /// <summary>
-    /// Search compliance rules with pagination, filtering and sorting.
+    /// Searches compliance rules using pagination, sorting, and optional filtering criteria.
     /// </summary>
+    /// <param name="req">
+    /// The search request containing pagination, sorting, and filter parameters.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// A paged collection of compliance rules matching the provided criteria.
+    /// </returns>
+    /// <response code="200">Returns the paged list of compliance rules.</response>
+    /// <response code="400">Invalid query parameters.</response>
+    /// <response code="401">Unauthorized - JWT token missing or invalid.</response>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResponse<ComplianceRuleResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Search([FromQuery] SearchComplianceRulesRequest req, CancellationToken ct)
     {
-        // ValidationFilter + FluentValidation handle Page/PageSize/SortBy/SortDir errors uniformly.
         var query = ComplianceRuleContractMapper.ToQuery(req);
         var result = await _service.SearchAsync(query, ct);
 
@@ -39,8 +50,20 @@ public sealed class ComplianceRulesController : ControllerBase
     }
 
     /// <summary>
-    /// Get a single compliance rule by ID.
+    /// Retrieves a single compliance rule by its unique identifier.
     /// </summary>
+    /// <param name="id">
+    /// The unique identifier of the compliance rule.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// The compliance rule if found.
+    /// </returns>
+    /// <response code="200">Returns the compliance rule.</response>
+    /// <response code="401">Unauthorized - JWT token missing or invalid.</response>
+    /// <response code="404">Compliance rule not found.</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ComplianceRuleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -59,8 +82,26 @@ public sealed class ComplianceRulesController : ControllerBase
     }
 
     /// <summary>
-    /// Patch a compliance rule (partial update).
+    /// Applies a partial update to an existing compliance rule.
     /// </summary>
+    /// <param name="id">
+    /// The unique identifier of the compliance rule to update.
+    /// </param>
+    /// <param name="req">
+    /// The patch request containing the fields to update.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// The updated compliance rule if the patch operation succeeds.
+    /// </returns>
+    /// <response code="200">Compliance rule updated successfully.</response>
+    /// <response code="400">
+    /// Invalid update request, no changes applied, or invalid rule parameters.
+    /// </response>
+    /// <response code="401">Unauthorized - JWT token missing or invalid.</response>
+    /// <response code="404">Compliance rule not found.</response>
     [HttpPatch("{id:guid}")]
     [ProducesResponseType(typeof(ComplianceRuleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

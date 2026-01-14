@@ -9,11 +9,18 @@ namespace Ubs.Monitoring.Api.Extensions;
 public static class AuthenticationExtensions
 {
     /// <summary>
-    /// Registers JWT Bearer authentication for HTTP APIs and SignalR hubs.
+    /// Configures JWT Bearer authentication for the API, including support for HTTP requests and SignalR connections.
     /// </summary>
-    public static IServiceCollection AddJwtAuthentication(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    /// <param name="services">
+    /// The dependency injection container used to register authentication services.
+    /// </param>
+    /// <param name="configuration">
+    /// The application configuration source used to read JWT settings such as issuer, audience, and signing key.
+    /// </param>
+    /// <returns>
+    /// The same <see cref="IServiceCollection"/> instance, enabling fluent  registration of additional services.
+    /// </returns>
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var jwtSection = configuration.GetSection("Jwt");
         var issuer = jwtSection["Issuer"];
@@ -27,6 +34,7 @@ public static class AuthenticationExtensions
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                // Usual  JWT
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -42,21 +50,16 @@ public static class AuthenticationExtensions
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.FromSeconds(30)
                 };
-
-                // --------------------------------------------------------
-                //  REQUIRED FOR SIGNALR (WebSockets)
-                // --------------------------------------------------------
+                // SignalR JWT
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
                     {
-                        // SignalR sends token via query string
                         var accessToken =
                             context.Request.Query["access_token"];
 
                         var path = context.HttpContext.Request.Path;
 
-                        // Only allow this for SignalR hubs
                         if (!string.IsNullOrEmpty(accessToken) &&
                             path.StartsWithSegments("/hubs"))
                         {

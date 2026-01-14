@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Ubs.Monitoring.Api.Contracts;
 using Ubs.Monitoring.Api.Mappers;
 using Ubs.Monitoring.Application.Auth;
-using Ubs.Monitoring.Application.Analysts;
 
 namespace Ubs.Monitoring.Api.Controllers;
 
@@ -25,15 +24,18 @@ public sealed class AuthController : ControllerBase
     /// Authenticates an analyst using email and password credentials.
     /// </summary>
     /// <param name="req">
-    /// The login request containing the analyst's credentials.
+    /// The login request containing the analyst's email and password.
     /// </param>
     /// <param name="ct">
-    /// Cancellation token used to cancel the authentication request.
+    /// Cancellation token.
     /// </param>
     /// <returns>
-    /// A <see cref="LoginResponse"/> containing a JWT token, expiration metadata, and the authenticated analyst profile if the credentials are valid.
-    /// If authentication fails, returns an RFC 7807 problem response with HTTP 401 Unauthorized.
+    /// A <see cref="LoginResponse"/> containing a JWT access token, expiration metadata, and the authenticated analyst profile if the credentials
+    /// are valid.
     /// </returns>
+    /// <response code="200">Authentication succeeded and a JWT token was issued.</response>
+    /// <response code="400">Invalid request payload.</response>
+    /// /// <response code="401">Authentication failed due to invalid credentials.</response>
     [AllowAnonymous]
     [HttpPost("login")]
     [Consumes("application/json")]
@@ -56,8 +58,17 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieves the authenticated analyst's profile information.
+    /// Retrieves the profile of the currently authenticated analyst.
     /// </summary>
+    /// <param name="ct">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// The authenticated analyst profile derived from the JWT identity.
+    /// </returns>
+    /// <response code="200">Returns the authenticated analyst profile.</response>
+    /// <response code="401">Unauthorized - JWT token missing or invalid.</response>
+    /// <response code="404">Authenticated analyst not found.</response>
     [Authorize]
     [HttpGet("me")]
     [ProducesResponseType(typeof(AnalystProfileResponse), StatusCodes.Status200OK)]
@@ -89,11 +100,13 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Logs the analyst out of the system (stateless).
+    /// Logs the currently authenticated analyst out of the system.
     /// </summary>
     /// <remarks>
-    /// This endpoint does not invalidate JWTs server-side.
+    /// This endpoint is stateless and does not invalidate JWT tokens server-side. Clients are responsible for discarding the token.
     /// </remarks>
+    /// <response code="204">Logout completed successfully.</response>
+    /// <response code="401">Unauthorized - JWT token missing or invalid.</response>
     [Authorize]
     [HttpPost("logout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

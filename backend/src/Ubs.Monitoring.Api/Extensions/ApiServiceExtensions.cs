@@ -7,34 +7,41 @@ using Ubs.Monitoring.Application.Clients;
 using Ubs.Monitoring.Application.Common;
 
 namespace Ubs.Monitoring.Api.Extensions;
-
 public static class ApiServiceExtensions
 {
     /// <summary>
-    /// Registers core API services, validation, and cross-cutting concerns.
+    /// Registers API-layer services .
     /// </summary>
+    /// <param name="services">
+    /// The dependency injection container used to register controllers, validation, request context services, and API infrastructure components.
+    /// </param>
+    /// <returns>
+    /// The same <see cref="IServiceCollection"/> instance, allowing fluent chaining of additional service registrations.
+    /// </returns>
     public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
         services.AddControllers(options =>
         {
-            // Centralized request validation -> RFC7807
+            // Applies centralized request validation and maps validation errors to RFC 7807 (Problem Details) responses.
             options.Filters.Add<ValidationFilter>();
         });
 
+        // Enables endpoint metadata discovery for tools such as Swagger
         services.AddEndpointsApiExplorer();
+
+        // Enables standardized RFC 7807 Problem Details responses
         services.AddProblemDetails();
-
-        // FluentValidation (automatic MVC integration)
-
-        // Scan Application validators
+        
+        // Registers FluentValidation validators from the Application layer
         services.AddValidatorsFromAssemblyContaining<CreateClientRequest>();
 
-        // Scan API validators (Auth, Analysts, etc.)
+        // Registers FluentValidation validators from the API layer
         services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
-        // Request context (JWT, correlation id, etc.)
+        // Registers a scoped service that exposes request-scoped context such as JWT claims and correlation identifiers
         services.AddScoped<ICurrentRequestContext, CurrentRequestContext>();
 
         return services;
     }
 }
+
