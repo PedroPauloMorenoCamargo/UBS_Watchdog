@@ -33,9 +33,9 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-        var raw = configuration.GetConnectionString("Default")
-                  ?? configuration["DATABASE_URL"]
-                  ?? throw new InvalidOperationException("Database connection string is missing.");
+        var raw = config.GetConnectionString("Default")
+              ?? config["DATABASE_URL"]
+              ?? throw new InvalidOperationException("Database connection string is missing.");
 
         var connectionString = raw.StartsWith("postgres", StringComparison.OrdinalIgnoreCase)
             ? new NpgsqlConnectionStringBuilder(raw).ConnectionString
@@ -45,7 +45,7 @@ public static class DependencyInjection
 
         services.AddDbContext<AppDbContext>((sp,options) =>
         {
-            options.UseNpgsql(cs, npgsql =>
+            options.UseNpgsql(connectionString, npgsql =>
             {
                 npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
             });
