@@ -25,7 +25,7 @@ export function ClientsTable({
   onViewClient,
 }: ClientsTableProps) {
   const tableRef = useRef<HTMLDivElement | null>(null);
-
+  console.log("Clients", clients)
   return (
     <div
       ref={tableRef}
