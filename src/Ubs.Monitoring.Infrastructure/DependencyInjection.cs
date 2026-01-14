@@ -33,9 +33,17 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-        var cs = config.GetConnectionString("Default");
-        if (string.IsNullOrWhiteSpace(cs))
-            throw new InvalidOperationException("ConnectionStrings:Default is missing.");
+        var rawConnectionString =
+            builder.Configuration.GetConnectionString("Default")
+            ?? builder.Configuration["DATABASE_URL"];
+
+        var connectionString = rawConnectionString!.StartsWith("postgres", StringComparison.OrdinalIgnoreCase)
+            ? new Npgsql.NpgsqlConnectionStringBuilder(rawConnectionString).ConnectionString
+            : rawConnectionString;
+
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseNpgsql(connectionString));
+
 
         services.AddScoped<AuditSaveChangesInterceptor>();
 
