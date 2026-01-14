@@ -41,10 +41,7 @@ app.UseSerilogRequestLogging();
 app.UseApiErrorHandling();
 
 // Enable Swagger only in development environments
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwaggerPipeline();
-}
+app.UseSwaggerPipeline();
 
 // Apply database migrations and initialization logic at startup
 await app.InitializeDatabaseAsync();
