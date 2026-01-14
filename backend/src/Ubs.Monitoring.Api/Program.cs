@@ -59,6 +59,6 @@ app.MapApiHealthChecks();
 app.MapControllers();
 
 // Map the SignalR hub endpoint used for case notifications
-app.MapHub<CaseNotificationsHub>("/hubs/cases");
+app.MapHub<CaseNotificationsHub>("/hubs/cases").RequireCors("frontend");
 
 app.Run();

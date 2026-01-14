@@ -74,11 +74,7 @@ export function Header() {
           {openNotifications && (
             <div className="absolute right-0 top-12 w-64 bg-white border rounded-lg shadow-lg p-3">
               <p className="font-semibold mb-2">Notificações</p>
-              <ul className="text-sm text-slate-600 space-y-1">
-                <li>🔔 Nova transação registrada</li>
-                <li>⚠️ Alerta de risco</li>
-                <li>📊 Relatório disponível</li>
-              </ul>
+              <p className="text-sm text-slate-500">Nenhuma notificação no momento</p>
             </div>
           )}
         </div>

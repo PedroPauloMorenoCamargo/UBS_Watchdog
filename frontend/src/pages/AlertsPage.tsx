@@ -1,5 +1,6 @@
 // AlertsPage.tsx
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { useSignalR } from "@/hooks/useSignalR";
 import { useCases } from "@/hooks/useCases";
 import {
   Select,
@@ -14,6 +15,7 @@ import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AlertsTable } from "@/components/ui/tables/alertstable";
 import { StatCard } from "@/components/ui/statcard";
 import { Pagination } from "@/components/ui/pagination";
+import { ToastContainer } from "@/components/ui/toast";
 
 import type { SeverityFilter } from "@/types/alert";
 import type { StatusFilter } from "@/types/status";
@@ -28,6 +30,7 @@ export function AlertsPage() {
   const [severity, setSeverity] = useState<SeverityFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [toasts, setToasts] = useState<Array<{ id: string; message: string; type?: "success" | "error" | "info" | "warning" }>>([]);
 
   const fetchCasesWithPagination = useCallback(
     () => fetchCases({ page: currentPage, pageSize: PAGE_SIZE }),
@@ -38,6 +41,60 @@ export function AlertsPage() {
     fetcher: fetchCasesWithPagination,
     deps: [currentPage],
   });
+
+  // Get access token from localStorage
+  const accessToken = useMemo(() => {
+    const authStorage = localStorage.getItem("ubs-monitoring-auth");
+    console.log("[SignalR Debug] Auth storage found:", !!authStorage);
+    if (!authStorage) return null;
+    try {
+      const { state } = JSON.parse(authStorage);
+      console.log("[SignalR Debug] Token found:", !!state?.token);
+      return state?.token || null;
+    } catch (e) {
+      console.error("[SignalR Debug] Error parsing auth:", e);
+      return null;
+    }
+  }, []);
+  
+  // Initialize SignalR connection
+  const signalR = useSignalR(accessToken);
+
+  // Listen for case opened events
+  useEffect(() => {
+    if (!signalR) return;
+
+    const handleCaseOpened = (notification: any) => {
+      console.log("New case opened:", notification);
+      
+      const severityMap: Record<number, string> = {
+        0: "Low",
+        1: "Medium",
+        2: "High",
+        3: "Critical"
+      };
+
+      const severityLabel = severityMap[notification.severity] || "Unknown";
+      
+      setToasts((prev) => [
+        ...prev,
+        {
+          id: notification.caseId,
+          message: `New ${severityLabel} severity alert opened`,
+          type: "warning",
+        },
+      ]);
+
+      // Refresh the alerts table
+      refetch();
+    };
+
+    signalR.on("caseOpened", handleCaseOpened);
+
+    return () => {
+      signalR.off("caseOpened", handleCaseOpened);
+    };
+  }, [signalR, refetch]);
 
 
   const fetchAllCasesForStats = useCallback(
@@ -171,6 +228,8 @@ export function AlertsPage() {
           )}
         </ChartCard>
       </div>
+
+      <ToastContainer toasts={toasts} onRemove={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
     </div>
   );
 }
