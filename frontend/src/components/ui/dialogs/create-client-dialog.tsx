@@ -60,7 +60,7 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
       return;
     }
 
-    await submit({
+    const result = await submit({
       legalType: legalType as LegalTypeApi,           
       name,
       contactNumber: telephone,
@@ -70,13 +70,15 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
       kycStatus: kycStatus as KycStatusApi,          
     });
 
-    onOpenChange(false);
-    onSuccess();
+    if (result.success) {
+      onOpenChange(false);
+      onSuccess();
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={onOpenChange} modal>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Client</DialogTitle>
         </DialogHeader>
@@ -161,7 +163,7 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
               <SelectTrigger>
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="max-h-[200px] overflow-y-auto">
                 {countryList.map((c) => (
                   <SelectItem key={c.code} value={c.code}>
                     {c.name}

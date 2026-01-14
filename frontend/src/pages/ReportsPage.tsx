@@ -1,3 +1,5 @@
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { ReportsTable } from "@/components/ui/tables/reportstable";
@@ -10,35 +12,67 @@ import { fetchClients } from "@/services/clients.service";
 import type { PagedClientsResponseDto } from "@/types/Clients/client";
 import type { PagedTransactionsResponseDto } from "@/types/Transactions/transaction";
 import { UsersByRiskLevelChart } from "@/components/ui/charts/userrisklevelchart";
+import { ClientSearchSelect } from "@/components/ui/clientsearchselect";
 
 export function ReportsPage() {
+  const navigate = useNavigate();
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
 
- const { data : clientsData} = 
-     useApi<PagedClientsResponseDto>({
-       fetcher: fetchClients
-     })
- 
-   const clients = clientsData?.items ?? []
- 
-   const {
-    usersByRiskLevel
- 
-   } = useClients(clients)
+  const { data: clientsData } = useApi<PagedClientsResponseDto>({
+    fetcher: fetchClients,
+  });
 
-  const { data: transactionsData} =
-    useApi<PagedTransactionsResponseDto>({
-      fetcher: fetchTransactions,
-    });
-  
-    const transactions = transactionsData?.items ?? [];
+  const clients = clientsData?.items ?? [];
 
-  const {
-  monthlyVolume,
-} = useTransactions(transactions);
+  const { usersByRiskLevel } = useClients(clients);
+
+  const { data: transactionsData } = useApi<PagedTransactionsResponseDto>({
+    fetcher: fetchTransactions,
+  });
+
+  const transactions = transactionsData?.items ?? [];
+
+  const { monthlyVolume } = useTransactions(transactions);
+
+  // Transform clients to combobox options
+  const clientOptions = useMemo(
+    () => clients.map((c) => ({ value: c.id, label: c.name })),
+    [clients]
+  );
+
+  // Navigate to client report page when a client is selected
+  useEffect(() => {
+    if (selectedClientId) {
+      navigate(`/reports/client/${selectedClientId}`);
+      setSelectedClientId("");
+    }
+  }, [selectedClientId, navigate]);
 
   return (
     <div className="relative bg-cover bg-center">
-     <div className="relative z-10 p-3">
+      <div className="relative z-10 p-3">
+        {/* Generate Client-Specific Report Card */}
+        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-red-600">
+                Generate Client-Specific Report
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Select a client to view detailed compliance analysis, transaction history, and risk assessment
+              </p>
+            </div>
+            <ClientSearchSelect
+              options={clientOptions}
+              value={selectedClientId}
+              onValueChange={setSelectedClientId}
+              placeholder="Select a client"
+              searchPlaceholder="Search clients..."
+            />
+          </div>
+        </div>
+
+        {/* Global Stats Section */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 {/*           
           <div className="rounded-xl bg-white/90 p-6 shadow-lg">

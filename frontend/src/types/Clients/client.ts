@@ -18,9 +18,9 @@ export interface ClientResponseDto {
 export interface PagedClientsResponseDto {
   items: ClientResponseDto[];
   page: number;
-  pageNumber: number;
   pageSize: number;
   totalPages: number;
+  total: number;
 }
 
 

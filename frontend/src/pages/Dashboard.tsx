@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { GeographicDistributionChart } from "@/components/ui/charts/geographicdistributionchart";
 import { TransactionsByTypeChart } from "@/components/ui/charts/transactionchart";
 import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
 import { TransactionsTable } from "@/components/ui/tables/transactionstable";
+import { Pagination } from "@/components/ui/pagination";
 import { DollarSign, ArrowUpRight, ArrowDownRight, 
   ShieldAlert, Minus, Users, TrendingUp, TrendingDown } from "lucide-react";
 
@@ -16,11 +17,19 @@ import type { PagedClientsResponseDto } from "@/types/Clients/client";
 import { fetchClients } from "@/services/clients.service";
 import { useClients } from "@/hooks/useClients";
 
-export function Dashboard() {
+const PAGE_SIZE = 20;
 
-  const { data: transactionsData} =
-  useApi<PagedTransactionsResponseDto>({
-    fetcher: fetchTransactions,
+export function Dashboard() {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchTransactionsWithPagination = useCallback(
+    () => fetchTransactions({ page: currentPage, pageSize: PAGE_SIZE }),
+    [currentPage]
+  );
+
+  const { data: transactionsData } = useApi<PagedTransactionsResponseDto>({
+    fetcher: fetchTransactionsWithPagination,
+    deps: [currentPage],
   });
 
   const transactions = transactionsData?.items ?? [];
@@ -267,6 +276,17 @@ export function Dashboard() {
         <div className="mt-5">
           <ChartCard title="Recent Transactions">      
             <TransactionsTable transactions={transactionRows} />
+            
+            {/* Pagination */}
+            {transactionsData && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={transactionsData.totalPages}
+                totalItems={transactionsData.totalCount}
+                pageSize={PAGE_SIZE}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </ChartCard>
         </div>
       </div>

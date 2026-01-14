@@ -3,11 +3,13 @@ import { useEffect, useState, useCallback } from "react";
 interface UseApiOptions<T> {
   fetcher: () => Promise<T>;
   enabled?: boolean;
+  deps?: unknown[];
 }
 
 export function useApi<T>({
   fetcher,
   enabled = true,
+  deps = [],
 }: UseApiOptions<T>) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(enabled);
@@ -41,7 +43,8 @@ export function useApi<T>({
     return () => {
       mounted = false;
     };
-  }, [fetcher, enabled, refreshKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetcher, enabled, refreshKey, ...deps]);
 
   return { data, loading, error, refetch };
 }

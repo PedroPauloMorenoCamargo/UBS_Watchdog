@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import type { SeverityFilter } from "@/types/alert";
 import type { KycFilter } from "@/types/kycstatus";
 import { useCountries } from "@/hooks/useCountries";
@@ -17,13 +17,12 @@ import { fetchClients } from "@/services/clients.service";
 import { mapClientToTableRow } from "@/mappers/client/client.mapper";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { ClientsTable } from "@/components/ui/tables/clientstable";
-import { ClientFormDialog } from "@/components/ui/clients/ClientFormDialog";
-import { useCreateClient } from "@/hooks/useCreateClient";
 import { useImportClientsCsv } from "@/hooks/useImportCsv";
-import type { CreateClientFormData } from "@/components/ui/clients/ClientForm";
-import type { CreateClientDto } from "@/types/Clients/client";
 import { CreateClientDialog } from "@/components/ui/dialogs/create-client-dialog";
+import { ClientDetailsDialog } from "@/components/ui/dialogs/client-details-dialog";
+import { Pagination } from "@/components/ui/pagination";
 
+const PAGE_SIZE = 20;
 
 export function ClientsPage() {
   const [search, setSearch] = useState("");
@@ -31,24 +30,31 @@ export function ClientsPage() {
   const [countries, setCountries] = useState<string>("all");
   const [kyc, setKyc] = useState<KycFilter>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const { data, loading, error } = useApi({
-    fetcher: fetchClients,
-  });
+  const fetchClientsWithPagination = useCallback(
+    () => fetchClients({ page: currentPage, pageSize: PAGE_SIZE }),
+    [currentPage]
+  );
 
-  const {
-    submit: createNewClient,
-    loading: isCreating,
-  } = useCreateClient();
+  const { data, loading, error, refetch } = useApi({
+    fetcher: fetchClientsWithPagination,
+    deps: [currentPage],
+  });
 
   const {
     submit: importCsv,
     loading: isImporting,
-  } = useImportClientsCsv();
+  } = useImportClientsCsv(() => {
+    setCurrentPage(1); // Reset to first page after import
+    refetch();
+  });
 
-  const { countries: countryList, loading: countriesLoading, error: countriesError } = useCountries();
+  const { countries: countryList } = useCountries();
 
   const clients = useMemo(() => {
     if (!data) return [];
@@ -70,33 +76,6 @@ export function ClientsPage() {
     });
   }, [clients, search, risk, countries, kyc]);
 
-  function handleCountryChange(value: string) {
-    setCountries(value);
-  }
-
-  async function handleCreateClient(formData: CreateClientFormData) {
-    const clientDto: CreateClientDto = {
-      legalType: formData.legalType,
-      name: formData.name,
-      contactNumber: formData.contactNumber,
-      countryCode: formData.countryCode,
-      riskLevel: formData.riskLevel,
-      kycStatus: formData.kycStatus,
-      addressJson: {},
-    };
-
-    const result = await createNewClient(clientDto);
-
-    if (result.success) {
-      alert("Client created successfully!");
-      setDialogOpen(false);
-      window.location.reload();
-    } else {
-      alert(result.error ?? "Error creating client");
-    }
-  }
-
-
   async function handleImportCSV(event: React.ChangeEvent<HTMLInputElement>) {
   const file = event.target.files?.[0];
   if (!file) return;
@@ -110,10 +89,14 @@ export function ClientsPage() {
   await importCsv(file);
 
   alert("CSV imported successfully!");
-  window.location.reload();
 
   event.target.value = "";
 }
+
+  function handleViewClient(clientId: string) {
+    setSelectedClientId(clientId);
+    setDetailsDialogOpen(true);
+  }
   
 
   return (
@@ -229,9 +212,8 @@ export function ClientsPage() {
           <Button
             className="cursor-pointer hover:bg-slate-600"
             onClick={() => setDialogOpen(true)}
-            disabled={isCreating}
           >
-            {isCreating ? "Creating..." : "Create Client"}
+            Create Client
           </Button>
 
           <Button
@@ -249,7 +231,23 @@ export function ClientsPage() {
         <ChartCard title="Clients">
           {loading && <p>Loading...</p>}
           {error && <p className="text-red-500">{error}</p>}
-          {!loading && !error && <ClientsTable clients={filteredClients} />}
+          {!loading && !error && (
+            <ClientsTable 
+              clients={filteredClients} 
+              onViewClient={handleViewClient}
+            />
+          )}
+          
+          {/* Pagination */}
+          {!loading && !error && data && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={data.totalPages}
+              totalItems={data.total}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </ChartCard>
       </div>
 
@@ -257,10 +255,19 @@ export function ClientsPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSuccess={() => {
+          refetch();
           alert("Client created successfully!");
           setDialogOpen(false);
-          }}
+        }}
       />
+
+      {selectedClientId && (
+        <ClientDetailsDialog
+          open={detailsDialogOpen}
+          onOpenChange={setDetailsDialogOpen}
+          clientId={selectedClientId}
+        />
+      )}
     </div>
   );
 }

@@ -5,9 +5,19 @@ import type {
   ImportCsvResponseDto,
 } from "@/types/Clients/client";
 
-export function fetchClients() {
+export interface FetchClientsParams {
+  page?: number;
+  pageSize?: number;
+}
+
+export function fetchClients(params?: FetchClientsParams) {
   return api
-    .get<PagedClientsResponseDto>("api/clients")
+    .get<PagedClientsResponseDto>("api/clients", {
+      params: {
+        page: params?.page ?? 1,
+        pageSize: params?.pageSize ?? 20,
+      },
+    })
     .then((res) => res.data);
 }
 
