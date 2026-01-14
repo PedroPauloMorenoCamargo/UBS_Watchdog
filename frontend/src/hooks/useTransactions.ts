@@ -6,6 +6,9 @@ import { mapCountryCode } from "@/constants/countries";
 import { TRANSACTION_TYPES } from "@/constants/transactionTypes";
 import { MONTHS } from "@/constants/months";
 import { COUNTRY_MAP } from "@/constants/countries";
+import type { CaseDecision, CaseResponseDto } from "@/types/Cases/cases";
+
+import { WEEK_DAYS } from "@/constants/weekdays";
 type Trend = "up" | "down" | "neutral";
 
 interface TransactionsByType {
@@ -41,7 +44,14 @@ interface UseTransactionsResult {
   transactionsCountry: TransactionCountry[];
 }
 
-export function useTransactions(transactions: TransactionResponseDto[]): UseTransactionsResult {
+export function useTransactions(transactions: TransactionResponseDto[], cases: CaseResponseDto[]): UseTransactionsResult {
+  function toDayKey(date: Date | string): string {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0); // LOCAL
+  return d.toISOString().slice(0, 10);
+}
+
+
   const now = new Date();
 
   const totalTransactionsAmount = useMemo(() => {
@@ -107,49 +117,39 @@ export function useTransactions(transactions: TransactionResponseDto[]): UseTran
   }, [transactions]);
 
   const weeklyActivity = useMemo<WeeklyActivity[]>(() => {
-  const map = new Map<string, WeeklyActivity>();
+  // inicializa os 7 dias fixos
+  const data: WeeklyActivity[] = WEEK_DAYS.map(day => ({
+    day,
+    transactions: 0,
+    alerts: 0,
+  }));
 
+  // indexa alerts por tx + weekday
+  const alertsByTxAndDay = new Set<string>();
 
-  const start = new Date();
-  start.setUTCHours(0, 0, 0, 0);
-  start.setUTCDate(start.getUTCDate() - 6);
+  cases.forEach(c => {
+    const d = new Date(c.openedAtUtc);
+    const dayIndex = d.getUTCDay(); // 0 = Sunday
+    alertsByTxAndDay.add(`${c.transactionId}_${dayIndex}`);
+  });
 
-  const end = new Date(); 
+  // percorre transactions
+  transactions.forEach(t => {
+    const d = new Date(t.occurredAtUtc);
+    const dayIndex = d.getUTCDay();
 
-  
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setUTCDate(start.getUTCDate() + i);
+    data[dayIndex].transactions += 1;
 
-    const label = d.toLocaleDateString("en-US", {
-      weekday: "short",
-    });
-
-    map.set(label, {
-      day: label,
-      transactions: 0,
-      alerts: 0, 
-    });
-  }
-
-  
-  transactions.forEach((t) => {
-    const txDate = new Date(t.occurredAtUtc);
-
-    if (txDate >= start && txDate <= end) {
-      const label = txDate.toLocaleDateString("en-US", {
-        weekday: "short",
-      });
-
-      const entry = map.get(label);
-      if (entry) {
-        entry.transactions += 1;
-      }
+    if (alertsByTxAndDay.has(`${t.id}_${dayIndex}`)) {
+      data[dayIndex].alerts += 1;
     }
   });
 
-  return Array.from(map.values());
-}, [transactions]);
+  return data;
+}, [transactions, cases]);
+
+
+
 
   const monthlyVolume = useMemo(() => {
   const volumeByMonth = new Map<number, number>();

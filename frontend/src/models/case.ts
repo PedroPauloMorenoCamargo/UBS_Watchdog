@@ -1,4 +1,4 @@
-// models/case.models.ts
+
 import type { CaseDecision} from "@/types/Cases/cases";
 import type { Severity } from "@/types/alert";
 import type { Status } from "@/types/status";
@@ -13,6 +13,6 @@ export interface CaseTableRow {
   analystName: string;
   severity: Severity;
   findingsCount: number;
-  openedAt: string;
+  openedAtUtc: string;
   resolvedAt?: string | null;
 }

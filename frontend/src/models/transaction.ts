@@ -6,6 +6,7 @@ export type TransactionRow = {
   type: string;
   method?: string;
   clientId: string;
-  counterPartyName?: string;
+  counterIdentifier?: string;
   country?: string;
+  currencyCode?: string;
 };
