@@ -145,7 +145,7 @@ export function ClientsPage() {
               <SelectTrigger className="h-9 w-full">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="max-h-[200px] overflow-y-auto">
                 <SelectItem value="all">All</SelectItem>
                 {countryList.map((c) => (
                   <SelectItem key={c.code} value={c.code}>

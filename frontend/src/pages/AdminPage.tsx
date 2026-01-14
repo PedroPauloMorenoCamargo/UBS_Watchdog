@@ -81,7 +81,6 @@ export function AdminPage() {
 
   const rules = useMemo(() => {
     if (!data) return [];
-    // Sort by code to keep rules in a fixed position
     return data.items
       .map(mapDtoToRule)
       .sort((a, b) => a.code.localeCompare(b.code));
@@ -126,7 +125,7 @@ export function AdminPage() {
     scope?: string;
     parameters?: Record<string, unknown>;
   }) => {
-    // Remove undefined fields
+
     const cleanData = Object.fromEntries(
       Object.entries(data).filter(([, v]) => v !== undefined)
     );
@@ -136,9 +135,21 @@ export function AdminPage() {
       return;
     }
 
+    const severityMap: Record<string, number> = {
+      "Low": 0,
+      "Medium": 1,
+      "High": 2,
+      "Critical": 3
+    };
+
+    const payload: any = { ...cleanData };
+    if (data.severity) {
+      payload.severity = severityMap[data.severity];
+    }
+
     setIsSaving(true);
     try {
-      await patchRule(id, cleanData);
+      await patchRule(id, payload);
       setIsConfigureOpen(false);
       refetch();
     } catch (err) {
@@ -150,7 +161,7 @@ export function AdminPage() {
   }, [refetch]);
 
   const handleDeleteRule = useCallback((id: string) => {
-    // To delete a rule, you can disable it or implement a DELETE endpoint
+
     console.log("Delete rule:", id);
     alert("Delete functionality not implemented. Use the toggle to disable the rule.");
   }, []);
@@ -221,11 +232,9 @@ export function AdminPage() {
           <TabsContent value="audit">
             <ChartCard title="Audit Log">
               {auditLogsError && <p className="text-red-500 text-center py-8">{auditLogsError}</p>}
-              
-              {/* Initial loading state (no data yet) */}
+ 
               {auditLogsLoading && !auditLogsData && <p className="text-center py-8">Loading audit logs...</p>}
 
-              {/* Data display (dimmed when refreshing) */}
               {auditLogsData && (
                 <div className={auditLogsLoading ? "opacity-60 transition-opacity pointer-events-none" : ""}>
                   <div className="mb-4 flex justify-end">
@@ -237,7 +246,7 @@ export function AdminPage() {
                         } else {
                           setSelectedAction(Number(val) as AuditAction);
                         }
-                        setAuditPage(1); // Reset to first page on filter change
+                        setAuditPage(1);
                       }}
                     >
                       <SelectTrigger className="w-[180px]">

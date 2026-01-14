@@ -19,7 +19,7 @@ export type Rule = {
 export type PatchRuleRequest = {
   name?: string;
   isActive?: boolean;
-  severity?: "Low" | "Medium" | "High" | "Critical";
+  severity?: number;
   scope?: string;
   parameters?: Record<string, unknown>;
 };

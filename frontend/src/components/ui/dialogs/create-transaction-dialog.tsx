@@ -25,17 +25,12 @@ interface Props {
 
 export function CreateTransactionDialog({ isOpen, onClose, onCreated }: Props) {
 
-  // Seleção de cliente, conta e identificador
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [selectedIdentifierId, setSelectedIdentifierId] = useState<string>("");
-
-  // Hooks de busca
   const { clients, loading: loadingClients } = useClientsWithAccountsSimple();
   const { accounts, loading: loadingAccounts } = useClientAccounts(selectedClientId);
   const { identifiers, loading: loadingIdentifiers } = useClientAccountIdentifiers(selectedAccountId);
-
-  // Dados da transação
   const [type, setType] = useState<TransactionTypeApi>(0);
   const [transferMethod, setTransferMethod] = useState<TransferMethodApi | null>(null);
   const [amount, setAmount] = useState<string>("");
@@ -118,7 +113,6 @@ export function CreateTransactionDialog({ isOpen, onClose, onCreated }: Props) {
     }
   };
 
-  // Helper para nomear os tipos
   const getIdentifierTypeName = (type: number) => {
     switch (type) {
       case 0: return "CPF";
@@ -142,7 +136,6 @@ export function CreateTransactionDialog({ isOpen, onClose, onCreated }: Props) {
         </DialogHeader>
 
         <div className="flex gap-4 py-4">
-          {/* Dropdown Cliente */}
           <div className="w-full">
             <label className="text-xs font-medium text-slate-500">Cliente</label>
             <Select value={selectedClientId} onValueChange={(v) => { setSelectedClientId(v); setSelectedAccountId(""); setSelectedIdentifierId(""); }}>
@@ -156,8 +149,6 @@ export function CreateTransactionDialog({ isOpen, onClose, onCreated }: Props) {
               </SelectContent>
             </Select>
           </div>
-
-          {/* Dropdown Conta */}
           <div className="w-full max-w-xs">
             <label className="text-xs font-medium text-slate-500">Conta</label>
             <Select value={selectedAccountId} onValueChange={(v) => { setSelectedAccountId(v); setSelectedIdentifierId(""); }} disabled={!selectedClientId}>
@@ -174,7 +165,6 @@ export function CreateTransactionDialog({ isOpen, onClose, onCreated }: Props) {
         </div>
 
         <div className="py-2">
-          {/* Dropdown Identificador */}
           <div className="mb-4">
             <label className="text-xs font-medium text-slate-500">Account Identifier</label>
             <Select value={selectedIdentifierId} onValueChange={setSelectedIdentifierId} disabled={!selectedAccountId}>
@@ -189,7 +179,6 @@ export function CreateTransactionDialog({ isOpen, onClose, onCreated }: Props) {
             </Select>
           </div>
 
-          {/* Só exibe o restante se conta estiver selecionada */}
           {selectedAccountId && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

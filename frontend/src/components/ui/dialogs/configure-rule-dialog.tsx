@@ -18,9 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { CountriesResponseDto } from "@/types/Countries/countries";
 import type { Rule } from "@/types/rules";
 import { Loader2, X } from "lucide-react";
-import { fetchCountries, type CountryDto } from "@/services/countries.service";
+import { fetchCountries} from "@/services/countries.service";
 
 interface Props {
   open: boolean;
@@ -56,12 +57,10 @@ export function ConfigureRuleDialog({
   const [scope, setScope] = useState("");
   const [parameters, setParameters] = useState<Record<string, unknown>>({});
   
-  // Countries state for banned_countries rule
-  const [countries, setCountries] = useState<CountryDto[]>([]);
+  const [countries, setCountries] = useState<CountriesResponseDto[]>([]);
   const [countriesLoading, setCountriesLoading] = useState(false);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
 
-  // Load countries when dialog opens
   useEffect(() => {
     if (open && rule?.code.toLowerCase().includes("banned_countries")) {
       setCountriesLoading(true);
@@ -72,7 +71,6 @@ export function ConfigureRuleDialog({
     }
   }, [open, rule?.code]);
 
-  // Reset form when rule changes
   useEffect(() => {
     if (rule) {
       setName(rule.name);
@@ -81,7 +79,6 @@ export function ConfigureRuleDialog({
       setScope(rule.scope ?? "global");
       setParameters(rule.parameters);
       
-      // Set selected countries from parameters
       if (rule.code.toLowerCase().includes("banned_countries") && rule.parameters.countries) {
         setSelectedCountries(rule.parameters.countries as string[]);
       } else {
@@ -142,7 +139,6 @@ export function ConfigureRuleDialog({
   }
 
   function handleArrayParameterChange(key: string, value: string) {
-    // Parse comma-separated values into array
     const array = value.split(",").map((v) => v.trim()).filter(Boolean);
     setParameters((prev) => ({
       ...prev,
@@ -163,7 +159,6 @@ export function ConfigureRuleDialog({
 
     const code = rule.code.toLowerCase();
 
-    // Daily Limit rule
     if (code.includes("daily_limit")) {
       return (
         <div className="space-y-2">
@@ -184,7 +179,6 @@ export function ConfigureRuleDialog({
       );
     }
 
-    // Banned Countries rule
     if (code.includes("banned_countries")) {
       return (
         <div className="space-y-4">
@@ -200,7 +194,7 @@ export function ConfigureRuleDialog({
                 <SelectTrigger>
                   <SelectValue placeholder="Select a country to ban" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="max-h-[200px] overflow-y-auto">
                   {countries
                     .filter((c) => !selectedCountries.includes(c.code))
                     .sort((a, b) => a.name.localeCompare(b.name))
@@ -214,7 +208,6 @@ export function ConfigureRuleDialog({
             )}
           </div>
 
-          {/* Selected countries badges */}
           {selectedCountries.length > 0 && (
             <div className="space-y-2">
               <Label>Banned Countries ({selectedCountries.length})</Label>
@@ -238,7 +231,6 @@ export function ConfigureRuleDialog({
             </div>
           )}
 
-          {/* JSON preview (read-only) */}
           <div className="space-y-2">
             <Label>Parameters Preview (JSON)</Label>
             <pre className="w-full p-2 text-xs bg-gray-50 border rounded-md font-mono overflow-auto max-h-[100px]">
@@ -249,7 +241,6 @@ export function ConfigureRuleDialog({
       );
     }
 
-    // Banned Accounts rule - use JSON editor
     if (code.includes("banned_accounts")) {
       return (
         <div className="space-y-2">
@@ -261,7 +252,6 @@ export function ConfigureRuleDialog({
               try {
                 setParameters(JSON.parse(e.target.value));
               } catch {
-                // Invalid JSON, ignore
               }
             }}
           />
@@ -272,7 +262,6 @@ export function ConfigureRuleDialog({
       );
     }
 
-    // Structuring rule
     if (code.includes("structuring")) {
       return (
         <div className="space-y-4">
@@ -307,7 +296,6 @@ export function ConfigureRuleDialog({
       );
     }
 
-    // Generic JSON view for unknown rule types
     return (
       <div className="space-y-2">
         <Label>Parameters (JSON)</Label>
@@ -318,7 +306,6 @@ export function ConfigureRuleDialog({
             try {
               setParameters(JSON.parse(e.target.value));
             } catch {
-              // Invalid JSON, ignore
             }
           }}
         />
@@ -342,7 +329,6 @@ export function ConfigureRuleDialog({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Name */}
           <div className="space-y-2">
             <Label htmlFor="ruleName">Rule Name</Label>
             <Input
@@ -353,7 +339,6 @@ export function ConfigureRuleDialog({
             />
           </div>
 
-          {/* Active Status */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="isActive">Active Rule</Label>
@@ -368,7 +353,6 @@ export function ConfigureRuleDialog({
             />
           </div>
 
-          {/* Severity */}
           <div className="space-y-2">
             <Label>Severity</Label>
             <Select value={severity} onValueChange={(val) => setSeverity(val as typeof severity)}>
@@ -385,7 +369,6 @@ export function ConfigureRuleDialog({
             </Select>
           </div>
 
-          {/* Scope */}
           <div className="space-y-2">
             <Label htmlFor="scope">Scope</Label>
             <Input
@@ -399,7 +382,6 @@ export function ConfigureRuleDialog({
             </p>
           </div>
 
-          {/* Dynamic Parameters */}
           <div className="border-t pt-4">
             <h4 className="font-medium mb-3">Rule Parameters</h4>
             {renderParametersFields()}

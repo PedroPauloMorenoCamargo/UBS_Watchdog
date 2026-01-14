@@ -53,9 +53,17 @@ export function ImportTransactionsCsvDialog({
       onClose();
     } catch (err: any) {
       console.error("CSV import error:", err);
-      const message =
-        err?.response?.data?.title ||
-        "Failed to import CSV. Check the file format and data.";
+      
+      const resData = err?.response?.data;
+      let message = "Failed to import CSV. Check the file format and data.";
+
+      if (typeof resData === "string") {
+        message = resData;
+      } else if (resData) {
+         if (resData.detail) message = resData.detail;
+         else if (resData.title) message = resData.title;
+      }
+      
       setError(message);
     } finally {
       setLoading(false);
@@ -93,7 +101,11 @@ export function ImportTransactionsCsvDialog({
             {file ? file.name + ` (${(file.size / 1024).toFixed(2)} KB)` : "No file selected"}
           </p>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <div className="bg-destructive/15 text-destructive px-3 py-2 rounded-md text-sm font-medium border border-destructive/20">
+              {error}
+            </div>
+          )}
         </div>
 
         <DialogFooter className="flex justify-end gap-2">

@@ -24,11 +24,9 @@ export function useCreateClient() {
     } catch (err: any) {
       let message = "Error creating client";
       
-      // Handle ValidationProblemDetails from backend
       if (err?.response?.data) {
         const data = err.response.data;
-        
-        // Check for validation errors object
+
         if (data.errors && typeof data.errors === "object") {
           const errorMessages = Object.values(data.errors)
             .flat()

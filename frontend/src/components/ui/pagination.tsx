@@ -16,22 +16,19 @@ export function Pagination({
   pageSize = 20,
   onPageChange,
 }: PaginationProps) {
-  // Don't show pagination if there's only one page
+
   if (totalPages <= 1) return null;
 
   const canGoPrevious = currentPage > 1;
   const canGoNext = currentPage < totalPages;
 
-  // Calculate visible page numbers - always show 5, centered on current page when possible
   const getVisiblePages = () => {
     const pages: number[] = [];
     const maxVisible = 5;
     
-    // Try to center the current page
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let end = Math.min(totalPages, start + maxVisible - 1);
     
-    // If we're near the end, adjust start to still show 5 pages
     if (end - start + 1 < maxVisible) {
       start = Math.max(1, end - maxVisible + 1);
     }
@@ -44,8 +41,6 @@ export function Pagination({
   };
 
   const visiblePages = getVisiblePages();
-
-  // Calculate item range for display
   const startItem = (currentPage - 1) * pageSize + 1;
   const endItem = totalItems 
     ? Math.min(currentPage * pageSize, totalItems)
@@ -53,7 +48,6 @@ export function Pagination({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-2">
-      {/* Item count info */}
       {totalItems && (
         <p className="text-sm text-slate-500">
           Showing <span className="font-medium">{startItem}</span> to{" "}
@@ -62,9 +56,7 @@ export function Pagination({
         </p>
       )}
 
-      {/* Pagination controls */}
       <div className={`flex items-center gap-1 ${!totalItems ? 'sm:ml-auto' : ''}`}>
-        {/* First page button */}
         <Button
           variant="outline"
           size="icon"
@@ -76,7 +68,6 @@ export function Pagination({
           <ChevronsLeft className="h-4 w-4" />
         </Button>
 
-        {/* Previous page button */}
         <Button
           variant="outline"
           size="icon"
@@ -88,7 +79,6 @@ export function Pagination({
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        {/* Page numbers */}
         <div className="flex items-center gap-1">
           {visiblePages.map((page) => (
             <Button
@@ -103,7 +93,6 @@ export function Pagination({
           ))}
         </div>
 
-        {/* Next page button */}
         <Button
           variant="outline"
           size="icon"
@@ -115,7 +104,6 @@ export function Pagination({
           <ChevronRight className="h-4 w-4" />
         </Button>
 
-        {/* Last page button */}
         <Button
           variant="outline"
           size="icon"

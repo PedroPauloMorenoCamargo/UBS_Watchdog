@@ -18,9 +18,12 @@ export function AppLayout() {
       <div className="flex flex-col flex-1 min-w-0">
         <Header />
 
-        <main className="flex-1 bg-slate-100 p-6 min-w-0 overflow-x-hidden">
-          <h3 className="mb-1 text-xl font-semibold leading-tight">
-            {title}</h3>
+        <main className="flex-1 bg-muted/40 p-8 min-w-0 overflow-x-hidden">
+          <div className="mb-8 flex items-center justify-between">
+             <h3 className="text-2xl font-semibold tracking-tight text-foreground">
+              {title}
+            </h3>
+          </div>
           <Outlet />
         </main>
       </div>

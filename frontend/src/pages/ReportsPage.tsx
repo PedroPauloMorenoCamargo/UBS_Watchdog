@@ -32,8 +32,6 @@ export function ReportsPage() {
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [isExporting, setIsExporting] = useState(false);
   const navigate = useNavigate();
-
-  // ====== FETCH DATA ======
   const { data: casesData } = useApi<PagedCasesResponseDto>({ fetcher: fetchCases });
   const fetchClientsPage = useMemo(
     () => () => fetchClients({ page: currentPage, pageSize: PAGE_SIZE }),
@@ -47,19 +45,10 @@ export function ReportsPage() {
   const mappedCases = mapPagedCasesDtoToTableRows({ items: cases });
   const clients = clientsData?.items ?? [];
   const transactions = transactionsData?.items ?? [];
-
-  // Memoiza clients para evitar loop infinito
   const clientsMemo = useMemo(() => clients, [clientsData?.items, currentPage]);
-
-  // ====== USE REPORTS HOOK COM PAGINAÇÃO ======
   const { reports: pagedReports, isLoading } = useReports(clientsMemo, currentPage, PAGE_SIZE, { clientsArePaged: true });
-
-  // Use the server-side total (if available) to calculate total pages so
-  // pagination shows correctly when the API returns paged results.
   const serverTotalClients = clientsData?.total ?? clients.length;
   const totalPages = Math.ceil(serverTotalClients / PAGE_SIZE);
-
-  // ====== CHARTS & METRICS ======
   const { decisionsCount, weeklyAlertsBySeverity } = useCases(mappedCases);
   const { usersByRiskLevel } = useClients(clients);
   const { monthlyVolume } = useTransactions(transactions, cases);
@@ -73,7 +62,6 @@ export function ReportsPage() {
     }
   }, [selectedClientId, navigate]);
 
-  // ====== EXPORT CSV ======
   const handleExportCsv = async () => {
     setIsExporting(true);
     try {
@@ -94,7 +82,6 @@ export function ReportsPage() {
     }
   };
 
-  // ====== EXPORT PDF ======
   const handleExportPdf = async () => {
     setIsExporting(true);
     const element = document.getElementById("reports-content");
@@ -121,11 +108,9 @@ export function ReportsPage() {
     }
   };
 
-  // ====== RENDER ======
   return (
     <div className="relative bg-cover bg-center">
       <div className="relative z-10 p-3">
-        {/* HEADER */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Compliance Reports</h1>
@@ -141,7 +126,6 @@ export function ReportsPage() {
           </div>
         </div>
 
-        {/* CLIENT SELECT */}
         <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -158,16 +142,13 @@ export function ReportsPage() {
           </div>
         </div>
 
-        {/* REPORTS CONTENT */}
         <div id="reports-content">
-          {/* STAT CARDS */}
           <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
             <StatCard title="Fraudulent" value={decisionsCount.fraudulent} variant="destructive" />
             <StatCard title="Not Fraudulent" value={decisionsCount.notFraudulent} variant="low" />
             <StatCard title="Inconclusive" value={decisionsCount.inconclusive} variant="default" />
           </div>
 
-          {/* CHARTS */}
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
             <ChartCard title="Transaction Volume by Month">
               <AdaptiveLineChart
@@ -188,8 +169,6 @@ export function ReportsPage() {
               <AlertSeverityBarChart data={weeklyAlertsBySeverity} />
             </ChartCard>
           </div>
-
-          {/* REPORTS TABLE COM PAGINAÇÃO */}
           <div className="mt-5">
             <ChartCard title="Generated Reports">
               {isLoading ? (

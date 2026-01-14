@@ -9,17 +9,16 @@ export interface AccountResponseDto {
 }
 
 export async function fetchMyAccount(): Promise<AccountResponseDto> {
-  // Supondo que você tenha o accountId do login armazenado no token
   const stored = localStorage.getItem("AUTH_STORAGE_KEY");
   if (!stored) throw new Error("No login data found");
 
   const { state } = JSON.parse(stored);
-  const accountId = state?.accountId; // ⚠️ aqui é fundamental ter o accountId no login
+  const accountId = state?.accountId; // Here we expect the accountId to be in the login data
 
   if (!accountId) throw new Error("Account ID not found in login data");
 
   const res = await api.get(`/accounts/${accountId}/identifiers`);
-  // Mapear para AccountResponseDto
+
   const accountData: AccountResponseDto = {
     id: accountId,
     accountNumber: res.data.accountNumber,

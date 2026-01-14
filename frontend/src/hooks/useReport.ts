@@ -11,8 +11,6 @@ export function useReports(
 ) {
   const [reports, setReports] = useState<ClientReportDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Calcula total de páginas baseado na lista completa de clients
   const totalPages = Math.ceil(clients.length / pageSize);
 
   useEffect(() => {
@@ -26,8 +24,6 @@ export function useReports(
     const loadReports = async () => {
       setIsLoading(true);
       try {
-        // Se os `clients` já representam uma página trazida do servidor,
-        // usa-os diretamente; caso contrário, faz a paginação no cliente.
         let clientsPage: ClientResponseDto[];
         if (options?.clientsArePaged) {
           clientsPage = clients;
@@ -36,8 +32,7 @@ export function useReports(
           const end = start + pageSize;
           clientsPage = clients.slice(start, end);
         }
-
-        // Busca relatórios apenas desses clients
+        
         const results = await Promise.all(
           clientsPage.map(c => fetchClientReport(c.id))
         );

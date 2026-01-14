@@ -1,13 +1,10 @@
 // React standard imports
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// UBS images
 import UbsLogo from "@/assets/svg/ubs_logo.svg";
 import loginBg from "@/assets/png/ubs.jpg";
 
 import { useAuthStore } from "@/store/auth";
-
-// Shadcn/ui
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

@@ -5,9 +5,7 @@ export function requireRole(allowedRoles: string[]) {
   return () => {
     const { user } = useAuthStore.getState();
 
-    // TODO: Implementar sistema de roles/permissões
-    // const role = user?.role;
-    const role = user?.email; // temporariamente usando email
+    const role = user?.email; 
 
     if (!role || !allowedRoles.includes(role)) {
       throw redirect("/dashboard");

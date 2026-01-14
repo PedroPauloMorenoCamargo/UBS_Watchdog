@@ -18,13 +18,13 @@ interface AlertsByTypePieChartProps {
 }
 
 const ALERT_TYPE_COLORS: Record<string, string> = {
-  "Critical": "#ef4444", // red
-  "High": "#f97316", // orange  
-  "Medium": "#eab308", // yellow
-  "Low": "#22c55e", // green
+  "Critical": "#ef4444",
+  "High": "#f97316",
+  "Medium": "#eab308", 
+  "Low": "#22c55e", 
 };
 
-// Severity levels in order for legend
+
 const SEVERITY_LEVELS = [
   { name: "Critical", color: "#ef4444", bgColor: "bg-red-100", iconColor: "text-red-500" },
   { name: "High", color: "#f97316", bgColor: "bg-orange-100", iconColor: "text-orange-500" },
@@ -80,7 +80,6 @@ export function AlertsByTypePieChart({
   if (filteredData.length === 0) {
     return (
       <div className="flex flex-col" style={{ height }}>
-        {/* Legend */}
         <div className="flex justify-center gap-6 mb-4">
           {SEVERITY_LEVELS.map((level) => (
             <div key={level.name} className="flex items-center gap-2">
@@ -101,7 +100,6 @@ export function AlertsByTypePieChart({
 
   return (
     <div className="flex flex-col" style={{ height }}>
-      {/* Legend */}
       <div className="flex justify-center gap-6 mb-4">
         {SEVERITY_LEVELS.map((level) => (
           <div key={level.name} className="flex items-center gap-2">

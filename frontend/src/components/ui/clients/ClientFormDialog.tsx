@@ -26,10 +26,10 @@ export function ClientFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Criar Novo Cliente</DialogTitle>
+          <DialogTitle>Create new client</DialogTitle>
           <DialogDescription>
-            Preencha os dados do cliente para cadastro no sistema.
-            Campos marcados com * são obrigatórios.
+            Fill in the client data to register in the system.
+            Fields marked with * are mandatory.
           </DialogDescription>
         </DialogHeader>
 

@@ -28,13 +28,12 @@ export function useClientsWithAccounts() {
       const clientsResponse = await api.get("/api/clients", {
         params: {
           "Page.Page": 1,
-          "Page.PageSize": 100, // Buscar todos os clientes
+          "Page.PageSize": 100, 
         },
       });
 
       const clientsList = clientsResponse.data.items;
 
-      // Para cada cliente, buscar suas contas
       const clientsWithAccounts = await Promise.all(
         clientsList.map(async (client: any) => {
           try {
@@ -48,7 +47,6 @@ export function useClientsWithAccounts() {
               })),
             };
           } catch (err) {
-            // Se falhar ao buscar contas, retornar cliente sem contas
             return {
               id: client.id,
               name: client.name,
