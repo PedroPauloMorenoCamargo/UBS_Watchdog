@@ -25,6 +25,8 @@ namespace Ubs.Monitoring.Infrastructure;
 using Ubs.Monitoring.Application.AuditLogs;
 using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
 using Ubs.Monitoring.Infrastructure.Persistence.Auditing;
+using Npgsql;
+
 
 public static class DependencyInjection
 {   
