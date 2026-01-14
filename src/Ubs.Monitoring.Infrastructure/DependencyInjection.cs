@@ -28,6 +28,7 @@ using Ubs.Monitoring.Infrastructure.Persistence.Auditing;
 using Npgsql;
 
 
+
 public static class DependencyInjection
 {   
     /// <summary>
