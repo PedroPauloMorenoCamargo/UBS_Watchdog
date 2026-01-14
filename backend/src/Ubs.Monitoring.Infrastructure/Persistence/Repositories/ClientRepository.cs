@@ -52,6 +52,12 @@ public sealed class ClientRepository : IClientRepository
             q = q.Where(c => c.KycStatus == query.KycStatus.Value);
         }
 
+        if (!string.IsNullOrWhiteSpace(query.SearchTerm))
+        {
+            var searchTerm = query.SearchTerm.ToLowerInvariant();
+            q = q.Where(c => c.Name.ToLower().Contains(searchTerm));
+        }
+
         // Apply dynamic ordering
         q = ApplyOrdering(q, query.Page.SortBy, query.Page.SortDir);
 

@@ -40,6 +40,7 @@ export interface PagedTransactionsResponseDto {
   items: TransactionResponseDto[];
   pageNumber: number;
   pageSize: number;
+  totalCount: number;
   totalPages: number;
 }
 

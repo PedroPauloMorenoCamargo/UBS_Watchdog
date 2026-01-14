@@ -21,6 +21,8 @@ import { useImportClientsCsv } from "@/hooks/useImportCsv";
 import { CreateClientDialog } from "@/components/ui/dialogs/create-client-dialog";
 import { ClientDetailsDialog } from "@/components/ui/dialogs/client-details-dialog";
 import { Pagination } from "@/components/ui/pagination";
+import { ToastContainer } from "@/components/ui/toast";
+import { useToast } from "@/hooks/useToast";
 
 const PAGE_SIZE = 20;
 
@@ -34,16 +36,24 @@ export function ClientsPage() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
+  const { toasts, removeToast, success, error: showError } = useToast();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchClientsWithPagination = useCallback(
-    () => fetchClients({ page: currentPage, pageSize: PAGE_SIZE }),
-    [currentPage]
+    () => fetchClients({
+      page: currentPage,
+      pageSize: PAGE_SIZE,
+      searchTerm: search,
+      riskLevel: risk === "all" ? undefined : risk,
+      countryCode: countries === "all" ? undefined : countries,
+      kycStatus: kyc === "all" ? undefined : kyc
+    }),
+    [currentPage, search, risk, countries, kyc]
   );
 
   const { data, loading, error, refetch } = useApi({
     fetcher: fetchClientsWithPagination,
-    deps: [currentPage],
+    deps: [currentPage, search, risk, countries, kyc],
   });
 
   const {
@@ -61,37 +71,20 @@ export function ClientsPage() {
     return data.items.map(mapClientToTableRow);
   }, [data]);
 
-  const filteredClients = useMemo(() => {
-    return clients.filter((t) => {
-      const searchMatch =
-        !search || t.name.toLowerCase().includes(search.toLowerCase());
-
-      const riskMatch = risk === "all" || t.risk.toLowerCase() === risk;
-
-      const countryMatch = countries === "all" || t.country === countries;
-
-      const kycMatch = kyc === "all" || t.kyc.toLowerCase() === kyc;
-
-      return searchMatch && riskMatch && countryMatch && kycMatch;
-    });
-  }, [clients, search, risk, countries, kyc]);
-
   async function handleImportCSV(event: React.ChangeEvent<HTMLInputElement>) {
-  const file = event.target.files?.[0];
-  if (!file) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  if (!file.name.toLowerCase().endsWith(".csv")) {
-    alert("Only CSV files are allowed!");
-    event.target.value = ""; 
-    return;
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      showError("Apenas arquivos CSV são permitidos!");
+      event.target.value = ""; 
+      return;
+    }
+
+    await importCsv(file);
+    success("CSV importado com sucesso!");
+    event.target.value = "";
   }
-
-  await importCsv(file);
-
-  alert("CSV imported successfully!");
-
-  event.target.value = "";
-}
 
   function handleViewClient(clientId: string) {
     setSelectedClientId(clientId);
@@ -101,6 +94,8 @@ export function ClientsPage() {
 
   return (
     <div className="relative w-full max-w-full overflow-x-hidden">
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
       <div className="mt-4 rounded-xl bg-white p-5 shadow">
         <div
           className="grid gap-4 items-end
@@ -233,7 +228,7 @@ export function ClientsPage() {
           {error && <p className="text-red-500">{error}</p>}
           {!loading && !error && (
             <ClientsTable 
-              clients={filteredClients} 
+              clients={clients} 
               onViewClient={handleViewClient}
             />
           )}
@@ -256,7 +251,7 @@ export function ClientsPage() {
         onOpenChange={setDialogOpen}
         onSuccess={() => {
           refetch();
-          alert("Client created successfully!");
+          success("Cliente criado com sucesso!");
           setDialogOpen(false);
         }}
       />

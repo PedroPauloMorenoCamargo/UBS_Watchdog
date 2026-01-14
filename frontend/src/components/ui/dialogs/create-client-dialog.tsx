@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useCreateClient } from "@/hooks/useCreateClient";
 import { useCountriesList } from "@/hooks/useCountriesList";
 
+
 import type { LegalTypeApi } from "@/types/legaltypeapi";
 import type { RiskLevelApi } from "@/types/alert";
 import type { KycStatusApi } from "@/types/kycstatus";
@@ -52,14 +53,15 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
   const [telephone, setTelephone] = useState("");
   const [address, setAddress] = useState("");
 
+
   const { countries: countryList, loading: countriesLoading, error: countriesError } = useCountriesList();
 
-  async function handleSubmit() {
+  async function handleFormSubmit() {
     if (!name || legalType === "" || riskLevel === "" || kycStatus === "" || !countryCode || !telephone || !address) {
       alert("Please fill in all required fields.");
       return;
     }
-
+    
     const result = await submit({
       legalType: legalType as LegalTypeApi,           
       name,
@@ -71,33 +73,45 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
     });
 
     if (result.success) {
+      // Reset form
+      setName("");
+      setLegalType("");
+      setRiskLevel("");
+      setKycStatus("");
+      setCountryCode("");
+      setTelephone("");
+      setAddress("");
+      
       onOpenChange(false);
       onSuccess();
     }
   }
 
+
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} modal>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Client</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange} modal>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Client</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-slate-700">Full Name *</label>
-            <Input
-              placeholder="Ex: John Doe or Company LLC"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
+          <div className="space-y-4">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-slate-700">Full Name *</label>
+              <Input
+                placeholder="Ex: John Doe or Company LLC"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
 
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-slate-700">Type *</label>
-            <Select
-              value={legalType !== "" ? legalType.toString() : ""} 
-              onValueChange={(value) => setLegalType(Number(value) as LegalTypeApi)} 
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-slate-700">Type *</label>
+              <Select
+                value={legalType !== "" ? legalType.toString() : ""} 
+                onValueChange={(value) => setLegalType(Number(value) as LegalTypeApi)} 
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select type" />
@@ -205,11 +219,14 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button onClick={handleFormSubmit} disabled={loading}>
             {loading ? "Creating..." : "Create Client"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+
+  </>
   );
 }
