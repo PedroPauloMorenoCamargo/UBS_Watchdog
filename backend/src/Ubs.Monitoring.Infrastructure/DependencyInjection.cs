@@ -101,7 +101,7 @@ public static class DependencyInjection
         // Logs
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IAuditLogService, AuditLogService>();
-
+        
         return services;
     }
 
