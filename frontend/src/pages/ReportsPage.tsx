@@ -12,12 +12,41 @@ import { fetchClients } from "@/services/clients.service";
 import type { PagedClientsResponseDto } from "@/types/Clients/client";
 import type { PagedTransactionsResponseDto } from "@/types/Transactions/transaction";
 import { UsersByRiskLevelChart } from "@/components/ui/charts/userrisklevelchart";
+import { fetchCases } from "@/services/case.service";
+import type { PagedCasesResponseDto } from "@/types/Cases/cases";
 import { ClientSearchSelect } from "@/components/ui/clientsearchselect";
 
 export function ReportsPage() {
   const navigate = useNavigate();
   const [selectedClientId, setSelectedClientId] = useState<string>("");
 
+ const { data : clientsData} = 
+     useApi<PagedClientsResponseDto>({
+       fetcher: fetchClients
+     })
+ 
+   const clients = clientsData?.items ?? []
+ 
+   const {
+    usersByRiskLevel
+ 
+   } = useClients(clients)
+   const { data: casesData} =
+     useApi<PagedCasesResponseDto>({
+       fetcher: fetchCases,
+     });
+     const cases = casesData?.items ?? [];
+
+  const { data: transactionsData} =
+    useApi<PagedTransactionsResponseDto>({
+      fetcher: fetchTransactions,
+    });
+  
+    const transactions = transactionsData?.items ?? [];
+
+  const {
+  monthlyVolume,
+} = useTransactions(transactions, cases);
   const { data: clientsData } = useApi<PagedClientsResponseDto>({
     fetcher: fetchClients,
   });

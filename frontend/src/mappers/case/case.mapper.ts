@@ -1,4 +1,3 @@
-// mappers/case.mapper.ts
 import type { CaseResponseDto } from "@/types/Cases/cases";
 import type { CaseTableRow } from "@/models/case";
 import { mapRiskLevel } from "../riskLevel.mapper";
@@ -15,8 +14,8 @@ export function mapCaseDtoToTableRow(dto: CaseResponseDto): CaseTableRow {
     analystName: dto.analystName,
     severity: mapRiskLevel(dto.severity),
     findingsCount: dto.findingsCount,
-    openedAt: new Date(dto.openedAt).toLocaleString(),
-    resolvedAt: dto.resolvedAt ? new Date(dto.resolvedAt).toLocaleString() : null,
+    openedAtUtc: new Date(dto.openedAtUtc).toLocaleString(),
+    resolvedAt: dto.resolvedAtUtc ? new Date(dto.resolvedAtUtc).toLocaleString() : null,
   };
 }
 
