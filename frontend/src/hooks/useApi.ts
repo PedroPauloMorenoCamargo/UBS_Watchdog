@@ -18,6 +18,21 @@ export function useApi<T>({
     setRefreshKey((prev) => prev + 1);
   }, []);
 
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetcher();
+      setData(res);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  }, [fetcher]);
+
   useEffect(() => {
     if (!enabled) return;
 
@@ -43,5 +58,5 @@ export function useApi<T>({
     };
   }, [fetcher, enabled, refreshKey]);
 
-  return { data, loading, error, refetch };
+  return { data, loading, error, refetch: fetch };
 }

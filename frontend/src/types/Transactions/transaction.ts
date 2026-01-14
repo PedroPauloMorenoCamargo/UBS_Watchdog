@@ -43,3 +43,25 @@ export interface PagedTransactionsResponseDto {
   pageSize: number;
   totalPages: number;
 }
+
+export interface CreateTransactionDto {
+  accountId: string;
+  type: TransactionTypeApi;
+  amount: number;
+  currencyCode: string;
+  occurredAtUtc: string;
+  transferMethod?: TransferMethodApi;
+  cpName?: string;
+  cpBank?: string;
+  cpBranch?: string;
+  cpAccount?: string;
+  cpIdentifierType?: IdentifierTypeApi;
+  cpIdentifier?: string;
+  cpCountryCode?: string;
+}
+
+export interface ImportTransactionsCsvResponseDto {
+  imported: number;
+  failed: number;
+  errors?: string[];
+}
