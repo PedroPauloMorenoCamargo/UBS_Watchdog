@@ -8,14 +8,22 @@ import type {
 export interface FetchClientsParams {
   page?: number;
   pageSize?: number;
+  searchTerm?: string;
+  riskLevel?: string;
+  countryCode?: string;
+  kycStatus?: string;
 }
 
 export function fetchClients(params?: FetchClientsParams) {
   return api
     .get<PagedClientsResponseDto>("api/clients", {
       params: {
-        page: params?.page ?? 1,
-        pageSize: params?.pageSize ?? 20,
+        "Page.Page": params?.page ?? 1,
+        "Page.PageSize": params?.pageSize ?? 20,
+        SearchTerm: params?.searchTerm || undefined,
+        RiskLevel: params?.riskLevel || undefined,
+        CountryCode: params?.countryCode || undefined,
+        KycStatus: params?.kycStatus || undefined,
       },
     })
     .then((res) => res.data);

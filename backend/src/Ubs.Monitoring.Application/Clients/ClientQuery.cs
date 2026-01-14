@@ -28,4 +28,9 @@ public sealed record ClientQuery
     /// Filter by KYC status.
     /// </summary>
     public KycStatus? KycStatus { get; init; }
+
+    /// <summary>
+    /// Search term to filter clients by name (case-insensitive, partial match).
+    /// </summary>
+    public string? SearchTerm { get; init; }
 }
