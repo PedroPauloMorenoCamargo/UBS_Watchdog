@@ -1,9 +1,10 @@
-using Ubs.Monitoring.Domain.Entities;
+using Ubs.Monitoring.Application.Analysts;
 
 namespace Ubs.Monitoring.Application.Auth;
 
 public interface IAnalystRepository
 {
-    Task<Analyst?> GetByIdAsync(Guid id, CancellationToken ct);
-    Task<Analyst?> GetByEmailAsync(string normalizedEmail, CancellationToken ct);
+    Task<AnalystAuthDto?> GetAuthByEmailAsync(string normalizedEmail, CancellationToken ct);
+
+    Task<AnalystProfileDto?> GetProfileByIdAsync(Guid analystId, CancellationToken ct);
 }

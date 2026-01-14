@@ -55,13 +55,32 @@ class ApiClient:
             headers.update(extra)
         return headers
 
+    # -------------------------------------------------
+    # Low-level request helpers
+    # -------------------------------------------------
+
+    def request(self, method: str, path: str, **kwargs):
+        """
+        Execute a raw HTTP request.
+
+        This is used internally for negative test cases
+        (e.g. invalid JSON, missing body, wrong content-type).
+        """
+        return self.session.request(
+            method=method,
+            url=f"{self.base_url}{path}",
+            headers=self._headers(kwargs.pop("headers", None)),
+            timeout=kwargs.pop("timeout", self.timeout),
+            **kwargs,
+        )
+
     def get(self, path: str, **kwargs):
         """
         Execute a HTTP GET request.
 
         Args:
             path: API path relative to the base URL (e.g. "/api/health").
-            **kwargs: Additional arguments forwarded to requests.Session.get() (e.g. params, json, headers override).
+            **kwargs: Additional arguments forwarded to requests.Session.get().
 
         Returns:
             requests.Response object.
@@ -78,8 +97,8 @@ class ApiClient:
         Execute a HTTP POST request.
 
         Args:
-            path: API path relative to the base URL. (e.g. "/api/auth/login").
-            **kwargs: Additional arguments forwarded to requests.Session.post() (e.g. json, data).
+            path: API path relative to the base URL (e.g. "/api/auth/login").
+            **kwargs: Additional arguments forwarded to requests.Session.post().
 
         Returns:
             requests.Response object.
@@ -94,13 +113,6 @@ class ApiClient:
     def put(self, path: str, **kwargs):
         """
         Execute an HTTP PUT request.
-
-        Args:
-            path: API path relative to the base URL (e.g. "/api/analysts/me/profile-picture").
-            **kwargs: Additional arguments forwarded to requests.Session.put() (e.g. json, data).
-
-        Returns:
-            requests.Response object.
         """
         return self.session.put(
             f"{self.base_url}{path}",
@@ -112,13 +124,6 @@ class ApiClient:
     def patch(self, path: str, **kwargs):
         """
         Execute an HTTP PATCH request.
-
-        Args:
-            path: API path relative to the base URL (e.g. "/api/rules/{id}").
-            **kwargs: Additional arguments forwarded to requests.Session.patch() (e.g. json, data).
-
-        Returns:
-            requests.Response object.
         """
         return self.session.patch(
             f"{self.base_url}{path}",
@@ -127,9 +132,22 @@ class ApiClient:
             **kwargs,
         )
 
-    # -----------------------------
+    def post_raw(self, path: str, data: bytes, content_type: str, headers=None):
+        """
+        Send a raw POST request, used for negative cases:
+            - invalid JSON
+            - missing body
+            - wrong content type
+        """
+        h = {"Content-Type": content_type}
+        if headers:
+            h.update(headers)
+
+        return self.request("POST", path, data=data, headers=h)
+
+    # -------------------------------------------------
     # Convenience API calls
-    # -----------------------------
+    # -------------------------------------------------
 
     def health(self):
         """
@@ -139,6 +157,10 @@ class ApiClient:
             GET /api/health
         """
         return self.get("/api/health")
+
+    # -----------------------------
+    # Auth endpoints
+    # -----------------------------
 
     def auth_login(self, email: str, password: str):
         """
@@ -158,6 +180,19 @@ class ApiClient:
         """
         return self.get("/api/auth/me")
 
+    def auth_logout(self):
+        """
+        Logout the currently authenticated analyst.
+
+        Endpoint:
+            POST /api/auth/logout
+        """
+        return self.post("/api/auth/logout")
+
+    # -----------------------------
+    # Analysts endpoints
+    # -----------------------------
+
     def analyst_get(self, analyst_id: str):
         """
         Retrieve an analyst profile by ID.
@@ -174,7 +209,10 @@ class ApiClient:
         Endpoint:
             PATCH /api/analysts/me/profile-picture
         """
-        return self.patch("/api/analysts/me/profile-picture", json={"profilePictureBase64": base64_payload})
+        return self.patch(
+            "/api/analysts/me/profile-picture",
+            json={"profilePictureBase64": base64_payload},
+        )
 
     # -----------------------------
     # Rules endpoints
@@ -186,12 +224,6 @@ class ApiClient:
 
         Endpoint:
             GET /api/rules
-
-        Args:
-            params: Optional query-string parameters (page, pageSize, ruleType, isActive, severity, scope, sortBy, sortDir).
-
-        Returns:
-            requests.Response object.
         """
         return self.get("/api/rules", params=params or {})
 
@@ -210,14 +242,7 @@ class ApiClient:
 
         Endpoint:
             PATCH /api/rules/{id}
-
-        Args:
-            payload: Patch payload (camelCase keys): name, isActive, severity, scope, parameters
-
-        Returns:
-            requests.Response object.
         """
         if payload is None:
-            # Send no JSON body at all (useful to test invalid payload behavior)
             return self.patch(f"/api/rules/{rule_id}")
         return self.patch(f"/api/rules/{rule_id}", json=payload)

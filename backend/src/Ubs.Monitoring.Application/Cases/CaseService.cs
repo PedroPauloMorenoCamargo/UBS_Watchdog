@@ -109,7 +109,7 @@ public sealed class CaseService : ICaseService
             // Handle analyst assignment
             if (request.AnalystId.HasValue)
             {
-                var analyst = await _analysts.GetByIdAsync(request.AnalystId.Value, ct);
+                var analyst = await _analysts.GetProfileByIdAsync(request.AnalystId.Value, ct);
                 if (analyst is null)
                 {
                     return (null, $"Analyst with ID '{request.AnalystId.Value}' not found.");
@@ -184,7 +184,7 @@ public sealed class CaseService : ICaseService
     {
         _logger.LogInformation("Assigning case {CaseId} to analyst {AnalystId}", caseId, analystId);
 
-        var analyst = await _analysts.GetByIdAsync(analystId, ct);
+        var analyst = await _analysts.GetProfileByIdAsync(analystId, ct);
         if (analyst is null)
         {
             _logger.LogWarning("Assign failed: Analyst {AnalystId} not found", analystId);

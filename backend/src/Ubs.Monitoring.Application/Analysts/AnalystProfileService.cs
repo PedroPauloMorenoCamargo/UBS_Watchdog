@@ -2,7 +2,6 @@ namespace Ubs.Monitoring.Application.Analysts;
 
 public sealed class AnalystProfileService : IAnalystProfileService
 {
-    private const int MaxProfilePictureBytes = 2 * 1024 * 1024; // 2MB
     private readonly IAnalystProfileRepository _repo;
 
     public AnalystProfileService(IAnalystProfileRepository repo)
@@ -11,43 +10,36 @@ public sealed class AnalystProfileService : IAnalystProfileService
     }
 
     /// <summary>
-    /// Updates or clears profile picture. Accepts optional data URI prefix.
-    /// Max size: 2MB. If null/empty, clears the picture.
+    /// Updates or clears the analyst's profile picture.
     /// </summary>
-    public async Task<bool> UpdateProfilePictureAsync(Guid analystId, string? base64, CancellationToken ct)
+    /// <param name="analystId">
+    /// Unique identifier of the analyst whose profile picture will be updated.
+    /// </param>
+    /// <param name="profilePictureBase64">
+    /// Base64-encoded image string representing the new profile picture.
+    /// May optionally include a data URI prefix (e.g. <c>data:image/png;base64,...</c>).
+    /// Pass <c>null</c> to remove the existing profile picture.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// <c>true</c> if the analyst exists and the profile picture was successfully updated or cleared;
+    /// <c>false</c> if the analyst does not exist.
+    /// </returns>
+    public async Task<bool> UpdateProfilePictureAsync( Guid analystId, string? profilePictureBase64, CancellationToken ct)
     {
         var analyst = await _repo.GetForUpdateAsync(analystId, ct);
-        if (analyst is null) return false;
-
-        // allow clearing
-        if (string.IsNullOrWhiteSpace(base64))
+        if (analyst is null)
+            return false;
+        if (profilePictureBase64 is null)
         {
             analyst.UpdateProfilePicture(null);
             await _repo.SaveChangesAsync(ct);
             return true;
         }
+        analyst.UpdateProfilePicture(profilePictureBase64);
 
-        // accept optional data-uri prefix
-        base64 = base64.Trim();
-        var commaIdx = base64.IndexOf(',');
-        if (base64.StartsWith("data:", StringComparison.OrdinalIgnoreCase) && commaIdx > 0)
-            base64 = base64[(commaIdx + 1)..];
-
-        byte[] bytes;
-        try
-        {
-            bytes = Convert.FromBase64String(base64);
-        }
-        catch
-        {
-            throw new ArgumentException("profilePictureBase64 is not valid base64.");
-        }
-
-        if (bytes.Length > MaxProfilePictureBytes)
-            throw new ArgumentException("profilePictureBase64 exceeds 2MB limit.");
-
-        // store normalized base64 (no data-uri)
-        analyst.UpdateProfilePicture(Convert.ToBase64String(bytes));
         await _repo.SaveChangesAsync(ct);
         return true;
     }

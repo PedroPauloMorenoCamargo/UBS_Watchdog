@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ubs.Monitoring.Api.Contracts;
-using Ubs.Monitoring.Api.Extensions;
-using Ubs.Monitoring.Api.Validation;
 using Ubs.Monitoring.Application.Common.Pagination;
 using Ubs.Monitoring.Application.ComplianceRules;
 using Ubs.Monitoring.Domain.Enums;
@@ -123,7 +121,7 @@ public sealed class ComplianceRulesController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Patch(Guid id, [FromBody] PatchRuleRequest req, CancellationToken ct)
+    public async Task<IActionResult> Patch(Guid id, [FromBody] PatchComplianceRuleRequest req, CancellationToken ct)
     {
         if (req is null)
             return Problem(title: "Invalid payload", statusCode: StatusCodes.Status400BadRequest);
