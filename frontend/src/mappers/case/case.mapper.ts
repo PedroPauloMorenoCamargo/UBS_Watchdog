@@ -14,8 +14,10 @@ export function mapCaseDtoToTableRow(dto: CaseResponseDto): CaseTableRow {
     analystName: dto.analystName,
     severity: mapRiskLevel(dto.severity),
     findingsCount: dto.findingsCount,
-    openedAtUtc: new Date(dto.openedAtUtc).toLocaleString(),
-    resolvedAt: dto.resolvedAtUtc ? new Date(dto.resolvedAtUtc).toLocaleString() : null,
+    openedAtUtc: dto.openedAtUtc ? new Date(dto.openedAtUtc).toLocaleString('sv').replace('T', ' ').slice(0, 16) : '',
+    resolvedAt: dto.resolvedAtUtc ? new Date(dto.resolvedAtUtc).toLocaleString('sv').replace('T', ' ').slice(0, 16) : null,
+    totalAmount: dto.totalAmount,
+    currencyCode: dto.currencyCode,
   };
 }
 

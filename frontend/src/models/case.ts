@@ -15,4 +15,6 @@ export interface CaseTableRow {
   findingsCount: number;
   openedAtUtc: string;
   resolvedAt?: string | null;
+  totalAmount: number;
+  currencyCode: string;
 }
