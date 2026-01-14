@@ -7,6 +7,8 @@ using Ubs.Monitoring.Application.ComplianceRules;
 using Ubs.Monitoring.Application.Transactions.Repositories;
 using Ubs.Monitoring.Domain.Entities;
 using Ubs.Monitoring.Domain.Enums;
+using Ubs.Monitoring.Application.Cases.Notifications;
+
 
 namespace Ubs.Monitoring.Application.Transactions.Compliance;
 
@@ -16,17 +18,21 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
     private readonly ITransactionRepository _transactions;
     private readonly ICaseRepository _cases;
     private readonly ILogger<TransactionComplianceChecker> _logger;
+    private readonly ICaseNotificationPublisher _caseNotifications;
+
 
     public TransactionComplianceChecker(
         IComplianceRuleRepository rules,
         ITransactionRepository transactions,
         ICaseRepository cases,
-        ILogger<TransactionComplianceChecker> logger)
+        ILogger<TransactionComplianceChecker> logger,
+        ICaseNotificationPublisher caseNotifications)
     {
         _rules = rules;
         _transactions = transactions;
         _cases = cases;
         _logger = logger;
+        _caseNotifications = caseNotifications;
     }
 
     public async Task CheckAndCreateCaseIfNeededAsync(Transaction tx, CancellationToken ct)
@@ -229,7 +235,22 @@ public sealed class TransactionComplianceChecker : ITransactionComplianceChecker
             }
 
             await _cases.SaveChangesAsync(ct);
+            try
+            {
+                var notification = new CaseOpenedNotification(
+                    CaseId: caseEntity.Id,
+                    ClientId: tx.ClientId,
+                    AccountId: tx.AccountId,
+                    Severity: (int)maxSeverity,
+                    OpenedAtUtc: caseEntity.OpenedAtUtc
+                );
 
+                await _caseNotifications.PublishCaseOpenedAsync(notification, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to publish caseOpened notification for CaseId={CaseId}", caseEntity.Id);
+            }
             _logger.LogWarning(
                 "CASE_CREATED | CaseId={CaseId} | Tx={TransactionId} | Client={ClientId} | Severity={Severity} | ViolationCount={ViolationCount}",
                 caseEntity.Id,

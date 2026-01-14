@@ -38,6 +38,31 @@ export interface CaseResponseDto {
   openedAtUtc: Date;
   updatedAtUtc: Date;
   resolvedAtUtc?: Date | null;
+  totalAmount: number;
+  currencyCode: string;
+}
+
+export interface UpdateCaseRequest {
+  status?: CaseStatus;
+  decision?: CaseDecision;
+  analystId?: string;
+}
+
+export interface CaseFindingDto {
+  id: string;
+  caseId: string;
+  ruleName: string;
+  severity: CaseSeverity;
+  evidenceJson: {
+    amount: number;
+    message: string;
+    [key: string]: any;
+  };
+  createdAtUtc: string;
+}
+
+export interface CaseDetailedResponseDto extends CaseResponseDto {
+  findings: CaseFindingDto[];
 }
 
 
