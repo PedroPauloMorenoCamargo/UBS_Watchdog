@@ -10,3 +10,10 @@ export async function fetchClientDetail(clientId: string): Promise<ClientDetailD
   const response = await api.get(`api/clients/${clientId}`);
   return response.data;
 }
+
+export async function exportSystemReportCsv(): Promise<Blob> {
+  const response = await api.get("api/reports/system/export/csv", {
+    responseType: "blob",
+  });
+  return response.data;
+}

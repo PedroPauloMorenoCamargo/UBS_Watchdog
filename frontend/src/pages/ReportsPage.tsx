@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { Download, FileText } from "lucide-react";
 import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
 import { ChartCard } from "@/components/ui/charts/chartcard";
 import { ReportsTable } from "@/components/ui/tables/reportstable";
@@ -15,10 +16,73 @@ import { UsersByRiskLevelChart } from "@/components/ui/charts/userrisklevelchart
 import { fetchCases } from "@/services/case.service";
 import type { PagedCasesResponseDto } from "@/types/Cases/cases";
 import { ClientSearchSelect } from "@/components/ui/clientsearchselect";
+import { exportSystemReportCsv } from "@/services/reports.service";
+import jsPDF from "jspdf";
+import { domToPng } from "modern-screenshot";
 
 export function ReportsPage() {
   const navigate = useNavigate();
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportCsv = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await exportSystemReportCsv();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `system-report-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error exporting CSV:", err);
+      alert("Failed to export CSV. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setIsExporting(true);
+    const element = document.getElementById("reports-content");
+    if (!element) {
+      alert("Content not found");
+      setIsExporting(false);
+      return;
+    }
+
+    try {
+      // Converte DOM para imagem PNG usando modern-screenshot
+      const imgData = await domToPng(element, {
+        quality: 0.95,
+        backgroundColor: "#ffffff",
+        scale: 2,
+      });
+
+      // Cria PDF e adiciona a imagem
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pdfWidth - 20; // margem de 10mm de cada lado
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+      pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
+      pdf.save(`compliance-reports-${new Date().toISOString().split("T")[0]}.pdf`);
+      setIsExporting(false);
+    } catch (err) {
+      console.error("Error generating PDF:", err);
+      alert("Failed to generate PDF. Please try again.");
+      setIsExporting(false);
+    }
+  };
 
    const { data: casesData} =
      useApi<PagedCasesResponseDto>({
@@ -59,6 +123,32 @@ export function ReportsPage() {
   return (
     <div className="relative bg-cover bg-center">
       <div className="relative z-10 p-3">
+        {/* Header with Export Buttons */}
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Compliance Reports</h1>
+            <p className="text-sm text-slate-500">System-wide compliance and transaction analysis</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportCsv}
+              disabled={isExporting}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </button>
+            <button
+              onClick={handleExportPdf}
+              disabled={isExporting}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FileText className="h-4 w-4" />
+              Export PDF
+            </button>
+          </div>
+        </div>
+
         {/* Generate Client-Specific Report Card */}
         <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
@@ -80,6 +170,8 @@ export function ReportsPage() {
           </div>
         </div>
 
+        {/* Content to be exported */}
+        <div id="reports-content">
         {/* Global Stats Section */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 {/*           
@@ -151,6 +243,7 @@ export function ReportsPage() {
           <ChartCard title="Generated Reports">
             <ReportsTable reports={reportsMock}/>
           </ChartCard>
+        </div>
         </div>
       </div>
     </div>
