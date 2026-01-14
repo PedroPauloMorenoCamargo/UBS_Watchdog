@@ -1,4 +1,5 @@
 import requests
+import io
 
 
 class ApiClient:
@@ -55,16 +56,28 @@ class ApiClient:
             headers.update(extra)
         return headers
 
+    # -------------------------------------------------
+    # Low-level request helpers
+    # -------------------------------------------------
+
+    def request(self, method: str, path: str, **kwargs):
+        """
+        Execute a raw HTTP request.
+
+        This is used internally for negative test cases
+        (e.g. invalid JSON, missing body, wrong content-type).
+        """
+        return self.session.request(
+            method=method,
+            url=f"{self.base_url}{path}",
+            headers=self._headers(kwargs.pop("headers", None)),
+            timeout=kwargs.pop("timeout", self.timeout),
+            **kwargs,
+        )
+
     def get(self, path: str, **kwargs):
         """
         Execute a HTTP GET request.
-
-        Args:
-            path: API path relative to the base URL (e.g. "/api/health").
-            **kwargs: Additional arguments forwarded to requests.Session.get() (e.g. params, json, headers override).
-
-        Returns:
-            requests.Response object.
         """
         return self.session.get(
             f"{self.base_url}{path}",
@@ -76,13 +89,6 @@ class ApiClient:
     def post(self, path: str, **kwargs):
         """
         Execute a HTTP POST request.
-
-        Args:
-            path: API path relative to the base URL. (e.g. "/api/auth/login").
-            **kwargs: Additional arguments forwarded to requests.Session.post() (e.g. json, data).
-
-        Returns:
-            requests.Response object.
         """
         return self.session.post(
             f"{self.base_url}{path}",
@@ -94,13 +100,6 @@ class ApiClient:
     def put(self, path: str, **kwargs):
         """
         Execute an HTTP PUT request.
-
-        Args:
-            path: API path relative to the base URL (e.g. "/api/analysts/me/profile-picture").
-            **kwargs: Additional arguments forwarded to requests.Session.put() (e.g. json, data).
-
-        Returns:
-            requests.Response object.
         """
         return self.session.put(
             f"{self.base_url}{path}",
@@ -112,13 +111,6 @@ class ApiClient:
     def patch(self, path: str, **kwargs):
         """
         Execute an HTTP PATCH request.
-
-        Args:
-            path: API path relative to the base URL (e.g. "/api/rules/{id}").
-            **kwargs: Additional arguments forwarded to requests.Session.patch() (e.g. json, data).
-
-        Returns:
-            requests.Response object.
         """
         return self.session.patch(
             f"{self.base_url}{path}",
@@ -127,23 +119,36 @@ class ApiClient:
             **kwargs,
         )
 
-    # -----------------------------
+    def post_raw(self, path: str, data: bytes, content_type: str, headers=None):
+        """
+        Send a raw POST request, used for negative cases:
+            - invalid JSON
+            - missing body
+            - wrong content type
+        """
+        h = {"Content-Type": content_type}
+        if headers:
+            h.update(headers)
+
+        return self.request("POST", path, data=data, headers=h)
+
+    # -------------------------------------------------
     # Convenience API calls
-    # -----------------------------
+    # -------------------------------------------------
 
     def health(self):
         """
-        Call the health endpoint to verify that API is not down.
-
         Endpoint:
             GET /api/health
         """
         return self.get("/api/health")
 
+    # -----------------------------
+    # Auth endpoints
+    # -----------------------------
+
     def auth_login(self, email: str, password: str):
         """
-        Authenticate an analyst and obtain a JWT token.
-
         Endpoint:
             POST /api/auth/login
         """
@@ -151,17 +156,24 @@ class ApiClient:
 
     def auth_me(self):
         """
-        Retrieve the profile of the currently authenticated analyst.
-
         Endpoint:
             GET /api/auth/me
         """
         return self.get("/api/auth/me")
 
+    def auth_logout(self):
+        """
+        Endpoint:
+            POST /api/auth/logout
+        """
+        return self.post("/api/auth/logout")
+
+    # -----------------------------
+    # Analysts endpoints
+    # -----------------------------
+
     def analyst_get(self, analyst_id: str):
         """
-        Retrieve an analyst profile by ID.
-
         Endpoint:
             GET /api/analysts/{id}
         """
@@ -169,12 +181,13 @@ class ApiClient:
 
     def analyst_update_profile_picture(self, base64_payload: str | None):
         """
-        Update or clear the authenticated analyst's profile picture.
-
         Endpoint:
             PATCH /api/analysts/me/profile-picture
         """
-        return self.patch("/api/analysts/me/profile-picture", json={"profilePictureBase64": base64_payload})
+        return self.patch(
+            "/api/analysts/me/profile-picture",
+            json={"profilePictureBase64": base64_payload},
+        )
 
     # -----------------------------
     # Rules endpoints
@@ -182,23 +195,13 @@ class ApiClient:
 
     def rules_search(self, params: dict | None = None):
         """
-        Search/list compliance rules.
-
         Endpoint:
             GET /api/rules
-
-        Args:
-            params: Optional query-string parameters (page, pageSize, ruleType, isActive, severity, scope, sortBy, sortDir).
-
-        Returns:
-            requests.Response object.
         """
         return self.get("/api/rules", params=params or {})
 
     def rules_get(self, rule_id: str):
         """
-        Retrieve a compliance rule by ID.
-
         Endpoint:
             GET /api/rules/{id}
         """
@@ -206,18 +209,123 @@ class ApiClient:
 
     def rules_patch(self, rule_id: str, payload: dict | None = None):
         """
-        Patch/update a compliance rule.
-
         Endpoint:
             PATCH /api/rules/{id}
-
-        Args:
-            payload: Patch payload (camelCase keys): name, isActive, severity, scope, parameters
-
-        Returns:
-            requests.Response object.
         """
         if payload is None:
-            # Send no JSON body at all (useful to test invalid payload behavior)
             return self.patch(f"/api/rules/{rule_id}")
         return self.patch(f"/api/rules/{rule_id}", json=payload)
+
+    # -----------------------------
+    # Clients endpoints
+    # -----------------------------
+
+    def client_create(self, payload: dict):
+        """
+        Endpoint:
+            POST /api/clients
+        """
+        return self.post("/api/clients", json=payload)
+
+    def clients_search(self, params: dict | None = None):
+        """
+        Endpoint:
+            GET /api/clients
+        """
+        return self.get("/api/clients", params=params or {})
+
+    def client_get(self, client_id: str):
+        """
+        Endpoint:
+            GET /api/clients/{id}
+        """
+        return self.get(f"/api/clients/{client_id}")
+
+    def clients_import(self, file_name: str, file_bytes: bytes, content_type: str = "text/csv"):
+        """
+        Endpoint:
+            POST /api/clients/import (multipart form-data)
+        """
+        files = {
+            "file": (file_name, io.BytesIO(file_bytes), content_type),
+        }
+        return self.post("/api/clients/import", files=files)
+
+    # -------- Accounts --------
+
+    def account_create(self, client_id: str, payload: dict):
+        """
+        Endpoint:
+            POST /api/clients/{clientId}/accounts
+        """
+        return self.post(f"/api/clients/{client_id}/accounts", json=payload)
+
+    def accounts_get_by_client(self, client_id: str):
+        """
+        Endpoint:
+            GET /api/clients/{clientId}/accounts
+        """
+        return self.get(f"/api/clients/{client_id}/accounts")
+
+    def account_get(self, account_id: str):
+        """
+        Endpoint:
+            GET /api/accounts/{accountId}
+        """
+        return self.get(f"/api/accounts/{account_id}")
+
+    def accounts_import(self, client_id: str, file_name: str, file_bytes: bytes):
+        """
+        Endpoint:
+            POST /api/clients/{clientId}/accounts/import (multipart form-data)
+        """
+        files = {
+            "file": (file_name, io.BytesIO(file_bytes), "text/csv"),
+        }
+        return self.post(f"/api/clients/{client_id}/accounts/import", files=files)
+    
+    # -------- Account Identifiers --------
+    def account_identifiers_get_by_account(self, account_id: str):
+        # GET /api/accounts/{accountId}/identifiers
+        return self.get(f"/api/accounts/{account_id}/identifiers")
+
+    def account_identifier_create(self, account_id: str, payload: dict):
+        # POST /api/accounts/{accountId}/identifiers
+        return self.post(f"/api/accounts/{account_id}/identifiers", json=payload)
+
+    def account_identifier_delete(self, identifier_id: str):
+        # DELETE /api/account-identifiers/{identifierId}
+        return self.request("DELETE", f"/api/account-identifiers/{identifier_id}")
+    
+        # -------- Transactions --------
+    def transaction_create(self, payload: dict):
+        # POST /api/transactions
+        return self.post("/api/transactions", json=payload)
+
+    def transactions_search(self, params: dict | None = None):
+        # GET /api/transactions
+        return self.get("/api/transactions", params=params or {})
+
+    def transaction_get(self, transaction_id: str):
+        # GET /api/transactions/{transactionId}
+        return self.get(f"/api/transactions/{transaction_id}")
+
+    def transactions_import(self, file_name: str, file_bytes: bytes, content_type: str = "text/csv"):
+        # POST /api/transactions/import (multipart form-data)
+        files = {"file": (file_name, io.BytesIO(file_bytes), content_type)}
+        return self.post("/api/transactions/import", files=files)
+    # -------- Cases --------
+    def cases_search(self, params: dict | None = None):
+        # GET /api/cases
+        return self.get("/api/cases", params=params or {})
+
+    def case_get(self, case_id: str):
+        # GET /api/cases/{id}
+        return self.get(f"/api/cases/{case_id}")
+
+    def case_findings(self, case_id: str, params: dict | None = None):
+        # GET /api/cases/{caseId}/findings
+        return self.get(f"/api/cases/{case_id}/findings", params=params or {})
+
+
+

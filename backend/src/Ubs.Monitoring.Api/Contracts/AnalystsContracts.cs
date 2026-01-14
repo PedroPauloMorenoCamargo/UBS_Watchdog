@@ -1,6 +1,16 @@
 namespace Ubs.Monitoring.Api.Contracts;
 
 /// <summary>
+/// Request payload to update an analyst profile picture.
+/// </summary>
+/// <param name="ProfilePictureBase64">
+/// Base64-encoded image (optionally prefixed with a data URI, e.g.
+/// <c>data:image/png;base64,...</c>).
+/// Send <c>null</c> to clear the profile picture.
+/// </param>
+public sealed record UpdateProfilePictureRequest(string? ProfilePictureBase64);
+
+/// <summary>
 /// Response containing analyst profile information.
 /// </summary>
 /// <param name="Id">Unique identifier of the analyst.</param>

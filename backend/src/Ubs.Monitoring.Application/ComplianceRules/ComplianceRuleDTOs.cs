@@ -15,3 +15,12 @@ public sealed record ComplianceRuleDto(
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc
 );
+
+
+public record PatchComplianceRuleDto(
+    string? Name,
+    bool? IsActive,
+    Severity? Severity,
+    string? Scope,
+    JsonElement? Parameters
+);

@@ -1,4 +1,4 @@
-namespace Ubs.Monitoring.Api.Validation;
+namespace Ubs.Monitoring.Api.Validation.Sorting;
 
 public static class AuditLogSortFields
 {
@@ -13,6 +13,7 @@ public static class AuditLogSortFields
             "CorrelationId"
         };
 
-    public static bool IsValid(string? sortBy)
-        => !string.IsNullOrWhiteSpace(sortBy) && Allowed.Contains(sortBy.Trim());
+    public static bool IsValid(string field) => Allowed.Contains(field);
+
+    public static string AllowedList() => string.Join(", ", Allowed.OrderBy(x => x));
 }

@@ -16,4 +16,4 @@ def test_health_ok(api, api_up):
     assert_status(r, 200)
 
     body = r.json()
-    assert body.get("status") == "ok"
+    assert body.get("status") == "Healthy"

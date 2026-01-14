@@ -8,28 +8,25 @@ var builder = WebApplication.CreateBuilder(args);
 // Logging
 builder.Host.AddSerilogLogging(builder.Configuration);
 
-// HTTP context
+// HTTP context (needed for ICurrentRequestContext)
 builder.Services.AddHttpContextAccessor();
 
-// Application + Infrastructure registrations
+// Infrastructure + Application
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApiHealthChecks();
 
-
-// API cross-cutting concerns
+// Security
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddAuthorization();
 
+// API layer (controllers, validation, problem details)
 builder.Services.AddApiServices();
 builder.Services.AddSwaggerServices();
 builder.Services.AddFrontendCors(builder.Configuration);
 
 var app = builder.Build();
 
-
 app.UseRouting();
-
-// Request logging and error handling
 app.UseSerilogRequestLogging();
 app.UseApiErrorHandling();
 
@@ -43,6 +40,7 @@ await app.InitializeDatabaseAsync();
 app.UseFrontendCors();
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapApiHealthChecks();
 app.MapControllers();
 app.Run();

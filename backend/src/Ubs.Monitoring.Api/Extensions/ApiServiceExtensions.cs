@@ -1,33 +1,39 @@
 using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.Extensions.DependencyInjection;
 using Ubs.Monitoring.Api.Filters;
+using Ubs.Monitoring.Api.Validation;
 using Ubs.Monitoring.Application.Clients;
 using Ubs.Monitoring.Application.Common;
+
 namespace Ubs.Monitoring.Api.Extensions;
 
 public static class ApiServiceExtensions
 {
     /// <summary>
-    /// Registers core API services, including controllers, endpoint exploration, and Problem Details support.</summary>
-    /// <param name="services">The service collection to register API services into.</param>
-    /// <returns>The same <see cref="IServiceCollection"/> instance for t registration.</returns>
+    /// Registers core API services, validation, and cross-cutting concerns.
+    /// </summary>
     public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
         services.AddControllers(options =>
         {
-            // Global validation filter - automatically validates all requests
+            // Centralized request validation -> RFC7807
             options.Filters.Add<ValidationFilter>();
         });
 
         services.AddEndpointsApiExplorer();
-
-        // RFC7807 / application/problem+json
         services.AddProblemDetails();
 
-        // FluentValidation - registers all validators from Application assembly
-        services.AddValidatorsFromAssemblyContaining<CreateClientRequest>();
-        // Saber quem faz a request
-        services.AddScoped<ICurrentRequestContext, CurrentRequestContext>();
+        // FluentValidation (automatic MVC integration)
 
+        // Scan Application validators
+        services.AddValidatorsFromAssemblyContaining<CreateClientRequest>();
+
+        // Scan API validators (Auth, Analysts, etc.)
+        services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+
+        // Request context (JWT, correlation id, etc.)
+        services.AddScoped<ICurrentRequestContext, CurrentRequestContext>();
 
         return services;
     }

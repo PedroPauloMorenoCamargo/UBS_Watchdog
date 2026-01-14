@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Ubs.Monitoring.Application.Analysts;
 using Ubs.Monitoring.Application.Auth;
-using Ubs.Monitoring.Domain.Entities;
 using Ubs.Monitoring.Infrastructure.Persistence;
 
 namespace Ubs.Monitoring.Infrastructure.Persistence.Repositories;
@@ -14,37 +14,32 @@ public sealed class AnalystRepository : IAnalystRepository
         _db = db;
     }
 
-    /// <summary>
-    /// Retrieves an analyst by its unique identifier.
-    /// </summary>
-    /// <param name="id">
-    /// The unique identifier of the analyst.
-    /// </param>
-    /// <param name="ct">
-    /// Cancellation token used to cancel the operation.
-    /// </param>
-    /// <returns>
-    /// The matching <see cref="Analyst"/> if found; otherwise, <c>null</c>.
-    /// </returns>
-    public Task<Analyst?> GetByIdAsync(Guid id, CancellationToken ct)
+    public Task<AnalystAuthDto?> GetAuthByEmailAsync(string normalizedEmail, CancellationToken ct)
         => _db.Analysts
-              .AsNoTracking()
-              .FirstOrDefaultAsync(a => a.Id == id, ct);
+            .AsNoTracking()
+            .Where(a => a.CorporateEmail == normalizedEmail)
+            .Select(a => new AnalystAuthDto(
+                a.Id,
+                a.CorporateEmail,
+                a.FullName,
+                a.PasswordHash,
+                a.PhoneNumber,
+                a.ProfilePictureBase64,
+                a.CreatedAtUtc
+            ))
+            .FirstOrDefaultAsync(ct);
 
-    /// <summary>
-    /// Retrieves an analyst by its normalized corporate email address.
-    /// </summary>
-    /// <param name="normalizedEmail">
-    /// The normalized corporate email used to identify the analyst.
-    /// </param>
-    /// <param name="ct">
-    /// Cancellation token used to cancel the operation.
-    /// </param>
-    /// <returns>
-    /// The matching <see cref="Analyst"/> if found; otherwise, <c>null</c>.
-    /// </returns>
-    public Task<Analyst?> GetByEmailAsync(string normalizedEmail, CancellationToken ct)
+    public Task<AnalystProfileDto?> GetProfileByIdAsync(Guid analystId, CancellationToken ct)
         => _db.Analysts
-              .AsNoTracking()
-              .FirstOrDefaultAsync(a => a.CorporateEmail == normalizedEmail, ct);
+            .AsNoTracking()
+            .Where(a => a.Id == analystId)
+            .Select(a => new AnalystProfileDto(
+                a.Id,
+                a.CorporateEmail,
+                a.FullName,
+                a.PhoneNumber,
+                a.ProfilePictureBase64,
+                a.CreatedAtUtc
+            ))
+            .FirstOrDefaultAsync(ct);
 }

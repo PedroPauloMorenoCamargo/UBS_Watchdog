@@ -1,3 +1,4 @@
+using Ubs.Monitoring.Application.Analysts;
 namespace Ubs.Monitoring.Application.Auth;
 
 public interface IAuthService
