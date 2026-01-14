@@ -1,3 +1,8 @@
+"use client";
+import { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +22,13 @@ import { ChartCard } from "@/components/ui/charts/chartcard";
 import { TransactionsTable } from "@/components/ui/tables/transactionstable";
 import { useApi } from "@/hooks/useApi";
 import { fetchTransactions } from "@/services/transaction.service";
+import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
+import type { SeverityFilter } from "@/types/alert";
+import { CreateTransactionDialog } from "@/components/ui/dialogs/create-transaction-dialog";
+import { ImportTransactionsCsvDialog } from "@/components/ui/dialogs/import-transactions-csv-dialog";
+
+export function TransactionsPage() {
+  const [type, setType] = useState<"all" | "Wire Transfer" | "Cash Deposit" | "Withdrawal">("all");
 import { Pagination } from "@/components/ui/pagination";
 
 const PAGE_SIZE = 20;
@@ -29,6 +41,7 @@ export function TransactionsPage() {
   const [severity, setSeverity] = useState<SeverityFilter>("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -37,15 +50,20 @@ export function TransactionsPage() {
     [currentPage]
   );
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+
+  const { data, loading, error, refetch } = useApi({
+    fetcher: fetchTransactions,
   const { data, loading, error } = useApi({
     fetcher: fetchTransactionsWithPagination,
     deps: [currentPage],
   });
 
-const transactions = useMemo(() => {
-  if (!data) return [];
-  return data.items.map(mapTransactionToRow);
-}, [data]);
+  const transactions = useMemo(() => {
+    if (!data) return [];
+    return data.items.map(mapTransactionToRow);
+  }, [data]);
 
   const filteredTransactions = useMemo(() => {
   return transactions.filter((t) => {
@@ -83,24 +101,16 @@ const transactions = useMemo(() => {
 }, [transactions, search, type, minAmount, maxAmount, startDate, endDate]);
 
 
+  // exemplo: accountId fixo para criar transaction
+  // retirar e deixar accountid normal 
+  const selectedAccountId = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
 
   return (
     <div className="relative">
       <div className="mt-4 rounded-xl bg-white p-5 shadow">
-        
-        <div
-          className="grid 
-          gap-4 
-          items-end
-          grid-cols-1
-          sm:grid-cols-2
-          lg:grid-cols-3
-          xl:grid-cols-4"
-        >
+        <div className="grid gap-4 items-end grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <div>
-            <label className="text-xs font-medium text-slate-500">
-              Search Parties
-            </label>
+            <label className="text-xs font-medium text-slate-500">Search Parties</label>
             <Input
               placeholder="Sender Client Id or Receiver name..."
               value={search}
@@ -110,9 +120,7 @@ const transactions = useMemo(() => {
           </div>
           
           <div>
-            <label className="text-xs font-medium text-slate-500">
-              Type
-            </label>
+            <label className="text-xs font-medium text-slate-500">Type</label>
             <Select value={type} onValueChange={(v) => setType(v as any)}>
               <SelectTrigger className="h-9 w-full">
                 <SelectValue placeholder="All" />
@@ -127,21 +135,18 @@ const transactions = useMemo(() => {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-500">
-              Start date
-            </label>
-            <Input 
-              type="date" 
+            <label className="text-xs font-medium text-slate-500">Start date</label>
+            <Input
+              type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="h-9 w-full" />
+              className="h-9 w-full"
+            />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-500">
-              End date
-            </label>
-            <Input 
+            <label className="text-xs font-medium text-slate-500">End date</label>
+            <Input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
@@ -150,9 +155,7 @@ const transactions = useMemo(() => {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-500">
-              Min amount
-            </label>
+            <label className="text-xs font-medium text-slate-500">Min amount</label>
             <Input
               type="number"
               placeholder="0"
@@ -163,9 +166,7 @@ const transactions = useMemo(() => {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-500">
-              Max amount
-            </label>
+            <label className="text-xs font-medium text-slate-500">Max amount</label>
             <Input
               type="number"
               placeholder="10000"
@@ -176,7 +177,8 @@ const transactions = useMemo(() => {
           </div>
 
           <div className="flex justify-between">
-            <Button variant="outline"
+            <Button
+              variant="outline"
               className="h-9"
               onClick={() => {
                 setSearch("");
@@ -193,13 +195,6 @@ const transactions = useMemo(() => {
           </div>
         </div>
       </div>
-      
-      <div className="mt-4 rounded-xl bg-white p-4 shadow">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button className="cursor-pointer hover:bg-slate-600"
-              onClick={() => console.log("Criar")}>
-              Create Transaction
-            </Button>
 
             <Button className="cursor-pointer hover:bg-slate-200"
               variant="outline" 
@@ -211,6 +206,9 @@ const transactions = useMemo(() => {
 
       <div className="mt-5">
         <ChartCard title="Recent Transactions">
+          {loading && <p>Loading transactions...</p>}
+          {error && <p className="text-red-500">{error}</p>}
+          {!loading && !error && (
           <div className="relative">
             <TransactionsTable
               transactions={filteredTransactions}
@@ -236,8 +234,20 @@ const transactions = useMemo(() => {
           )}
         </ChartCard>
       </div>
+
+      {/* Modais */}
+      <CreateTransactionDialog
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        accountId={selectedAccountId}
+        onCreated={() => refetch()}
+      />
+
+      <ImportTransactionsCsvDialog
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={() => refetch()}
+      />
     </div>
   );
 }
-
-    
