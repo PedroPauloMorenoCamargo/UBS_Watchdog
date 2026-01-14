@@ -1,9 +1,8 @@
-// Shadcn/ui
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMemo, useState, useCallback } from "react";
 import type { SeverityFilter } from "@/types/alert";
-import { transactionsMock } from "@/mocks/mocks";
 import { mapTransactionToRow } from "@/mappers/transaction/transaction.mapper";
 
 import {
@@ -23,7 +22,7 @@ import { Pagination } from "@/components/ui/pagination";
 const PAGE_SIZE = 20;
 
 export function TransactionsPage() {
-  const [type, setType] = useState<"all" | "Wire Transfer" | "Cash Deposit">("all");
+  const [type, setType] = useState<"all" | "Transfer" | "Deposit" | "Withdrawal">("all");
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
   const [search, setSearch] = useState("");
@@ -51,32 +50,38 @@ const transactions = useMemo(() => {
   const filteredTransactions = useMemo(() => {
   return transactions.filter((t) => {
 
-      const searchMatch =
-        !search ||
-        t.cpName?.toLowerCase().includes(search.toLowerCase()) ||
-        t.clientId?.toLowerCase().includes(search.toLowerCase());
-        
-      const typeMatch =
-        type === "all" || t.type === type;
+    // 🔹 Search (clientId ou cpName)
+    const searchMatch =
+      !search ||
+      t.counterIdentifier?.toLowerCase().includes(search.toLowerCase()) ||
+      t.clientId?.toLowerCase().includes(search.toLowerCase());
 
-      const amount = t.rawAmount;
-      const min = minAmount ? Number(minAmount) : null;
-      const max = maxAmount ? Number(maxAmount) : null;
+    // 🔹 Type
+    const typeMatch = type === "all" || t.type === type;
 
-      const minMatch = min === null || amount >= min;
-      const maxMatch = max === null || amount <= max;
+    // 🔹 Amount
+    const amount = t.rawAmount;
+    const min = minAmount ? Number(minAmount) : null;
+    const max = maxAmount ? Number(maxAmount) : null;
+    const minMatch = min === null || amount >= min;
+    const maxMatch = max === null || amount <= max;
 
-      const transactionDate = new Date(t.date).getTime();
+    // 🔹 Date
+    const transactionDate = t.rawTimestamp;
 
-      const startMatch =
-        !startDate || transactionDate >= new Date(startDate).getTime();
+    const startMatch =
+      !startDate ||
+      transactionDate >= new Date(startDate + "T00:00:00").getTime();
 
-      const endMatch =
-        !endDate || transactionDate <= new Date(endDate).getTime();
+    const endMatch =
+      !endDate ||
+      transactionDate <= new Date(endDate + "T23:59:59").getTime();
+      console.log(endDate)
 
-      return searchMatch && typeMatch && minMatch && maxMatch && startMatch && endMatch;
-    });
-  }, [transactions,search, severity, type, minAmount, maxAmount, startDate, endDate]);
+    return searchMatch && typeMatch && minMatch && maxMatch && startMatch && endMatch;
+  });
+}, [transactions, search, type, minAmount, maxAmount, startDate, endDate]);
+
 
 
   return (
@@ -103,26 +108,6 @@ const transactions = useMemo(() => {
               className="h-9 rounded-none border-0 border-b border-slate-300 px-0 shadow-none focus-visible:ring-0"
             />
           </div>
-
-          <div>
-            <label className="text-xs font-medium text-slate-500">
-              Severity
-            </label>
-            <Select 
-              value={severity} 
-              onValueChange={(v) => setSeverity(v as SeverityFilter)}
-            >
-              <SelectTrigger className="h-9 w-full">
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           
           <div>
             <label className="text-xs font-medium text-slate-500">
@@ -134,8 +119,8 @@ const transactions = useMemo(() => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
-                <SelectItem value="Wire Transfer">Wire Transfer</SelectItem>
-                <SelectItem value="Cash Deposit">Cash Deposit</SelectItem>
+                <SelectItem value="Transfer">Wire Transfer</SelectItem>
+                <SelectItem value="Deposit">Cash Deposit</SelectItem>
                 <SelectItem value="Withdrawal">Withdrawal</SelectItem>
               </SelectContent>
             </Select>

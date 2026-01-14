@@ -2,6 +2,7 @@ export type TransactionRow = {
   id: string;
   date: string;
   amount: string;
+  rawTimestamp: number ;
   rawAmount: number;
   type: string;
   method?: string;
