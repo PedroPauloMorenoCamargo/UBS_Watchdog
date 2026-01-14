@@ -21,10 +21,20 @@ import {
 
 import { useApi } from "@/hooks/useApi";
 import { fetchRules, patchRule, toggleRuleActive } from "@/services/rules.service";
-import { fetchAuditLogs } from "@/services/audit-log.service";
+import { fetchAuditLogs, getAuditLogDetails } from "@/services/audit-log.service";
+import { fetchAllAnalysts } from "@/services/analyst.service";
 import { mapDtoToRule } from "@/mappers/rule/rule.mapper";
+import { AuditLogDetailsDialog } from "@/components/ui/dialogs/audit-log-details-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMemo, useState, useCallback } from "react";
 import type { Rule } from "@/types/rules";
+import { type AuditLogDto, AuditAction } from "@/types/audit-log";
 
 
 export function AdminPage() {
@@ -36,18 +46,38 @@ export function AdminPage() {
   const [isConfigureOpen, setIsConfigureOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Audit Log Pagination
+  // Audit Log Pagination & Details
   const [auditPage, setAuditPage] = useState(1);
   const auditPageSize = 20;
+  const [selectedLog, setSelectedLog] = useState<AuditLogDto | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<AuditAction | undefined>(undefined);
 
   const fetchAuditLogsCallback = useCallback(() => {
-    return fetchAuditLogs({ page: auditPage, pageSize: auditPageSize });
-  }, [auditPage]);
+    return fetchAuditLogs({ 
+      page: auditPage, 
+      pageSize: auditPageSize,
+      action: selectedAction
+    });
+  }, [auditPage, selectedAction]);
 
   const { data: auditLogsData, loading: auditLogsLoading, error: auditLogsError } = useApi({
     fetcher: fetchAuditLogsCallback,
     deps: [auditPage],
   });
+
+  // Fetch Analysts for User Mapping
+  const { data: analystsData } = useApi({
+    fetcher: fetchAllAnalysts,
+  });
+
+  const userMap = useMemo(() => {
+    if (!analystsData) return {};
+    return analystsData.reduce((acc: Record<string, string>, analyst: any) => {
+      acc[analyst.id] = analyst.fullName;
+      return acc;
+    }, {} as Record<string, string>);
+  }, [analystsData]);
 
   const rules = useMemo(() => {
     if (!data) return [];
@@ -69,6 +99,20 @@ export function AdminPage() {
       alert("Error toggling rule status");
     }
   }, [rules, refetch]);
+
+  const handleAuditLogClick = useCallback(async (log: AuditLogDto) => {
+    try {
+      // Fetch full details (including before/after json)
+      const details = await getAuditLogDetails(log.id);
+      setSelectedLog(details);
+      setIsDetailsOpen(true);
+    } catch (err) {
+      console.error("Error fetching audit log details:", err);
+      // Fallback to showing basic info if fetch fails
+      setSelectedLog(log);
+      setIsDetailsOpen(true);
+    }
+  }, []);
 
   const handleConfigureRule = useCallback((rule: Rule) => {
     setSelectedRule(rule);
@@ -184,7 +228,35 @@ export function AdminPage() {
               {/* Data display (dimmed when refreshing) */}
               {auditLogsData && (
                 <div className={auditLogsLoading ? "opacity-60 transition-opacity pointer-events-none" : ""}>
-                  <AuditLogTable logs={auditLogsData.items} />
+                  <div className="mb-4 flex justify-end">
+                    <Select
+                      value={selectedAction?.toString() ?? "all"}
+                      onValueChange={(val) => {
+                        if (val === "all") {
+                          setSelectedAction(undefined);
+                        } else {
+                          setSelectedAction(Number(val) as AuditAction);
+                        }
+                        setAuditPage(1); // Reset to first page on filter change
+                      }}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by Action" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Actions</SelectItem>
+                        <SelectItem value={AuditAction.Created.toString()}>Created</SelectItem>
+                        <SelectItem value={AuditAction.Updated.toString()}>Updated</SelectItem>
+                        <SelectItem value={AuditAction.Deleted.toString()}>Deleted</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <AuditLogTable 
+                    logs={auditLogsData.items} 
+                    userMap={userMap}
+                    onRowClick={handleAuditLogClick}
+                  />
                   <Pagination
                     currentPage={auditLogsData.page}
                     totalPages={auditLogsData.totalPages}
@@ -205,6 +277,13 @@ export function AdminPage() {
         onOpenChange={setIsConfigureOpen}
         onSave={handleSaveRule}
         loading={isSaving}
+      />
+
+      <AuditLogDetailsDialog
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        log={selectedLog}
+        analystName={selectedLog?.performedByAnalystId ? userMap[selectedLog.performedByAnalystId] : undefined}
       />
     </div>
   );
