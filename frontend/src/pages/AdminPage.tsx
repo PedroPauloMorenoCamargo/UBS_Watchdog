@@ -2,11 +2,14 @@ import { ChartCard } from "@/components/ui/charts/chartcard";
 import { AdminTable } from "@/components/ui/tables/admintable";
 import { RulesGrid } from "@/components/ui/grids/rules-grid";
 import { ConfigureRuleDialog } from "@/components/ui/dialogs/configure-rule-dialog";
+import { AuditLogTable } from "@/components/ui/tables/audit-log-table";
+import { Pagination } from "@/components/ui/pagination";
 import { usersMock } from "@/mocks/mocks";
 
 import {
   Users,
   ShieldCheck,
+  ScrollText,
 } from "lucide-react";
 
 import {
@@ -18,6 +21,7 @@ import {
 
 import { useApi } from "@/hooks/useApi";
 import { fetchRules, patchRule, toggleRuleActive } from "@/services/rules.service";
+import { fetchAuditLogs } from "@/services/audit-log.service";
 import { mapDtoToRule } from "@/mappers/rule/rule.mapper";
 import { useMemo, useState, useCallback } from "react";
 import type { Rule } from "@/types/rules";
@@ -31,6 +35,19 @@ export function AdminPage() {
   const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
   const [isConfigureOpen, setIsConfigureOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Audit Log Pagination
+  const [auditPage, setAuditPage] = useState(1);
+  const auditPageSize = 20;
+
+  const fetchAuditLogsCallback = useCallback(() => {
+    return fetchAuditLogs({ page: auditPage, pageSize: auditPageSize });
+  }, [auditPage]);
+
+  const { data: auditLogsData, loading: auditLogsLoading, error: auditLogsError } = useApi({
+    fetcher: fetchAuditLogsCallback,
+    deps: [auditPage],
+  });
 
   const rules = useMemo(() => {
     if (!data) return [];
@@ -98,7 +115,7 @@ export function AdminPage() {
     
     <div className="relative bg-cover bg-center">
       <Tabs defaultValue="users" className="w-full">
-          <TabsList className="mt-5 bg-white shadow rounded-xl grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
+          <TabsList className="mt-5 bg-white shadow rounded-xl grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <TabsTrigger value="users" 
               className="flex 
               gap-2 
@@ -122,6 +139,18 @@ export function AdminPage() {
               <ShieldCheck className="h-4 w-4" />
               Rules
             </TabsTrigger>
+
+            <TabsTrigger value="audit" 
+              className="flex 
+              gap-2 
+              rounded-lg 
+              transition
+              hover:bg-slate-50
+              data-[state=active]:bg-slate-200"
+            >
+              <ScrollText className="h-4 w-4" />
+              Audit Log
+            </TabsTrigger>
           </TabsList>
 
         <div className="mt-5">
@@ -143,6 +172,29 @@ export function AdminPage() {
                 onDeleteRule={handleDeleteRule}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="audit">
+            <ChartCard title="Audit Log">
+              {auditLogsError && <p className="text-red-500 text-center py-8">{auditLogsError}</p>}
+              
+              {/* Initial loading state (no data yet) */}
+              {auditLogsLoading && !auditLogsData && <p className="text-center py-8">Loading audit logs...</p>}
+
+              {/* Data display (dimmed when refreshing) */}
+              {auditLogsData && (
+                <div className={auditLogsLoading ? "opacity-60 transition-opacity pointer-events-none" : ""}>
+                  <AuditLogTable logs={auditLogsData.items} />
+                  <Pagination
+                    currentPage={auditLogsData.page}
+                    totalPages={auditLogsData.totalPages}
+                    totalItems={auditLogsData.total}
+                    pageSize={auditLogsData.pageSize}
+                    onPageChange={setAuditPage}
+                  />
+                </div>
+              )}
+            </ChartCard>
           </TabsContent>
         </div>
       </Tabs>

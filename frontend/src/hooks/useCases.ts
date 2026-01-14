@@ -33,7 +33,19 @@ export function useCases(cases: CaseTableRow[]) {
 
 
   const criticalAlertsCount = useMemo(() => {
-    return activeCases.filter((c) => c.severity === "critical").length;
+    return activeCases.filter((c) => c.severity.toLowerCase() === "critical").length;
+  }, [activeCases]);
+
+  const highAlertsCount = useMemo(() => {
+    return activeCases.filter((c) => c.severity.toLowerCase() === "high").length;
+  }, [activeCases]);
+
+  const mediumAlertsCount = useMemo(() => {
+    return activeCases.filter((c) => c.severity.toLowerCase() === "medium").length;
+  }, [activeCases]);
+
+  const lowAlertsCount = useMemo(() => {
+    return activeCases.filter((c) => c.severity.toLowerCase() === "low").length;
   }, [activeCases]);
 
 
@@ -77,6 +89,9 @@ export function useCases(cases: CaseTableRow[]) {
   return {
     activeAlertsCount,
     criticalAlertsCount,
+    highAlertsCount,
+    mediumAlertsCount,
+    lowAlertsCount,
 
     activeCurrentPeriod,
     activePreviousPeriod,

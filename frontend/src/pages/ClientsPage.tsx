@@ -224,24 +224,25 @@ export function ClientsPage() {
 
       <div className="mt-5 overflow-x-auto max-w-full">
         <ChartCard title="Clients">
-          {loading && <p>Loading...</p>}
           {error && <p className="text-red-500">{error}</p>}
-          {!loading && !error && (
-            <ClientsTable 
-              clients={clients} 
-              onViewClient={handleViewClient}
-            />
-          )}
           
-          {/* Pagination */}
-          {!loading && !error && data && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={data.totalPages}
-              totalItems={data.total}
-              pageSize={PAGE_SIZE}
-              onPageChange={setCurrentPage}
-            />
+          {loading && !data && <p className="p-4">Loading...</p>}
+
+          {data && (
+            <div className={loading ? "opacity-60 transition-opacity pointer-events-none" : ""}>
+              <ClientsTable 
+                clients={clients} 
+                onViewClient={handleViewClient}
+              />
+              
+              <Pagination
+                currentPage={currentPage}
+                totalPages={data.totalPages}
+                totalItems={data.total}
+                pageSize={PAGE_SIZE}
+                onPageChange={setCurrentPage}
+              />
+            </div>
           )}
         </ChartCard>
       </div>
