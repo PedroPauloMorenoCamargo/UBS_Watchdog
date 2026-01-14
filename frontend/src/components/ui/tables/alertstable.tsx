@@ -63,7 +63,7 @@ export function AlertsTable({ alerts }: AlertsTableProps){
                       </TableCell>
 
                       <TableCell className="px-4 py-3 text-sm text-left font-medium">
-                          {alert.openedAt}
+                          {alert.openedAtUtc}
                       </TableCell>
 
                       <TableCell className="px-4 py-3 text-sm text-muted-foreground">

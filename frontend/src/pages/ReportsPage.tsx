@@ -20,33 +20,12 @@ export function ReportsPage() {
   const navigate = useNavigate();
   const [selectedClientId, setSelectedClientId] = useState<string>("");
 
- const { data : clientsData} = 
-     useApi<PagedClientsResponseDto>({
-       fetcher: fetchClients
-     })
- 
-   const clients = clientsData?.items ?? []
- 
-   const {
-    usersByRiskLevel
- 
-   } = useClients(clients)
    const { data: casesData} =
      useApi<PagedCasesResponseDto>({
        fetcher: fetchCases,
      });
      const cases = casesData?.items ?? [];
 
-  const { data: transactionsData} =
-    useApi<PagedTransactionsResponseDto>({
-      fetcher: fetchTransactions,
-    });
-  
-    const transactions = transactionsData?.items ?? [];
-
-  const {
-  monthlyVolume,
-} = useTransactions(transactions, cases);
   const { data: clientsData } = useApi<PagedClientsResponseDto>({
     fetcher: fetchClients,
   });
@@ -61,7 +40,7 @@ export function ReportsPage() {
 
   const transactions = transactionsData?.items ?? [];
 
-  const { monthlyVolume } = useTransactions(transactions);
+  const { monthlyVolume } = useTransactions(transactions,cases,[]);
 
   // Transform clients to combobox options
   const clientOptions = useMemo(

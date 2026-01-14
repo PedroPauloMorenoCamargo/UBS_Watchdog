@@ -53,7 +53,7 @@ const transactions = useMemo(() => {
 
       const searchMatch =
         !search ||
-        t.counterPartyName?.toLowerCase().includes(search.toLowerCase()) ||
+        t.cpName?.toLowerCase().includes(search.toLowerCase()) ||
         t.clientId?.toLowerCase().includes(search.toLowerCase());
         
       const typeMatch =
@@ -221,37 +221,26 @@ const transactions = useMemo(() => {
               onClick={() => console.log("Importar CSV")}>
               Import CSV
             </Button>
-
-            <Button className="cursor-pointer hover:bg-slate-200"
-              variant="outline"
-              disabled={!selectedTransactionId}
-              onClick={() => console.log("Editar", selectedTransactionId)}>
-              Edit Transaction
-            </Button>
-            
-            <Button className="cursor-pointer hover:bg-slate-600"
-              variant="destructive"
-              disabled={!selectedTransactionId}
-              onClick={() => console.log("Excluir", selectedTransactionId)}
-            >
-              Delete Transaction
-            </Button>
           </div>
       </div>
 
       <div className="mt-5">
         <ChartCard title="Recent Transactions">
-          {loading && <p>Loading transactions...</p>}
-          {error && <p className="text-red-500">{error}</p>}
-          {!loading && !error && (
-            
-              <TransactionsTable transactions={filteredTransactions} 
-                selectedId={selectedTransactionId}
-                onSelect={setSelectedTransactionId}/>
-          )}
-          
+          <div className="relative">
+            <TransactionsTable
+              transactions={filteredTransactions}
+              selectedId={selectedTransactionId}
+              onSelect={setSelectedTransactionId}
+            />
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
+                <span>Loading...</span>
+              </div>
+            )}
+            {error && <p className="text-red-500 absolute top-2 left-2 z-20">{error}</p>}
+          </div>
           {/* Pagination */}
-          {!loading && !error && data && (
+          {data && (
             <Pagination
               currentPage={currentPage}
               totalPages={data.totalPages}

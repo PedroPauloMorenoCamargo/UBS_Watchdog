@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 import { useState } from "react";
 import { useCreateClient } from "@/hooks/useCreateClient";
-import { useCountries } from "@/hooks/useCountries";
+import { useCountriesList } from "@/hooks/useCountriesList";
 
 import type { LegalTypeApi } from "@/types/legaltypeapi";
 import type { RiskLevelApi } from "@/types/alert";
@@ -52,7 +52,7 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
   const [telephone, setTelephone] = useState("");
   const [address, setAddress] = useState("");
 
-  const { countries: countryList, loading: countriesLoading, error: countriesError } = useCountries();
+  const { countries: countryList, loading: countriesLoading, error: countriesError } = useCountriesList();
 
   async function handleSubmit() {
     if (!name || legalType === "" || riskLevel === "" || kycStatus === "" || !countryCode || !telephone || !address) {
@@ -164,7 +164,7 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: Props) {
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
               <SelectContent position="popper" className="max-h-[200px] overflow-y-auto">
-                {countryList.map((c) => (
+                {countryList.map((c: { code: string; name: string }) => (
                   <SelectItem key={c.code} value={c.code}>
                     {c.name}
                   </SelectItem>

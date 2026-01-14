@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useMemo, useState, useRef, useCallback } from "react";
 import type { SeverityFilter } from "@/types/alert";
 import type { KycFilter } from "@/types/kycstatus";
-import { useCountries } from "@/hooks/useCountries";
+import { useCountriesList } from "@/hooks/useCountriesList";
 import { Search } from "lucide-react";
 import {
   Select,
@@ -54,7 +54,7 @@ export function ClientsPage() {
     refetch();
   });
 
-  const { countries: countryList } = useCountries();
+  const { countries: countryList } = useCountriesList();
 
   const clients = useMemo(() => {
     if (!data) return [];

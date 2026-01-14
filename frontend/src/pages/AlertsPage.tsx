@@ -33,19 +33,18 @@ export function AlertsPage() {
     [currentPage]
   );
 
-  // Buscar dados do backend
   const { data, loading, error } = useApi({
     fetcher: fetchCasesWithPagination,
     deps: [currentPage],
   });
 
-  // Mapear dados do backend para formato da tabela
+
   const cases = useMemo(() => {
     if (!data) return [];
     return data.items.map(mapCaseDtoToTableRow);
   }, [data]);
 
-  // Contagem por severidade
+
   const severityCounts = useMemo(() => {
     const counts = {
       all: 0,
@@ -64,7 +63,6 @@ export function AlertsPage() {
     return counts;
   }, [cases]);
 
-  // Filtrar casos por severidade e status
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
       const severityMatch = severity === "all" || c.severity === severity;
@@ -75,7 +73,6 @@ export function AlertsPage() {
 
   return (
     <div className="relative bg-cover bg-center">
-      {/* Cards de contagem */}
       <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
         <StatCard title="Critical Severity" value={severityCounts.critical} variant="destructive" />
         <StatCard title="High Severity" value={severityCounts.high} variant="high" />
@@ -83,7 +80,6 @@ export function AlertsPage() {
         <StatCard title="Low Severity" value={severityCounts.low} variant="low" />
       </div>
 
-      {/* Filtros */}
       <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl bg-white p-4 shadow">
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium text-slate-500">Status:</label>
@@ -143,14 +139,12 @@ export function AlertsPage() {
         </Button>
       </div>
 
-      {/* Tabela de Alerts */}
       <div className="mt-5">
         <ChartCard title="Recent High-Priority Alerts">
           {loading && <p>Loading...</p>}
           {error && <p className="text-red-500">{error}</p>}
           {!loading && !error && <AlertsTable alerts={filteredCases} />}
           
-          {/* Pagination */}
           {!loading && !error && data && (
             <Pagination
               currentPage={currentPage}

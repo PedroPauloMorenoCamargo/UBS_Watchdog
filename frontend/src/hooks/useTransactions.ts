@@ -8,7 +8,7 @@ import type { CaseDecision, CaseResponseDto } from "@/types/Cases/cases";
 
 import { WEEK_DAYS } from "@/constants/weekdays";
 import type { CountriesResponseDto } from "@/types/Countries/countries";
-import { useCountriesMap } from "./useCountries";
+import { useCountriesList } from "./useCountriesList";
 type Trend = "up" | "down" | "neutral";
 
 interface TransactionsByType {
@@ -46,8 +46,6 @@ interface UseTransactionsResult {
 
 export function useTransactions(transactions: TransactionResponseDto[], cases: CaseResponseDto[], countries: CountriesResponseDto[]): UseTransactionsResult {
    const now = new Date();
-
-   const countryNameByCode = useCountriesMap(countries);
 
 
   const totalTransactionsAmount = useMemo(() => {
@@ -171,16 +169,19 @@ export function useTransactions(transactions: TransactionResponseDto[], cases: C
   }));
 }, [transactions]);
 
+
+const countriesList = useCountriesList();
+
 const transactionsCountry = useMemo<TransactionCountry[]>(() => {
-  if (!countryNameByCode) return [];
+  if (!countriesList) return [];
 
   const map = new Map<string, { totalAmount: number; count: number }>();
 
   transactions.forEach(t => {
     if (!t.cpCountryCode) return;
 
-    const countryName =
-      countryNameByCode.get(t.cpCountryCode) ?? "Others";
+const countryName =
+  countriesList.countries.find(c => c.code === t.cpCountryCode)?.name ?? "Others";
 
     const entry = map.get(countryName) ?? {
       totalAmount: 0,
@@ -198,7 +199,7 @@ const transactionsCountry = useMemo<TransactionCountry[]>(() => {
     totalAmount: values.totalAmount,
     count: values.count,
   }));
-}, [transactions, countryNameByCode]);
+}, [transactions, countriesList]);
 
   return {
     totalTransactionsAmount,

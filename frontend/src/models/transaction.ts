@@ -8,5 +8,6 @@ export type TransactionRow = {
   clientId: string;
   counterIdentifier?: string;
   country?: string;
+  cpName?: string;
   currencyCode?: string;
 };
