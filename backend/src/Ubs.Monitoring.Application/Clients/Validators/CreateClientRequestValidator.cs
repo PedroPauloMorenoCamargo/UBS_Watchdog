@@ -37,7 +37,8 @@ public sealed class CreateClientRequestValidator : AbstractValidator<CreateClien
 
         RuleFor(x => x.AddressJson)
             .NotNull()
-            .WithMessage("Address information is required for compliance and KYC purposes.");
+            .WithMessage("Address information is required for compliance and KYC purposes.")
+            .NotEmpty().WithMessage("Address cannot be empty");
 
         RuleFor(x => x.CountryCode)
             .NotEmpty()

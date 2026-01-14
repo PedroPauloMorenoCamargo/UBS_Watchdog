@@ -1,4 +1,5 @@
 import requests
+import io
 
 
 class ApiClient:
@@ -77,13 +78,6 @@ class ApiClient:
     def get(self, path: str, **kwargs):
         """
         Execute a HTTP GET request.
-
-        Args:
-            path: API path relative to the base URL (e.g. "/api/health").
-            **kwargs: Additional arguments forwarded to requests.Session.get().
-
-        Returns:
-            requests.Response object.
         """
         return self.session.get(
             f"{self.base_url}{path}",
@@ -95,13 +89,6 @@ class ApiClient:
     def post(self, path: str, **kwargs):
         """
         Execute a HTTP POST request.
-
-        Args:
-            path: API path relative to the base URL (e.g. "/api/auth/login").
-            **kwargs: Additional arguments forwarded to requests.Session.post().
-
-        Returns:
-            requests.Response object.
         """
         return self.session.post(
             f"{self.base_url}{path}",
@@ -151,8 +138,6 @@ class ApiClient:
 
     def health(self):
         """
-        Call the health endpoint to verify that API is not down.
-
         Endpoint:
             GET /api/health
         """
@@ -164,8 +149,6 @@ class ApiClient:
 
     def auth_login(self, email: str, password: str):
         """
-        Authenticate an analyst and obtain a JWT token.
-
         Endpoint:
             POST /api/auth/login
         """
@@ -173,8 +156,6 @@ class ApiClient:
 
     def auth_me(self):
         """
-        Retrieve the profile of the currently authenticated analyst.
-
         Endpoint:
             GET /api/auth/me
         """
@@ -182,8 +163,6 @@ class ApiClient:
 
     def auth_logout(self):
         """
-        Logout the currently authenticated analyst.
-
         Endpoint:
             POST /api/auth/logout
         """
@@ -195,8 +174,6 @@ class ApiClient:
 
     def analyst_get(self, analyst_id: str):
         """
-        Retrieve an analyst profile by ID.
-
         Endpoint:
             GET /api/analysts/{id}
         """
@@ -204,8 +181,6 @@ class ApiClient:
 
     def analyst_update_profile_picture(self, base64_payload: str | None):
         """
-        Update or clear the authenticated analyst's profile picture.
-
         Endpoint:
             PATCH /api/analysts/me/profile-picture
         """
@@ -220,8 +195,6 @@ class ApiClient:
 
     def rules_search(self, params: dict | None = None):
         """
-        Search/list compliance rules.
-
         Endpoint:
             GET /api/rules
         """
@@ -229,8 +202,6 @@ class ApiClient:
 
     def rules_get(self, rule_id: str):
         """
-        Retrieve a compliance rule by ID.
-
         Endpoint:
             GET /api/rules/{id}
         """
@@ -238,11 +209,123 @@ class ApiClient:
 
     def rules_patch(self, rule_id: str, payload: dict | None = None):
         """
-        Patch/update a compliance rule.
-
         Endpoint:
             PATCH /api/rules/{id}
         """
         if payload is None:
             return self.patch(f"/api/rules/{rule_id}")
         return self.patch(f"/api/rules/{rule_id}", json=payload)
+
+    # -----------------------------
+    # Clients endpoints
+    # -----------------------------
+
+    def client_create(self, payload: dict):
+        """
+        Endpoint:
+            POST /api/clients
+        """
+        return self.post("/api/clients", json=payload)
+
+    def clients_search(self, params: dict | None = None):
+        """
+        Endpoint:
+            GET /api/clients
+        """
+        return self.get("/api/clients", params=params or {})
+
+    def client_get(self, client_id: str):
+        """
+        Endpoint:
+            GET /api/clients/{id}
+        """
+        return self.get(f"/api/clients/{client_id}")
+
+    def clients_import(self, file_name: str, file_bytes: bytes, content_type: str = "text/csv"):
+        """
+        Endpoint:
+            POST /api/clients/import (multipart form-data)
+        """
+        files = {
+            "file": (file_name, io.BytesIO(file_bytes), content_type),
+        }
+        return self.post("/api/clients/import", files=files)
+
+    # -------- Accounts --------
+
+    def account_create(self, client_id: str, payload: dict):
+        """
+        Endpoint:
+            POST /api/clients/{clientId}/accounts
+        """
+        return self.post(f"/api/clients/{client_id}/accounts", json=payload)
+
+    def accounts_get_by_client(self, client_id: str):
+        """
+        Endpoint:
+            GET /api/clients/{clientId}/accounts
+        """
+        return self.get(f"/api/clients/{client_id}/accounts")
+
+    def account_get(self, account_id: str):
+        """
+        Endpoint:
+            GET /api/accounts/{accountId}
+        """
+        return self.get(f"/api/accounts/{account_id}")
+
+    def accounts_import(self, client_id: str, file_name: str, file_bytes: bytes):
+        """
+        Endpoint:
+            POST /api/clients/{clientId}/accounts/import (multipart form-data)
+        """
+        files = {
+            "file": (file_name, io.BytesIO(file_bytes), "text/csv"),
+        }
+        return self.post(f"/api/clients/{client_id}/accounts/import", files=files)
+    
+    # -------- Account Identifiers --------
+    def account_identifiers_get_by_account(self, account_id: str):
+        # GET /api/accounts/{accountId}/identifiers
+        return self.get(f"/api/accounts/{account_id}/identifiers")
+
+    def account_identifier_create(self, account_id: str, payload: dict):
+        # POST /api/accounts/{accountId}/identifiers
+        return self.post(f"/api/accounts/{account_id}/identifiers", json=payload)
+
+    def account_identifier_delete(self, identifier_id: str):
+        # DELETE /api/account-identifiers/{identifierId}
+        return self.request("DELETE", f"/api/account-identifiers/{identifier_id}")
+    
+        # -------- Transactions --------
+    def transaction_create(self, payload: dict):
+        # POST /api/transactions
+        return self.post("/api/transactions", json=payload)
+
+    def transactions_search(self, params: dict | None = None):
+        # GET /api/transactions
+        return self.get("/api/transactions", params=params or {})
+
+    def transaction_get(self, transaction_id: str):
+        # GET /api/transactions/{transactionId}
+        return self.get(f"/api/transactions/{transaction_id}")
+
+    def transactions_import(self, file_name: str, file_bytes: bytes, content_type: str = "text/csv"):
+        # POST /api/transactions/import (multipart form-data)
+        files = {"file": (file_name, io.BytesIO(file_bytes), content_type)}
+        return self.post("/api/transactions/import", files=files)
+    # -------- Cases --------
+    def cases_search(self, params: dict | None = None):
+        # GET /api/cases
+        return self.get("/api/cases", params=params or {})
+
+    def case_get(self, case_id: str):
+        # GET /api/cases/{id}
+        return self.get(f"/api/cases/{case_id}")
+
+    def case_findings(self, case_id: str, params: dict | None = None):
+        # GET /api/cases/{caseId}/findings
+        return self.get(f"/api/cases/{case_id}/findings", params=params or {})
+
+
+

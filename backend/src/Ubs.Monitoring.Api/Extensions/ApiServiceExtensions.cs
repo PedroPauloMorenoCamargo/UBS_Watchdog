@@ -25,8 +25,6 @@ public static class ApiServiceExtensions
         services.AddProblemDetails();
 
         // FluentValidation (automatic MVC integration)
-        services.AddFluentValidationAutoValidation();
-        services.AddFluentValidationClientsideAdapters();
 
         // Scan Application validators
         services.AddValidatorsFromAssemblyContaining<CreateClientRequest>();
