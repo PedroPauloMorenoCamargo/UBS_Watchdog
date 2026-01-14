@@ -21,12 +21,10 @@ using Ubs.Monitoring.Infrastructure.Persistence;
 using Ubs.Monitoring.Infrastructure.Persistence.Seeding;
 using Ubs.Monitoring.Infrastructure.Repositories;
 using Ubs.Monitoring.Application.Transactions.Compliance;
+namespace Ubs.Monitoring.Infrastructure;
 using Ubs.Monitoring.Application.AuditLogs;
 using Ubs.Monitoring.Infrastructure.Persistence.Repositories;
 using Ubs.Monitoring.Infrastructure.Persistence.Auditing;
-using Npgsql;
-namespace Ubs.Monitoring.Infrastructure;
-
 
 public static class DependencyInjection
 {   
@@ -35,19 +33,15 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-        var raw = config.GetConnectionString("Default")
-              ?? config["DATABASE_URL"]
-              ?? throw new InvalidOperationException("Database connection string is missing.");
-
-        var connectionString = raw.StartsWith("postgres", StringComparison.OrdinalIgnoreCase)
-            ? new NpgsqlConnectionStringBuilder(raw).ConnectionString
-            : raw;
+        var cs =
+            config["ConnectionStrings:Default"]
+            ?? throw new InvalidOperationException("ConnectionStrings:Default is missing.");
 
         services.AddScoped<AuditSaveChangesInterceptor>();
 
         services.AddDbContext<AppDbContext>((sp,options) =>
         {
-            options.UseNpgsql(connectionString, npgsql =>
+            options.UseNpgsql(cs, npgsql =>
             {
                 npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
             });
