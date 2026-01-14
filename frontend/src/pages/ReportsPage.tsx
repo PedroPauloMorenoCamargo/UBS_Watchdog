@@ -18,12 +18,14 @@ import { AdaptiveLineChart } from "@/components/ui/charts/adaptivelinechart";
 import jsPDF from "jspdf";
 import { domToPng } from "modern-screenshot";
 import { useCases } from "@/hooks/useCases";
+import { fetchAllClientsReports } from "@/services/reports.service";
 
 import type { PagedClientsResponseDto } from "@/types/Clients/client";
 import type { PagedTransactionsResponseDto } from "@/types/Transactions/transaction";
 import type { PagedCasesResponseDto } from "@/types/Cases/cases";
 import { AlertSeverityBarChart } from "@/components/ui/charts/alertsbyseveritychart";
 import { StatCard } from "@/components/ui/statcard";
+import { useReports } from "@/hooks/useReport";
 
 export function ReportsPage() {
   const navigate = useNavigate();
@@ -38,7 +40,7 @@ export function ReportsPage() {
   const mappedCases = mapPagedCasesDtoToTableRows({ items: cases });
   const clients = clientsData?.items ?? [];
   const transactions = transactionsData?.items ?? [];
-
+  const { reports: allReports, isLoading } = useReports(clients);
   const { decisionsCount, weeklyAlertsBySeverity } = useCases(mappedCases);
   const { usersByRiskLevel } = useClients(clients);
   const { monthlyVolume } = useTransactions(transactions, cases);
@@ -173,7 +175,11 @@ export function ReportsPage() {
           {/* ==== GENERATED REPORTS TABLE ==== */}
           <div className="mt-5">
             <ChartCard title="Generated Reports">
-              <ReportsTable reports={reportsMock} />
+              {isLoading ? (
+                <p className="text-center py-6">Loading reports...</p>
+              ) : (
+                <ReportsTable reports={allReports ?? []} />
+              )}
             </ChartCard>
           </div>
 
