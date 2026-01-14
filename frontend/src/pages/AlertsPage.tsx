@@ -33,7 +33,7 @@ export function AlertsPage() {
     [currentPage]
   );
 
-  const { data, loading, error } = useApi({
+  const { data, loading, error, refetch } = useApi({
     fetcher: fetchCasesWithPagination,
     deps: [currentPage],
   });
@@ -52,6 +52,7 @@ export function AlertsPage() {
       high: 0,
       medium: 0,
       low: 0,
+      
     };
 
    cases.forEach((c) => {
@@ -68,6 +69,7 @@ export function AlertsPage() {
       const severityMatch = severity === "all" || c.severity === severity;
       const statusMatch = status === "all" || c.status === status;
       return severityMatch && statusMatch;
+      
     });
   }, [cases, severity, status]);
 
@@ -78,6 +80,7 @@ export function AlertsPage() {
         <StatCard title="High Severity" value={severityCounts.high} variant="high" />
         <StatCard title="Medium Severity" value={severityCounts.medium} variant="medium" />
         <StatCard title="Low Severity" value={severityCounts.low} variant="low" />
+        
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl bg-white p-4 shadow">
@@ -92,6 +95,7 @@ export function AlertsPage() {
               <SelectItem value="New">New</SelectItem>
               <SelectItem value="Under Review">Under Review</SelectItem>
               <SelectItem value="Resolved">Resolved</SelectItem>
+              
             </SelectContent>
           </Select>
         </div>
@@ -141,9 +145,13 @@ export function AlertsPage() {
 
       <div className="mt-5">
         <ChartCard title="Recent High-Priority Alerts">
-          {loading && <p>Loading...</p>}
+          {loading && !data && <p>Loading...</p>}
           {error && <p className="text-red-500">{error}</p>}
-          {!loading && !error && <AlertsTable alerts={filteredCases} />}
+          {data && (
+            <div className={loading ? "opacity-60 transition-opacity duration-200" : "transition-opacity duration-200"}>
+               <AlertsTable alerts={filteredCases} onRefresh={refetch} />
+            </div>
+          )}
           
           {!loading && !error && data && (
             <Pagination

@@ -57,6 +57,7 @@ public sealed class CaseRepository : ICaseRepository
             .Include(c => c.Account)
             .Include(c => c.Analyst)
             .Include(c => c.Findings)
+            .Include(c => c.Transaction)
             .AsQueryable();
 
         // Apply filters
