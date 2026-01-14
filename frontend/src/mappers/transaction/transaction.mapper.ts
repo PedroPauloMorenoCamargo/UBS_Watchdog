@@ -9,12 +9,13 @@ export function mapTransactionToRow(
   return {
     id: dto.id,
     date: new Date(dto.occurredAtUtc).toLocaleString("pt-BR"),
-    amount: `${dto.amount.toFixed(2)} ${dto.currencyCode}`,
+    amount: `${dto.amount.toFixed(2)}`,
     rawAmount: dto.amount,
     type: mapTransactionType(dto.type),
     method: mapTransferMethod(dto.transferMethod),
     clientId: dto.clientId,
-    counterPartyName: dto.cpName ?? "-",
-    country: dto.cpCountryCode ?? "-"
+    counterIdentifier: dto.cpIdentifier ?? "-",
+    country: dto.cpCountryCode ?? "-",
+    currencyCode: dto.currencyCode
   };
 }

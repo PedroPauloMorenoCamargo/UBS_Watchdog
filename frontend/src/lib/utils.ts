@@ -16,3 +16,27 @@ export function formatDateTime(
     timeStyle: "short",
   }).format(date);
 }
+
+export function formatCurrencyCompact(
+  value: number,
+  currency: string = "USD",
+  decimals: number = 1
+): string {
+  const abs = Math.abs(value);
+
+  if (abs >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toFixed(decimals)}B`;
+  }
+
+  if (abs >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(decimals)}M`;
+  }
+
+  // fallback normal
+  return value.toLocaleString("en-US", {
+    // style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}

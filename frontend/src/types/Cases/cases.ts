@@ -35,9 +35,9 @@ export interface CaseResponseDto {
   analystName: string;
   severity: CaseSeverity;
   findingsCount: number;
-  openedAt: Date;
-  updatedAt: Date;
-  resolvedAt?: Date | null;
+  openedAtUtc: Date;
+  updatedAtUtc: Date;
+  resolvedAtUtc?: Date | null;
 }
 
 
