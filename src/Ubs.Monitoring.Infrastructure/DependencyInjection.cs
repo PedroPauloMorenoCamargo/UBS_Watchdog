@@ -33,9 +33,7 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-        var cs =
-            config["ConnectionStrings:Default"]
-            ?? throw new InvalidOperationException("ConnectionStrings:Default is missing.");
+        var cs = ResolvePostgresConnectionString(config);
 
         services.AddScoped<AuditSaveChangesInterceptor>();
 
@@ -140,4 +138,36 @@ public static class DependencyInjection
 
         return services;
     }
+
+    private static string ResolvePostgresConnectionString(IConfiguration config)
+    {
+        // 1. Railway / cloud (DATABASE_URL)
+        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+        if (!string.IsNullOrWhiteSpace(databaseUrl))
+        {
+            var uri = new Uri(databaseUrl);
+            var userInfo = uri.UserInfo.Split(':', 2);
+
+            if (userInfo.Length != 2)
+                throw new InvalidOperationException("Invalid DATABASE_URL format.");
+
+            return
+                $"Host={uri.Host};" +
+                $"Port={uri.Port};" +
+                $"Database={uri.AbsolutePath.TrimStart('/')};" +
+                $"Username={userInfo[0]};" +
+                $"Password={userInfo[1]};" +
+                $"SSL Mode=Require;" +
+                $"Trust Server Certificate=true";
+        }
+
+        // 2. Local / fallback
+        var cs = config["ConnectionStrings:Default"];
+        if (!string.IsNullOrWhiteSpace(cs))
+            return cs;
+
+        throw new InvalidOperationException(
+            "No database configuration found. Set DATABASE_URL or ConnectionStrings:Default.");
+    }
 }
+
