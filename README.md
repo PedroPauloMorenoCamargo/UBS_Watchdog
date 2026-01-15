@@ -512,4 +512,102 @@ Nesta solução, o deploy do back-end foi feito criando uma **branch dedicada ch
 ### 13.2. Deploy do Front-end no Vercel
 ---
 
+Após testar o projeto em localhost, você pode disponibiliza-lo em nuvem através de um deploy na vercel, que é uma plataforma focada em aplicações de front-end (como React + Vite), com integração direta ao GitHub e configuração simples de variáveis de ambiente.
+
+Nesta solução, o front-end está localizado na pasta `frontend` do repositório (estrutura de monorepo), o que exige a configuração do **Root Directory** durante o deploy.
+
+---
+
+### Pré-requisitos
+
+* Repositório já conectado ao GitHub  
+* Back-end já publicado (ex.: Railway), com uma URL pública disponível  
+* Build do front funcionando localmente (`npm run build`)  
+
+---
+
+### Passo a passo
+
+#### Criar conta e novo projeto na Vercel
+
+1. Acesse **https://vercel.com**
+2. Crie uma conta (preferencialmente usando GitHub)
+3. Clique em **Add New → Project**
+
+---
+
+#### Conectar o repositório GitHub
+
+1. Selecione o repositório:
+
+2. Escolha a branch desejada (ex.: `main`)
+
+---
+
+#### Configurar Root Directory (monorepo)
+
+Como o front-end está dentro da pasta `frontend`, é necessário apontar isso para a Vercel:
+
+* **Root Directory**:
+
+Isso garante que a Vercel execute os comandos (`npm install` e `npm run build`) no local correto.
+
+---
+
+#### Configurar Build & Output Settings
+
+Na etapa de configuração do projeto (ou em **Project → Settings → Build & Output**):
+
+* **Framework Preset**: `Vite`
+* **Build Command**:
+
+
+O Vite gera os arquivos finais de produção dentro da pasta `dist`.
+
+---
+
+#### Configurar variáveis de ambiente
+
+No painel da Vercel:
+
+1. Vá em **Project → Settings → Environment Variables**
+2. Adicione a variável que aponta para o back-end publicado no Railway:
+   
+Marque a variável para os ambientes:
+* Production
+* Preview
+
+---
+
+#### Deploy
+
+1. Após salvar as configurações, clique em **Deploy**
+2. A Vercel irá:
+* Instalar dependências
+* Executar `npm run build`
+* Publicar o conteúdo da pasta `dist`
+
+Acompanhe os logs para validar se o build foi concluído com sucesso.
+
+---
+
+#### Domínio público do Front-end
+
+Ao final do deploy, a Vercel disponibiliza automaticamente um domínio público, por exemplo: (https://aplicação.vercel.app)
+
+
+Esse domínio será o ponto de acesso da aplicação em produção.
+
+---
+
+### Teste em produção
+
+Verifique:
+* A aplicação abre corretamente no domínio da Vercel  
+* As chamadas para a API do Railway funcionam  
+* Não há erros de CORS ou de variáveis de ambiente no console do navegador  
+
+
+
+
 
