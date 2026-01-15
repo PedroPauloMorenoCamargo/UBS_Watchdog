@@ -477,7 +477,7 @@ Nesta solução, o deploy do back-end foi feito criando uma **branch dedicada ch
    - Selecione a **branch `deploy`** (em vez da `DEV` ou `main` ), pois ela contém a estrutura ajustada para produção.
 
 3. **Adicionar PostgreSQL no Railway**
-   - Dentro do projeto no Railway, adicione o plugin de banco:
+   - O railway não implementa suporte para `docker-compose`,sendo assim, dentro do projeto no Railway, adicione o plugin de banco:
      - **Add Plugin -> PostgreSQL**
    - Isso provisionará um banco gerenciado e exibirá credenciais/URL de conexão.
 
