@@ -260,6 +260,8 @@ Jwt_ExpiresMinutes=60
 
 ```
 
+> Caso você queira que a taxa de câmbio funcione corretamente, faça o registro nesse site: [ https://www.exchangerate-api.com/ ] e gere uma API key, após fazer isso, coloque sua API Key em uma váriavel de ambiente .env com o seguinte valor: EXCHANGERATE_API_KEY=${key}
+
 > Esses valores definem o nome do banco de dados (`POSTGRES_DB`), o usuário e a senha do PostgreSQL que serão utilizados no ambiente de desenvolvimento e variáveis de sistema. O Docker Compose utilizará essas variáveis para configurar o container do banco e atribuir constantes a API.
 
 #### 4.2. Subir os contêineres da aplicação
