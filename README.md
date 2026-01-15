@@ -4,12 +4,12 @@
 
 **UBS Watchdog** é um projeto de monitoramento de transações financeiras, com foco em analisar e identificar transações que não seguem as regras de *compliance*. Em outras palavras, a aplicação atua como um “vigia” (*watchdog*) para detectar operações financeiras potencialmente irregulares ou fora dos padrões estabelecidos, auxiliando equipes de compliance a encontrar e investigar essas ocorrências.
 
-## Arquitetura
+## 1. Arquitetura
 
 
 ![Diagrama de Arquitetura](docs/arquitetura.png)
 
-## Tecnologias Utilizadas
+## 2. Tecnologias Utilizadas
 
 - **Back-end:** .NET 8.0 (C#) - API desenvolvida em ASP.NET Core, responsável pelas regras de negócio e análise de compliance.
 - **Banco de Dados:** PostgreSQL - utilizado para armazenar as transações financeiras e demais dados da aplicação.
@@ -17,9 +17,9 @@
 - **Docker:** usado para containerizar a aplicação (tanto back-end quanto banco de dados) e facilitar a configuração do ambiente de desenvolvimento.
 - **Outras Dependências:**  Docker Compose (para orquestração dos contêineres do back-end e banco de dados).
 
-## Modelo de Dados (PostgreSQL)
+## 3. Modelo de Dados (PostgreSQL)
 
-![Diagrama Relacional](docs/diagrama-relacional.png)
+![Diagrama Relacional](docs/er_diagram.png)
 
 ### Entidades principais (visão conceitual)
 
@@ -30,6 +30,140 @@
 - **Clients / Accounts**: clientes e contas associadas às transações.
 - **Logs**: trilha/auditoria de eventos relevantes (ex.: ações em casos e regras).
 - **Identifiers**: identificadores auxiliares/metadata para correlação (quando aplicável).
+- **FxRates**: Taxas de câmbio.
+
+
+## 4. Métodos e Endpoints
+
+### Account Identifiers
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| GET | `/api/accounts/{accountId}/identifiers` | Retorna todos os identificadores de uma conta específica. |
+| POST | `/api/accounts/{accountId}/identifiers` | Cria um novo identificador para uma conta. |
+| DELETE | `/api/account-identifiers/{identifierId}` | Remove um identificador de uma conta. |
+
+---
+
+### Accounts
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| POST | `/api/clients/{clientId}/accounts` | Cria uma nova conta para um cliente. |
+| GET | `/api/clients/{clientId}/accounts` | Lista todas as contas de um cliente específico. |
+| GET | `/api/accounts/{accountId}` | Retorna os detalhes de uma conta específica. |
+| POST | `/api/clients/{clientId}/accounts/import` | Importa múltiplas contas a partir de CSV ou Excel. |
+
+---
+
+### Analysts
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| GET | `/api/analysts/{id}` | Retorna o perfil de um analista pelo ID. |
+| PATCH | `/api/analysts/me/profile-picture` | Atualiza ou remove a foto de perfil do analista autenticado. |
+
+---
+
+### Audit Logs
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| GET | `/api/audit-logs` | Pesquisa logs de auditoria com paginação, filtros e ordenação. |
+| GET | `/api/audit-logs/{id}` | Retorna um log de auditoria específico. |
+
+---
+
+### Auth
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| POST | `/api/auth/login` | Autentica um analista via email e senha. |
+| GET | `/api/auth/me` | Retorna o perfil do analista autenticado. |
+| POST | `/api/auth/logout` | Encerra a sessão do analista autenticado. |
+
+---
+
+### Cases
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| GET | `/api/cases` | Retorna uma lista paginada, filtrada de casos e ordenada. |
+| GET | `/api/cases/{id}` | Retorna os detalhes de um caso específico. |
+| PATCH | `/api/cases/{id}` | Atualiza o workflow do caso (status, decisão, responsável). |
+| GET | `/api/cases/{caseId}/findings` | Retorna todas as violações (findings) de um caso. |
+| POST | `/api/cases/{id}/assign-to-me` | Atribui o caso ao analista autenticado. |
+
+---
+
+### Clients
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| POST | `/api/clients` | Cria um novo cliente. |
+| GET | `/api/clients` | Lista clientes com paginação, filtros e ordenação. |
+| GET | `/api/clients/{id}` | Retorna os detalhes de um cliente específico. |
+| POST | `/api/clients/import` | Importa múltiplos clientes via CSV ou Excel. |
+
+---
+
+### Compliance Rules
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| GET | `/api/rules` | Lista regras de compliance com paginação, filtros e ordenação. |
+| GET | `/api/rules/{id}` | Retorna uma regra de compliance específica. |
+| PATCH | `/api/rules/{id}` | Atualiza parcialmente uma regra existente. |
+
+---
+
+### Countries
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| GET | `/api/countries` | Retorna todos os países disponíveis (ex.: dropdowns). |
+| PATCH | `/api/countries/{code}/risk-level` | Atualiza o nível de risco de um país. |
+
+---
+
+### Exchange Rates
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| GET | `/api/exchange-rates/{baseCurrency}/{quoteCurrency}` | Retorna a taxa de câmbio para um par de moedas. |
+| GET | `/api/exchange-rates/{baseCurrency}` | Retorna todas as taxas disponíveis para uma moeda base. |
+| POST | `/api/exchange-rates/convert` | Converte um valor entre moedas. |
+
+---
+
+### Health
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| GET | `/api/health` | Health check da API. |
+| GET | `/api/health/db` | Verifica conectividade com o banco de dados. |
+
+---
+
+### Reports
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| GET | `/api/reports/client/{clientId}` | Retorna relatório detalhado de um cliente. |
+| GET | `/api/reports/system` | Retorna relatório sistêmico (todos os clientes). |
+| GET | `/api/reports/client/{clientId}/export/csv` | Exporta relatório do cliente em CSV (streaming). |
+| GET | `/api/reports/system/export/csv` | Exporta relatório sistêmico em CSV (streaming). |
+
+---
+
+### Transactions
+
+| Método | Endpoint | Descrição |
+|------|---------|-----------|
+| POST | `/api/transactions` | Cria uma nova transação. |
+| GET | `/api/transactions` | Lista transações com paginação e filtros. |
+| GET | `/api/transactions/{id}` | Retorna os detalhes de uma transação específica. |
+| POST | `/api/transactions/import` | Importa múltiplas transações via CSV ou Excel. |
 
 
 
