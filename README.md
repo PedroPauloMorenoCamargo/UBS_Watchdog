@@ -7,7 +7,7 @@
 ## Arquitetura
 
 
-![Diagrama de Arquitetura](docs/diagrama-arquitetura.png)
+![Diagrama de Arquitetura](docs/arquitetura.png)
 
 ## Tecnologias Utilizadas
 
