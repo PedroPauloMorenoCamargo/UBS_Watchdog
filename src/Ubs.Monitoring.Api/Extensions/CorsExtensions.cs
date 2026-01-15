@@ -9,14 +9,14 @@ public static class CorsExtensions
     private const string FrontendPolicyName = "frontend";
 
     /// <summary>
-    /// Registers the frontend CORS policy. If <c>Cors:FrontendOrigin</c> is not configured, defaults to <c>http://localhost:5173</c>.
+    /// Registers the frontend CORS policy. If <c>Cors:FrontendOrigin</c> is not configured, defaults to <c>https://ubs-watchdog-gamma.vercel.app/</c>.
     /// </summary>
     /// <param name="services">The service collection to register CORS services into.</param>
     /// <param name="configuration">The application configuration source.</param>
     /// <returns>The same <see cref="IServiceCollection"/> instance for fluent registration.</returns>
     public static IServiceCollection AddFrontendCors(this IServiceCollection services, IConfiguration configuration)
     {
-        var origin = configuration["Cors:FrontendOrigin"] ?? "http://localhost:5173";
+        var origin = configuration["Cors:FrontendOrigin"] ?? "https://ubs-watchdog-gamma.vercel.app/";
 
         services.AddCors(options =>
         {
