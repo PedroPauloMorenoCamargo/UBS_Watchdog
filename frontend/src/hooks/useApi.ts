@@ -14,12 +14,7 @@ export function useApi<T>({
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const refetch = useCallback(() => {
-    setRefreshKey((prev) => prev + 1);
-  }, []);
-
+  
   const fetch = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -59,7 +54,7 @@ export function useApi<T>({
       mounted = false;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetcher, enabled, refreshKey, ...deps]);
+   }, [fetcher, enabled, ...deps]);
 
   return { data, loading, error, refetch: fetch };
 }

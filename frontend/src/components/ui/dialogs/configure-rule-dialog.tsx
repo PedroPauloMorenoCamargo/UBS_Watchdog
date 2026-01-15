@@ -138,21 +138,6 @@ export function ConfigureRuleDialog({
     }));
   }
 
-  function handleArrayParameterChange(key: string, value: string) {
-    const array = value.split(",").map((v) => v.trim()).filter(Boolean);
-    setParameters((prev) => ({
-      ...prev,
-      [key]: array,
-    }));
-  }
-
-  function getArrayValue(key: string): string {
-    const val = parameters[key];
-    if (Array.isArray(val)) {
-      return val.join(", ");
-    }
-    return "";
-  }
 
   function renderParametersFields() {
     if (!rule) return null;
