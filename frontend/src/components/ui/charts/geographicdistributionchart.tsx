@@ -1,5 +1,9 @@
 import { formatCurrencyCompact } from "@/lib/utils";
-import type { TransactionCountry } from "@/mocks/mocks";
+export interface TransactionCountry {
+  country: string;
+  totalAmount: number;
+  count: number;
+}
 
 interface GeoDistributionChartProps {
   data: TransactionCountry[];

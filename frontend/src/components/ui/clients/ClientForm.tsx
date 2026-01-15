@@ -47,22 +47,6 @@ interface ClientFormProps {
   defaultValues?: Partial<CreateClientFormData>;
 }
 
-const riskLevelMap: Record<string, RiskLevelApi> = {
-  low: 0,
-  medium: 1,
-  high: 2,
-};
-
-const kycStatusMap: Record<string, KycStatusApi> = {
-  pending: 0,
-  verified: 1,
-  expired: 2,
-};
-
-const legalType: Record<string, LegalTypeApi> = {
-  individual: 0,
-  company: 1,
-};
 
 export function ClientForm({
   onSubmit,
@@ -79,8 +63,7 @@ export function ClientForm({
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
-      legalType: defaultValues?.legalType ?? "individual",
-      name: defaultValues?.name || "",
+         legalType: defaultValues?.legalType === 0 ? "individual" : defaultValues?.legalType === 1 ? "company" : "individual",
       contactNumber: defaultValues?.contactNumber || "",
       countryCode: defaultValues?.countryCode || "",
       riskLevel: defaultValues?.riskLevel ?? 0,
@@ -97,7 +80,7 @@ export function ClientForm({
     <form
         onSubmit={handleSubmit((data) => {
           const apiData: CreateClientFormData = {
-            legalType: data.legalType,
+          legalType: (data.legalType === "individual" ? 0 : 1) as LegalTypeApi,
             name: data.name,
             contactNumber: data.contactNumber,
             countryCode: data.countryCode,

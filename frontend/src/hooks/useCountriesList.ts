@@ -14,7 +14,7 @@ export function useCountriesList() {
         setCountries(data);
         setError(null);
       })
-      .catch((err) => {
+      .catch(() => {
         setError("Erro ao carregar países");
         setCountries([]);
       })

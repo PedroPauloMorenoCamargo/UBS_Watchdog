@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import type { CaseTableRow } from "@/models/case";
-import { CaseSeverity } from "@/types/Cases/cases";
 type Trend = "up" | "down" | "neutral";
 
 function getTrend(current: number, previous: number): Trend {
