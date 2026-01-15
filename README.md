@@ -365,7 +365,9 @@ Com o front-end rodando (passo anterior), abra seu navegador e visite:
 * **Aplicação Web (Interface do UBS Watchdog):** `http://localhost:5173`
 
 Você deverá ver a interface do UBS Watchdog carregada. A aplicação web irá consumir os dados da API (rodando em `http://localhost:8080`) para exibir informações de transações e possíveis violações de compliance em tempo real durante o desenvolvimento.
+
 Para efetuar o login deve-se usar as credenciais:
+
 login: admin@ubs.com
 senha: admin123
 
