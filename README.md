@@ -4,6 +4,9 @@
 
 **UBS Watchdog** é um projeto de monitoramento de transações financeiras, com foco em analisar e identificar transações que não seguem as regras de *compliance*. Em outras palavras, a aplicação atua como um “vigia” (*watchdog*) para detectar operações financeiras potencialmente irregulares ou fora dos padrões estabelecidos, auxiliando equipes de compliance a encontrar e investigar essas ocorrências.
 
+Link Documentação no Notion: 
+https://www.notion.so/UBS-Watchdog-Monitoramento-de-Transa-es-Compliance-2cc78493cfe780319353d98050e9d2bb
+
 ## 1. Arquitetura
 
 
